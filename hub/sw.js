@@ -7,9 +7,9 @@
 // - The backend (Supabase), the nearby/push test servers and anything outside the scope: never touched here.
 // Routes mirror pwa-core.js `routeFor` (tested there): keep the two in step.
 
-const VERSION = "hub-pwa-4-ff97905";
+const VERSION = "hub-pwa-4-4b05232";
 const SHELL = `stash-hub-shell-${VERSION}`, RUNTIME = "stash-hub-runtime-1", FILES = "stash-hub-files-1";
-const SHELL_FILES = ["./", "./index.html", "./core.js", "./backend.js", "./live.js", "./pwa.js", "./pwa-main.js", "./pwa-core.js", "./nearby/nearby.js",
+const SHELL_FILES = ["./", "./index.html", "./core.js", "./backend.js", "./live.js", "./profile-ui.js", "./pwa.js", "./pwa-main.js", "./pwa-core.js", "./nearby/nearby.js",
   "./vendor/qrcode-generator-1.4.4.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/apple-touch-icon.png"];
 const RUNTIME_MAX = 150;
 

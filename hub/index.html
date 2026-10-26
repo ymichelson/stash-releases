@@ -430,6 +430,46 @@ select.input { appearance:none; padding-inline-end:34px; background-image:url("d
 .ini { width:30px; height:30px; border-radius:50%; display:grid; place-items:center; background:var(--well); font:500 12px/1 var(--font); color:var(--ink2); flex:none; }
 .list .role { margin-inline-start:auto; font:500 11px/1 var(--font); color:var(--ink2); }
 .list .nm { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* profile (optional): an initial circle with the colour or photo its person chose (profile-ui.js), the Profile sheet */
+.ini[data-c], .sw { background:var(--fl); color:var(--fil); }
+:root[data-theme="dark"] .ini[data-c], :root[data-theme="dark"] .sw:not(.none) { background:var(--fd); color:var(--fid); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ini[data-c], :root:not([data-theme="light"]) .sw:not(.none) { background:var(--fd); color:var(--fid); } }
+.ini.has-photo { overflow:hidden; }
+.ini img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
+.ini.big { width:64px; height:64px; font-size:24px; }
+.me-row, .you-face { display:flex; align-items:center; gap:12px; width:100%; min-height:46px; padding:0; border:0; background:none; color:inherit; font:inherit; text-align:start; cursor:pointer; }
+.you-face { width:auto; min-height:0; border-radius:50%; }
+.me-row .role { display:inline-flex; align-items:center; gap:2px; }
+[dir="rtl"] .me-row .role svg { transform:scaleX(-1); }
+.prof-top { display:flex; align-items:center; gap:14px; }
+.prof-top b { display:block; font:500 18px/1.25 var(--font); }
+.prof-top small { color:var(--ink2); font-size:13px; }
+.prof-note { display:flex; gap:8px; align-items:flex-start; color:var(--ink2); font-size:13px; margin:14px 0 0; }
+.prof-note svg { flex:none; margin-top:1px; }
+.prof-sec { margin-top:20px; padding-top:16px; border-top:1px solid var(--hair); }
+.prof-sec h3, .prof-sub { margin:0 0 10px; font:500 14px/1.25 var(--font); }
+.prof-sub { margin-top:18px; color:var(--ink2); font-size:12px; }
+.prof-p { color:var(--ink2); font-size:13px; margin:0 0 12px; }
+.prof-err { color:var(--ink2); font-size:13px; margin:8px 0 0; }
+.prof-err:empty { display:none; }
+.prof-scope { display:grid; gap:8px; margin-top:12px; font-size:14px; }
+.prof-scope label { display:flex; align-items:center; gap:8px; }
+.prof-courses .course-link { display:flex; align-items:center; gap:12px; width:100%; padding:6px 0; color:inherit; text-decoration:none; }
+.prof-courses .nm small { display:block; color:var(--ink2); font-size:12px; }
+.swatches { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+.sw { width:32px; height:32px; border-radius:50%; border:0; padding:0; display:grid; place-items:center; font:500 13px/1 var(--font); box-shadow:inset 0 0 0 1px var(--hair); transition:transform .2s var(--spring), box-shadow .15s; }
+.sw.none { background:var(--well); color:var(--ink2); }
+.sw[aria-checked="true"] { box-shadow:0 0 0 2px var(--sheet), 0 0 0 3.5px var(--ink); }
+.sw:active { transform:scale(.92); }
+.sw:focus-visible { outline:none; box-shadow:0 0 0 2px var(--sheet), 0 0 0 3.5px var(--focus); }
+.btn.danger { color:var(--red); }
+.pair-code { font:500 28px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing:.1em; text-align:center; padding:18px 12px; border-radius:12px; background:var(--well); margin:0 0 12px; }
+.pair-input { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing:.08em; text-transform:uppercase; }
+.prof-hint { display:flex; align-items:center; gap:8px; margin:12px 0 0; color:var(--ink2); font-size:13px; }
+.prof-hint .ini { width:20px; height:20px; font-size:10px; }
+.prof-hint .x { margin-inline-start:auto; border:0; background:none; color:var(--ink2); width:32px; height:32px; display:grid; place-items:center; border-radius:50%; }
+.prof-hint .x:hover { background:var(--well); }
+@media (prefers-reduced-motion: reduce) { .sw { transition:none; } }
 .menu { position:fixed; z-index:45; min-width:220px; padding:6px; border-radius:12px; background:var(--sheet); box-shadow:var(--shadow-float), 0 0 0 1px var(--hair);
   opacity:0; transform:scale(.96); transform-origin:top right; transition:opacity .14s var(--ease-out), transform .2s var(--ease-out); }
 .menu.in { opacity:1; transform:none; }
@@ -562,6 +602,30 @@ select.input { appearance:none; padding-inline-end:34px; background-image:url("d
 .hd .shelf { display:block; font:500 11px/1 var(--font); color:var(--ink2); margin-bottom:5px; }
 .hd h1 { margin:0; font:500 28px/1.1 var(--display); letter-spacing:-.016em; }
 .hd .meta { margin-top:4px; font-size:13px; color:var(--ink2); }
+/* who's here now (core.js Presence): quiet initial circles in the course header line, like a shared doc's viewers */
+.here-slot:empty { display:none; }
+.here-now { display:inline-flex; align-items:center; vertical-align:middle; margin-inline-start:8px; padding-inline-start:6px; }
+.pc { position:relative; display:grid; place-items:center; width:26px; height:26px; margin-inline-start:-4px; padding:0; border:0; border-radius:50%;
+  font:600 10.5px/1 var(--font); letter-spacing:-.01em; box-shadow:0 0 0 2px var(--ring, var(--sheet)); cursor:default; unicode-bidi:isolate; }
+.pc.t-coral { background:var(--pc-coral); color:var(--pc-coral-ink); } .pc.t-butter { background:var(--pc-butter); color:var(--pc-butter-ink); }
+.pc.t-sky { background:var(--pc-sky); color:var(--pc-sky-ink); } .pc.more { background:var(--well); color:var(--ink2); font-weight:500; cursor:pointer; }
+.pc[data-c] { background:var(--fl); color:var(--fil); }
+:root[data-theme="dark"] .pc[data-c] { background:var(--fd); color:var(--fid); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pc[data-c] { background:var(--fd); color:var(--fid); } }
+.pc.has-photo > img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+.pc.in { animation:pc-in .22s var(--ease-out, ease-out) both; }
+@keyframes pc-in { from { opacity:0; transform:scale(.6); } }
+.pc::after { content:attr(data-name); position:absolute; top:calc(100% + 6px); inset-inline-end:-4px; z-index:5; max-width:min(70vw, 280px); overflow:hidden; text-overflow:ellipsis; padding:5px 8px; border-radius:6px;
+  background:var(--primary); color:var(--on-primary); font:500 12px/1.2 var(--font); white-space:nowrap; unicode-bidi:plaintext; pointer-events:none; opacity:0; transition:opacity .12s; }
+.pc:hover::after, .pc:focus-visible::after, .pc.show::after { opacity:1; }
+:root { --pc-coral:#FBE4DD; --pc-coral-ink:#8A4536; --pc-butter:#FAEBCB; --pc-butter-ink:#70510D; --pc-sky:#E4EDFC; --pc-sky-ink:#345EA0; }
+:root[data-theme="dark"] { --pc-coral:#4D3631; --pc-coral-ink:#F6C2B6; --pc-butter:#4A3F2A; --pc-butter-ink:#F2D9A4; --pc-sky:#2C3852; --pc-sky-ink:#B9CFF7; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pc-coral:#4D3631; --pc-coral-ink:#F6C2B6; --pc-butter:#4A3F2A; --pc-butter-ink:#F2D9A4; --pc-sky:#2C3852; --pc-sky-ink:#B9CFF7; } }
+@media (prefers-reduced-motion: reduce) { .pc.in { animation:none; } .pc::after { transition:none; } }
+.fsubline { display:flex; align-items:center; }
+.fsubline:not(:has(.sub)) .here-slot { position:absolute; top:14px; inset-inline-end:16px; }
+.fsubline .here-slot { margin-inline-start:auto; position:relative; z-index:2; }
+.menu [role="menuitemcheckbox"] .chk { margin-inline-start:auto; color:var(--ink2); font-size:13px; }
 .hd .grow { flex:1; }
 .acts-hd { display:flex; gap:8px; }
 .search { display:flex; align-items:center; gap:8px; width:min(280px, 30vw); height:34px; padding:0 12px; border-radius:10px; background:var(--well); box-shadow:inset 0 0 0 1px var(--hair); color:var(--ink2); }
@@ -1079,7 +1143,7 @@ const HE = {
   courses:"קורסים", joinCourse:"הצטרפות לקורס", yourCourses:"הקורסים שלך", onTheirOwn:"קורסים", bring:"הזמנה",
   next:"הבא", add:"הוספה ל", week:"שבוע", thisWeek:"השבוע", courseFiles:"קבצי הקורס", earlier:"קודם", things:"פריטים", thing:"פריט",
   newSince:"חדשים מאז", show:"להראות", others:"ועוד", and:"ו-", people:"אנשים", photo:"תמונה", file:"קובץ", link:"קישור", note:"פתק",
-  thanks:"תודה", gotIt:"הבנתי", same:"גם לי יש שאלה", helpful:"עזר לי", addOne:"הוספה", info:"על הקורס", invitePeople:"הזמנת אנשים", thanksW:"תודה", open:"פתיחה", save:"שמירה", saveFiles:"שמירה בקבצים", savePhoto:"שמירת התמונה", close:"סגירה", copy:"העתקה",
+  thanks:"תודה", gotIt:"הבנתי", same:"גם לי יש שאלה", helpful:"עזר לי", addOne:"הוספה", info:"על הקורס", invitePeople:"הזמנת אנשים", reminders:"תזכורות לתאריכים", showHere:"להראות שאני כאן", hereMore:"עוד", thanksW:"תודה", open:"פתיחה", save:"שמירה", saveFiles:"שמירה בקבצים", savePhoto:"שמירת התמונה", close:"סגירה", copy:"העתקה",
   nothingYet:"עוד אין כלום על השולחן", nothingYetP:"אפשר להניח את הסילבוס, מצגות או תמונה של הלוח — כולם בקורס יקבלו את זה.",
   offline:"אין חיבור · עודכן", offlineP:"מה שכאן עדיין עובד; מה שתוסיפו יישלח כשהחיבור יחזור.",
 };
@@ -1088,7 +1152,7 @@ const lang = params.get("lang") === "he" ? "he" : "en";
 const EN = { courses:"Courses", joinCourse:"Join a course", yourCourses:"Your courses", onTheirOwn:"Courses", bring:"Invite",
   next:"Next", add:"Add to ", week:"Week", thisWeek:"This week", courseFiles:"Course files", earlier:"Earlier", things:"things", thing:"thing",
   newSince:"new since", show:"Show", others:"others", and:"and", people:"people", photo:"Photo", file:"File", link:"Link", note:"Note",
-  thanks:"Thanks", gotIt:"Got it", same:"Same question", helpful:"Helpful", addOne:"Add", info:"Course info", invitePeople:"Invite people", thanksW:"Thanks", open:"Open", save:"Save", saveFiles:"Save to Files", savePhoto:"Save Photo", close:"Close", copy:"Copy",
+  thanks:"Thanks", gotIt:"Got it", same:"Same question", helpful:"Helpful", addOne:"Add", info:"Course info", invitePeople:"Invite people", reminders:"Reminders for the dates", showHere:"Show me as here", hereMore:"more", thanksW:"Thanks", open:"Open", save:"Save", saveFiles:"Save to Files", savePhoto:"Save Photo", close:"Close", copy:"Copy",
   nothingYet:"Nothing here yet", nothingYetP:"Add the syllabus, slides or a photo of the board. Everyone in the course sees it.",
   offline:"Offline · updated", offlineP:"What's here still works; what you add goes when you're back." };
 const t = k => (lang === "he" ? HE[k] : null) ?? EN[k] ?? k;
@@ -1101,6 +1165,7 @@ $$("[data-t]").forEach(n => n.textContent = t(n.dataset.t));
 const HE_DAYS = { Sun:"יום א׳", Mon:"יום ב׳", Tue:"יום ג׳", Wed:"יום ד׳", Thu:"יום ה׳", Fri:"יום ו׳", Sat:"שבת", Sunday:"יום ראשון", Monday:"יום שני", Tuesday:"יום שלישי", Wednesday:"יום רביעי", Thursday:"יום חמישי", today:"היום", now:"עכשיו", Nov:"בנוב׳", Oct:"באוק׳", Dec:"בדצמ׳" };
 const heWhen = x => String(x).replace(/\b(\d+) h\b/g, (_, n) => n === "1" ? "לפני שעה" : n === "2" ? "לפני שעתיים" : `לפני ${n} שעות`).replace(/\bWeek (\d+)\b/g, "שבוע $1").replace(/\b(Sunday|Monday|Tuesday|Wednesday|Thursday|Sun|Mon|Tue|Wed|Thu|Fri|Sat|today|now|Nov|Oct|Dec)\b/g, d => HE_DAYS[d]);
 const HE_EXACT = {
+  "Profile":"פרופיל", "Make it yours ·":"להפוך אותו לשלך ·", "Don’t show again":"לא להציג שוב", "Your profile":"הפרופיל שלך", "You · your profile":"את/ה · הפרופיל שלך", "Owner · Profile":"בעלים · פרופיל",
   "Join a course":"הצטרפות לקורס", "Prototype states":"מצבי אב־טיפוס", "Course files":"קבצי הקורס", "This week":"השבוע", "Earlier":"קודם",
   "All":"הכול", "Lectures":"הרצאות", "Tutorials":"תרגולים", "Homework":"שיעורי בית", "Exams":"מבחנים", "Show":"להראות", "Undo":"ביטול",
   "Copied.":"הועתק.", "Link copied.":"הקישור הועתק.", "Saved to this device.":"נשמר במכשיר הזה.", "Removed.":"הוסר.", "Deleted for everyone.":"נמחק אצל כולם.",
@@ -1203,7 +1268,8 @@ const I = {
   lock:'<rect x="4.5" y="9" width="11" height="8" rx="2"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/>', check:'<path d="M4.5 10.5l3.5 3.5 7.5-8"/>', search:'<circle cx="8.5" cy="8.5" r="5"/><path d="M12.5 12.5l4 4"/>', video:'<rect x="2.5" y="5.5" width="11" height="9" rx="2"/><path d="M13.5 9l4-2.5v7l-4-2.5"/>', chat:'<path d="M10 3.5c-3.9 0-7 2.6-7 5.9 0 1.7.8 3.2 2.2 4.3L4.6 17l3.5-1.6c.6.1 1.2.2 1.9.2 3.9 0 7-2.6 7-5.9S13.9 3.5 10 3.5z"/>', cal:'<rect x="3" y="4.5" width="14" height="12.5" rx="2"/><path d="M3 8.5h14M7 3v3M13 3v3"/>',
   warn:'<circle cx="10" cy="10" r="7.5"/><path d="M10 6v4.5M10 13.5h.01"/>', drop:'<path d="M10 3v10M6 9.5L10 13.5 14 9.5"/><path d="M4 16.5h12"/>',
   leave:'<path d="M12 4.5h2.5A1.5 1.5 0 0 1 16 6v8a1.5 1.5 0 0 1-1.5 1.5H12M8.5 13.5L5 10l3.5-3.5M5 10h8"/>', cover:'<rect x="2.5" y="5" width="15" height="10" rx="2"/><path d="M11 12c1.5-2.5 3-3 5-2.5"/>',
-  forget:'<path d="M3.5 6h13M7 6V4.5h6V6M5 6l.8 10.5h8.4L15 6M8.5 9.5l3 3M11.5 9.5l-3 3"/>', theme:'<circle cx="10" cy="10" r="6.5"/><path d="M10 3.5v13a6.5 6.5 0 0 0 0-13z" fill="currentColor"/>',
+  bell:'<path d="M5.5 13.5V9a4.5 4.5 0 0 1 9 0v4.5l1.3 1.5H4.2z"/><path d="M8.3 16.6a1.8 1.8 0 0 0 3.4 0"/>',
+  person:'<circle cx="10" cy="7" r="3"/><path d="M4 16.5c.7-3 3.1-4.5 6-4.5s5.3 1.5 6 4.5"/>', forget:'<path d="M3.5 6h13M7 6V4.5h6V6M5 6l.8 10.5h8.4L15 6M8.5 9.5l3 3M11.5 9.5l-3 3"/>', theme:'<circle cx="10" cy="10" r="6.5"/><path d="M10 3.5v13a6.5 6.5 0 0 0 0-13z" fill="currentColor"/>',
 };
 const ic = (n, cls = "") => `<svg class="i ${cls}" viewBox="0 0 20 20" aria-hidden="true">${I[n]}</svg>`;
 
@@ -1215,6 +1281,23 @@ const thumb = i => { const [fx, fy] = FOCUS[i]; const x = Math.min(136, Math.max
 const COVERS = ["cover-01-ribbon","cover-02-torn-edge","cover-03-sheet-stack","cover-04-folded-corner","cover-05-bookmark",
                 "cover-06-binder-edge","cover-07-ink-loop","cover-08-grid-corner","cover-09-ruled-strip","cover-10-stamp-circle"];
 const ME = "You";
+/* profile (optional, profile-ui.js): your name here, and the initial circle with someone's colour or photo */
+const myNameHere = () => course()?.myName || S.courses?.find(c => c.myName)?.myName || store.get("liveName", "") || (LIVE ? "You" : "Jonathan");
+const DEMO_LOOKS = { Dana: { color: 0 }, Omer: { color: 2 }, Maya: { color: 3 }, Noa: { color: 4 } };   // made-up courses only
+const lookOf = (c, name) => name === ME ? S.myLook || null : c?.looks?.get(name) || (LIVE ? null : DEMO_LOOKS[name] || null);
+function face(name, look, cls = "") {
+  const col = look && CORE?.Profile.COLORS[look.color], photo = look?.photo && CORE?.Profile.photoOK(look.photo) ? look.photo : null;
+  const st = col ? ` data-c style="--fl:${col.light[0]};--fil:${col.light[1]};--fd:${col.dark[0]};--fid:${col.dark[1]}"` : "";
+  const who = String((name === ME ? myNameHere() : name) || "?").trim();
+  return `<span class="ini${cls ? " " + cls : ""}${photo ? " has-photo" : ""}"${st} aria-hidden="true">${photo ? `<img src="${photo}" alt="">` : esc(([...who][0] || "?").toLocaleUpperCase())}</span>`;
+}
+/* "Make it yours · Profile": once, after joining, until opened or dismissed (core.js Profile.hintVisible) */
+function profHint() {
+  const st = store.get("profileHint", ""), on = st !== "done" && !S.myLook && (st === "show" || S.welcome);
+  if (!on) return "";
+  if (st !== "show") store.set("profileHint", "show");
+  return `<p class="prof-hint">${face(ME, null)}<span>Make it yours · <button class="linkbtn" data-act="profile">Profile</button></span><button class="x" data-act="prof-hint-x" aria-label="Don’t show again">${ic("x","s")}</button></p>`;
+}
 let uid = 1;
 const m = (o) => ({ id: "m" + (uid++), stickers: {}, mine: [], ...o });
 
@@ -1382,6 +1465,7 @@ const shows = it => (S.section === "All" || it.section === S.section) && (!S.q |
 function render() {
   const c = course();
   if (c) pwa(P => P.openedCourse?.(c.id));
+  hooks.course?.(S.view === "class" ? null : c);   // live.js: say "here" in the open course only
   renderSide();
   if (LIVE && S.liveBlock) return S.liveBlock();
   if (!c) return renderNoCourses();
@@ -1402,7 +1486,7 @@ function render() {
       <header class="hd">
         <span class="cov"><img data-art="${COVERS[c.cover]}" src="${art(COVERS[c.cover])}" alt="" decoding="async"></span>
         <div class="id">${c.shelf ? `<span class="shelf">${esc(c.shelf)}</span>` : ""}<h1 id="course-name">${esc(c.name)}</h1>
-          <div class="meta">${esc([c.code, c.term, c.instructor].filter(Boolean).join(" · "))}</div></div>
+          <div class="meta">${esc([c.code, c.term, c.instructor].filter(Boolean).join(" · "))}${c.here ? "" : `<span class="here-slot" id="here-slot">${presenceInner(c)}</span>`}</div></div>
         <span class="grow"></span>
         ${isEmpty ? "" : `<label class="search">${ic("search","s")}<input id="q" type="search" placeholder="Search ${esc(c.name)}" value="${esc(S.q || "")}" autocomplete="off" aria-label="Search this course"><span class="kbd-hint" aria-hidden="true">⌘K</span></label>`}
         <span class="acts-hd">${canAdd ? `<button class="btn" data-act="invite">${ic("people","s")}<span>${t("bring")}</span></button>
@@ -1415,12 +1499,13 @@ function render() {
           <li><b>Add what you have</b> — ${phone() ? "a photo of the board is two taps" : "paste or drop a file anywhere on the page"}.</li>
           <li><b>Say thanks</b> with a sticker; no chat to keep up with.</li></ul>
           <div class="acts"><button class="btn" data-act="welcome-ok">Got it</button></div></div></aside>` : ""}
+      ${profHint()}
       ${removed ? `<div class="notice">${ic("leave")}<p><b>You're no longer in ${esc(c.name)}.</b><small>What you saved from it stays on this device.</small></p></div>` : ""}
       ${deleted ? `<div class="notice">${ic("trash")}<p><b>Maya deleted this course. It's gone in 5 days.</b><small>Keep a copy of the notes and links on this device until then.</small></p><button class="btn">Keep a copy</button></div>` : ""}
     </div>
     <div class="workspace">
       <section class="desk" id="desk" aria-labelledby="h-now">
-        ${!isEmpty && c.here ? `<div class="seats" aria-label="Here now">${c.here.map(n => `<button class="seat" data-act="people" data-seat="${esc(n)}" aria-label="${esc(n)} is here"><span class="ini" aria-hidden="true">${esc([...n][0])}</span><bdi>${esc(n)}</bdi></button>`).join("")}${c.hereMore ? `<button class="seat more" data-act="people" aria-label="${c.hereMore} more people here"><bdi dir="ltr">+${c.hereMore}</bdi></button>` : ""}</div>` : ""}
+        ${!isEmpty && c.here ? `<div class="seats" aria-label="Here now">${c.here.map(n => `<button class="seat" data-act="people" data-seat="${esc(n)}" aria-label="${esc(n)} is here">${face(n, lookOf(c, n))}<bdi>${esc(n)}</bdi></button>`).join("")}${c.hereMore ? `<button class="seat more" data-act="people" aria-label="${c.hereMore} more people here"><bdi dir="ltr">+${c.hereMore}</bdi></button>` : ""}</div>` : ""}
         ${isEmpty ? emptyCourse(c) : `
         <div class="desk-head"><h2 id="h-now">${t("week")} ${c.week} <span class="sub"><bdi>${esc(c.weekTitles[c.week] || "")}</bdi></span></h2>
           ${sections.length >= 2 ? `<span class="seg" role="tablist" aria-label="Show">${["All", ...["Lectures","Tutorials","Homework","Exams"].filter(x => sections.includes(x))].map(x => `<button role="tab" data-act="section" data-s="${x}" aria-selected="${x === S.section}">${x}</button>`).join("")}</span>` : ""}</div>
@@ -1430,7 +1515,7 @@ function render() {
         <div class="grid" id="grid-now" data-week="${c.week}">${(shelf ? weekNow.slice(0, S.shelfLim = S.shelfFor === c.id ? Math.max(SHELF_PAGE, S.shelfLim || 0) : (S.shelfFor = c.id, SHELF_PAGE)) : weekNow).map(sheet).join("") || `<p style="grid-column:1/-1;margin:0;color:var(--ink2)">${S.q ? `Nothing matches “${esc(S.q)}” this week.` : `Nothing in ${esc(S.section)} this week yet.`}</p>`}</div>
         ${shelf && weekNow.length > S.shelfLim ? `<div id="shelf-more" aria-hidden="true"></div>` : ""}
         ${earlier.length ? `<div class="weeks" aria-label="${t("earlier")}">${earlier.map(w => weekRow(c, w)).join("")}</div>` : ""}
-        ${canAdd ? `<div class="you" id="you"><span class="ini" aria-hidden="true">Y</span><p><b>You</b> · paste or drop anything here — it lands on the desk for ${c.people > 1 ? `${c.people} people` : "everyone you invite"}.</p>
+        ${canAdd ? `<div class="you" id="you"><button class="you-face" data-act="profile" aria-label="Your profile">${face(ME, S.myLook)}</button><p><b>You</b> · paste or drop anything here — it lands on the desk for ${c.people > 1 ? `${c.people} people` : "everyone you invite"}.</p>
           <span class="q"><button class="btn" data-act="quick" data-q="photo">${ic("photo","s")}<span>${t("photo")}</span></button><button class="btn" data-act="quick" data-q="file">${ic("file","s")}<span>${t("file")}</span></button>
           <button class="btn" data-act="quick" data-q="link">${ic("link","s")}<span>${t("link")}</span></button><button class="btn" data-act="quick" data-q="note">${ic("note","s")}<span>${t("note")}</span></button></span></div>` : ""}`}
       </section>
@@ -1452,7 +1537,12 @@ function render() {
    the top bar as you scroll, the three dates in one card) ============
    Cover with the moment line → Essentials (Next exam · Due · Next class, core.js Essentials) → New since … → the shelf
    (This week / Earlier) → one bar. During class: the line says so, today's board leads, the bar is camera-first. */
-let CORE = null; import("./core.js").then(mod => { CORE = mod; if (phone() && course() && S.view !== "class") render(); }).catch(() => {});
+let CORE = null; import("./core.js").then(mod => { CORE = mod; if (!LIVE && params.get("here")) demoHere(+params.get("here")); if ((phone() || params.get("here")) && course() && S.view !== "class") render(); }).catch(() => {});
+function demoHere(n) { // prototype only (?here=6): classmates with the course open, for pictures and tests
+  const names = lang === "he" ? ["דנה לוי", "עומר", "נועה כהן", "Maya Ben David", "אילן", "שירה"] : ["Dana Levi", "Omer", "Noa Cohen", "Maya Ben David", "Ilan", "Shira"];
+  const members = new Map(names.map((x, i) => [`p${i}`, x]));
+  for (const c of S.courses) c.present = CORE.Presence.people(Object.fromEntries(names.slice(0, n).map((x, i) => [`p${i}`, [{ p: `p${i}` }]])), { me: "me", members });
+}
 const tzHere = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return undefined; } };
 function wallClock(text) { // the prototype's made-up courses carry display strings ("Thu 12 Nov · 9:00"); live rows carry due_at
   const p = String(text ?? "").toLowerCase(), day = CORE.EssentialsNotice.date(p, new Date(), tzHere()), t = CORE.EssentialsNotice.clock(p);
@@ -1487,6 +1577,25 @@ function duringClass(c, ess) { // the timetable says a class is on, or 2+ things
   const now = ess.find(e => e.slot === "class" && e.isNow); if (now) return { what: now.title || "Class", where: now.place || "" };
   return c.items.filter(i => i.at && Date.now() - i.at < 30 * 60000).length >= 2 ? { what: lang === "he" ? "שיעור" : "Class" } : null;
 }
+// Who's here now: up to 4 initial circles + "+N" (core.js Presence); live.js fills c.present from Realtime Presence and
+// redraws only this slot. The name shows on hover, keyboard focus or a tap; screen readers hear one sentence.
+const presenceSeen = new Set();
+function presenceInner(c) {
+  const ppl = c?.present || [];
+  if (!ppl.length || !CORE?.Presence) return "";
+  const { shown, more } = CORE.Presence.shown(ppl), rest = ppl.slice(shown.length).map(p => p.name).join(", ");
+  const html = `<span class="here-now" role="group" aria-label="${esc(CORE.Presence.label(ppl, lang))}">${shown.map(p => {
+    const fresh = !presenceSeen.has(c.id + p.id); presenceSeen.add(c.id + p.id);
+    // their profile colour or photo when they chose one (hub-profile's looks), else a brand tone from the name
+    const look = lookOf(c, p.name), col = look && CORE.Profile?.COLORS[look.color], photo = look?.photo && CORE.Profile?.photoOK(look.photo) ? look.photo : null;
+    const st = col ? ` data-c style="--fl:${col.light[0]};--fil:${col.light[1]};--fd:${col.dark[0]};--fid:${col.dark[1]}"` : "";
+    return `<button class="pc t-${p.colour}${fresh ? " in" : ""}${photo ? " has-photo" : ""}"${st} data-act="here-who" data-name="${esc(p.name)}" aria-label="${esc(p.name)}">${photo ? `<img src="${photo}" alt="">` : `<span aria-hidden="true">${esc(p.initials)}</span>`}</button>`; }).join("")}${more
+    ? `<button class="pc more" data-act="here-who" data-name="${esc(rest)}" aria-label="${esc(rest)}"><bdi dir="ltr" aria-hidden="true">+${more}</bdi></button>` : ""}</span>`;
+  return html;
+}
+const remindersOn = c => store.get(`remind.${c?.id}`, true);  // one switch per course (Mac: its own; phone: + set_reminders)
+const showHere = () => store.get("showHere", true);           // this device: "Show me as here"
+function renderPresence() { const el = $("#here-slot"); if (el) el.innerHTML = presenceInner(course()); }
 function renderFolio(c, isEmpty) {
   const ess = essentialsOf(c), live = duringClass(c, ess), nNew = c.items.filter(i => i.isNew);
   const exam = ess.find(e => e.slot === "exam"), soon = ess.filter(e => e.slot !== "class").sort((a, b) => a.at - b.at)[0];
@@ -1512,10 +1621,10 @@ function renderFolio(c, isEmpty) {
   $("#tb-back").textContent = c.shelf || t("courses");
   $("#course").innerHTML = `<div class="folio ${live ? "during" : ""}">
     <header class="fcover"><img class="fart" data-art="${COVERS[c.cover]}" src="${art(COVERS[c.cover])}" alt="" decoding="async">
-      ${sub ? `<span class="sub">${esc(sub)}</span>` : ""}
+      <div class="fsubline">${sub ? `<span class="sub">${esc(sub)}</span>` : ""}<span class="here-slot" id="here-slot">${presenceInner(c)}</span></div>
       <h1 id="course-name"><button class="fname" data-act="switcher" aria-haspopup="dialog">${esc(c.name)}${ic("down","s")}</button></h1>
       ${moment ? `<p class="moment">${moment}</p>` : ""}</header>
-    ${essHTML}${ask}
+    ${essHTML}${ask}${profHint()}
     <div class="status" id="status" role="status" aria-live="polite"></div>
     ${isEmpty ? emptyCourse(c) : `
     ${board.length ? `<section class="fsec board" aria-labelledby="h-board"><h2 class="fh" id="h-board">${lang === "he" ? "הלוח של היום" : "Today’s board"}<span>${board.length} ${board.length === 1 ? "photo" : "photos"}</span></h2>
@@ -1993,13 +2102,16 @@ function openMenu(btn) {
   mu.innerHTML = c ? `${phone() ? `<button role="menuitem" data-act="invite">${ic("plus","s")}${t("invitePeople")}</button>
     <button role="menuitem" data-act="course-info">${ic("note","s")}${t("info")}</button>` : ""}<button role="menuitem" data-act="people">${ic("people","s")}People in this course</button>
     ${phone() ? "" : `<button role="menuitem" data-act="covers">${ic("cover","s")}Change the cover</button>`}
+    <button role="menuitemcheckbox" data-act="reminders" aria-checked="${remindersOn(c)}">${ic("bell","s")}${t("reminders")}<span class="chk" aria-hidden="true">${remindersOn(c) ? (lang === "he" ? "פועל" : "On") : (lang === "he" ? "כבוי" : "Off")}</span></button>
+    <button role="menuitemcheckbox" data-act="show-here" aria-checked="${showHere()}">${ic("people","s")}${t("showHere")}<span class="chk" aria-hidden="true">${showHere() ? (lang === "he" ? "פועל" : "On") : (lang === "he" ? "כבוי" : "Off")}</span></button>
     <button role="menuitem" data-act="leave" class="danger">${ic("leave","s")}Leave ${esc(c.name)}…</button><hr>
+    <button role="menuitem" data-act="profile">${ic("person","s")}Profile</button>
     <button role="menuitem" data-act="forget">${ic("forget","s")}Forget this browser…</button><hr>` : "";
   if (!LIVE) mu.innerHTML += `<div class="lab">Prototype</div><button role="menuitem" data-act="states">${ic("note","s")}States…</button>
     <button role="menuitem" data-act="toggle-theme">${ic("theme","s")}${theme() === "dark" ? "Light paper" : "Night paper"}</button>
     <button role="menuitem" data-act="arrive">${ic("drop","s")}Someone adds something</button>`;
   mu.addEventListener("keydown", e => { // arrow keys move through the menu (QA-10)
-    const items = [...mu.querySelectorAll('[role="menuitem"]')], i = items.indexOf(document.activeElement);
+    const items = [...mu.querySelectorAll('[role="menuitem"], [role="menuitemcheckbox"]')], i = items.indexOf(document.activeElement);
     const n = e.key === "ArrowDown" ? (i + 1) % items.length : e.key === "ArrowUp" ? (i - 1 + items.length) % items.length : e.key === "Home" ? 0 : e.key === "End" ? items.length - 1 : -1;
     if (n >= 0) { e.preventDefault(); items[n].focus(); } });
   mu._btn = btn; document.body.append(mu);
@@ -2194,8 +2306,8 @@ function closeProjector() { const d = $(".proj"); if (!d) return; $("#app").iner
 function openPeople() {
   const c = S.view === "class" ? theClass() : course(); const names = LIVE ? (c.allNames || []).map(p => p.name) : [...c.names, "Maya", "Noam", "Ilan", "Shira", "Itai", "Yael"].filter((v, i, a) => a.indexOf(v) === i).slice(0, Math.max(0, c.people - 1));
   openPanel(`${head(`${c.people.toLocaleString()} ${t("people")} in ${esc(c.name)}`)}<div class="p-body"><ul class="list">
-    <li><span class="ini" aria-hidden="true">Y</span><span class="nm">You</span><span class="role">${c.owner === ME ? "Owner" : ""}</span></li>
-    ${names.map(n => `<li><span class="ini" aria-hidden="true">${esc([...n][0])}</span><span class="nm">${esc(n)}</span><span class="role">${n === c.owner ? "Started this course" : ""}</span></li>`).join("")}
+    <li><button class="me-row" data-act="profile" aria-label="You · your profile">${face(ME, S.myLook)}<span class="nm">You</span><span class="role">${c.owner === ME ? "Owner · " : ""}Profile${ic("chev","s")}</span></button></li>
+    ${names.map(n => `<li>${face(n, lookOf(c, n))}<span class="nm">${esc(n)}</span><span class="role">${n === c.owner ? "Started this course" : ""}</span></li>`).join("")}
     ${c.people - 1 > names.length ? `<li style="color:var(--ink2)">and ${(c.people - 1 - names.length).toLocaleString()} more</li>` : ""}</ul>
     <p style="color:var(--ink2);font-size:13px;margin:14px 0 0">People here see only the name you chose for this course.</p></div>
     <div class="p-foot"><button class="btn primary" data-act="invite">${ic("people","s")}<span>${t("bring")}</span></button></div>`, { w: 440, label: "People" });
@@ -2252,7 +2364,7 @@ document.addEventListener("click", async e => {
       say(`<span>Move to</span><span class="refile">${secs.map(x => `<button class="seat" data-act="refile-to" data-id="${id}" data-s="${x}" aria-pressed="${it.section === x}">${x}</button>`).join("")}</span>`, 8000); break; }
     case "refile-to": { const it = findItem(id); if (it) it.section = a.dataset.s; say(`<span>${ic("check","s")}</span><span>Moved to <b>${esc(a.dataset.s)}</b></span>`, 2500); break; }
     case "pass-menu": { const box = $(".tag .pass-to"), open = box.hidden; box.hidden = !open; a.setAttribute("aria-expanded", String(open));
-      if (open) { box.innerHTML = `<div class="tray-h" style="margin:12px 0 6px">Pass to someone at the desk</div><div style="display:flex;flex-wrap:wrap;gap:6px">${(course().here || []).map(n => `<button class="seat" data-act="pass-to" data-id="${id}" data-who="${esc(n)}"><span class="ini" aria-hidden="true">${esc(n[0])}</span><bdi>${esc(n)}</bdi></button>`).join("")}</div>`; $("button", box)?.focus(); } break; }
+      if (open) { box.innerHTML = `<div class="tray-h" style="margin:12px 0 6px">Pass to someone at the desk</div><div style="display:flex;flex-wrap:wrap;gap:6px">${(course().here || []).map(n => `<button class="seat" data-act="pass-to" data-id="${id}" data-who="${esc(n)}">${face(n, lookOf(course(), n))}<bdi>${esc(n)}</bdi></button>`).join("")}</div>`; $("button", box)?.focus(); } break; }
     case "pass-to": { const it = findItem(id); didIt(a); say(`<span>${ic("check","s")}</span><span>Passed <b>${esc(it?.title || "the note")}</b> to <b><bdi>${esc(a.dataset.who)}</bdi></b> — it waits for them with Keep · No thanks.</span>`, 4500); break; }
     case "quick": { const k = a.dataset.q; S.addSection = a.dataset.section || null; openAdd(); if (k === "photo") $("#pick-photo").click(); else if (k === "file") $("#pick-file").click(); else drawAdd(k); break; }
     case "ics": say(`<span>In the real hub, the course rep pastes the course's calendar link (.ics) here — lectures, tutorials and deadlines appear in Coming up.</span>`, 5000); break;
@@ -2274,6 +2386,8 @@ document.addEventListener("click", async e => {
     case "new-code": { const c = course(); c.invite = LIVE ? await hub.live.newCode(c) : newCode(); const which = $('[data-act="inv"][aria-pressed="true"]')?.dataset.k || "code"; $("#inv-body").innerHTML = invBody(which, c, c.invite.slice(0, 3) + "‑" + c.invite.slice(3)); break; }
     case "projector": openProjector(); break;
     case "people": closeMenu(); openPeople(); break;
+    case "profile": closeMenu(); hub.openProfile?.(a); break;
+    case "prof-hint-x": store.set("profileHint", "done"); $(".prof-hint")?.remove(); break;
     case "ess-no": S.essAsk = null; render(); break;
     case "ess-add": { const { it, s: a } = S.essAsk || {}; S.essAsk = null; if (!it) { render(); break; }
       const title = CORE.Essentials.dueTitle(a.title, a.place);
@@ -2290,6 +2404,14 @@ document.addEventListener("click", async e => {
     case "covers": closeMenu(); openCovers(); break;
     case "cover": course().cover = Number(a.dataset.i); closeAll(); render(); break;
     case "more": openMenu(a); break;
+    case "here-who": { a.classList.add("show"); clearTimeout(a._t); a._t = setTimeout(() => a.classList.remove("show"), 2200); break; }
+    case "reminders": { const c = course(), on = !remindersOn(c); store.set(`remind.${c.id}`, on); closeMenu();
+      say(`<span>${ic(on ? "bell" : "check", "s")}</span><span>${on ? (lang === "he" ? `תזכורות ל${esc(c.name)} פועלות: יום לפני מבחן, ובבוקר של יום הגשה.` : `Reminders on for ${esc(c.name)}: the day before an exam and the morning something’s due.`)
+        : (lang === "he" ? `אין תזכורות ל${esc(c.name)}.` : `No reminders for ${esc(c.name)}.`)}</span>`, 4000);
+      hooks.reminders?.(c, on); break; }
+    case "show-here": { const on = !showHere(); store.set("showHere", on); closeMenu();
+      say(`<span>${on ? (lang === "he" ? "אחרים בקורס יראו שאת/ה כאן." : "Others in the course see when you’re here.") : (lang === "he" ? "לא יראו שאת/ה כאן. גם את/ה עדיין רואה מי כאן." : "Nobody sees when you’re here now. You still see who is.")}</span>`, 4000);
+      hooks.showHere?.(on); break; }
     case "states": closeMenu(); openStates(); break;
     case "toggle-theme": closeMenu(); document.documentElement.dataset.theme = theme() === "dark" ? "light" : "dark"; refreshArt(); break;
     case "arrive": closeMenu(); { const s = S.state; S.state = "normal"; arrival(); S.state = s; } break;
@@ -2440,8 +2562,9 @@ addEventListener("scroll", () => { if (ticking) return; ticking = true; requestA
 /* ============ hidden features ============ */
 // Crisp Swap (CONFIDENTIAL, off): ?crisp=1 turns it on for this browser, ?crisp=0 off. Lives in crisp/ (never published).
 const hooks = {};
-const hub = { S, m, ME, store, course, render, renderSide, addItem, say, esc, ic, reduced, phone, shareSave, openItem, drawAdd, findItem, closeAll, hooks, openPanel, head, sheet, $, $$,
+const hub = { S, m, ME, store, course, render, renderSide, renderPresence, remindersOn, showHere, pwa, addItem, say, esc, ic, reduced, phone, shareSave, openItem, drawAdd, findItem, closeAll, hooks, openPanel, head, sheet, $, $$,
   get draft() { return draft; }, set draft(v) { draft = v; }, live: null };
+Object.assign(hub, { LIVE, lang, face, thumb, myNameHere }); import("./profile-ui.js").then(mod => mod.startProfile(hub)).catch(() => {});
 try { const q = params.get("crisp"); if (q === "1") localStorage.setItem("stash.crisp", "1"); if (q === "0") localStorage.removeItem("stash.crisp"); } catch {}
 if ((() => { try { return localStorage.getItem("stash.crisp") === "1"; } catch { return params.get("crisp") === "1"; } })()) {
   window.stashHub = hub;

@@ -4,10 +4,14 @@
 // functions as the Mac app (backend/supabase/shared.sql), so what one adds shows on the other within ~20 seconds.
 // Publishable key only — row-level security guards; never a secret key (SupabaseBackend refuses one).
 import { SupabaseBackend } from "./backend.js";
+import { Presence } from "./core.js";
 
 export const SERVER = Object.freeze({
   url: "https://gvxouyoucqojpghqzuks.supabase.co",
   publishableKey: "sb_publishable_PomoWbTbDphGFReApvWYIA_GHWqam62",
+  // Web push (new things + dates-card reminders): the VAPID public key once functions/push-send is deployed with its
+  // keys (GO-LIVE.md Part 6). Empty = no push on the page.
+  vapidPublicKey: "",
 });
 
 const KINDS = { text: "note", link: "link", image: "photo", file: "pdf" };
@@ -55,6 +59,7 @@ export async function startLive(hub) {
   const backend = new SupabaseBackend(SERVER);
   const spaces = new Map();   // course id → { people: Map, lastSeen, mineStickers }
   let timer = null, busy = false;
+  let looksOn = null;         // profile colours/photos: null = not known yet, false = the server doesn't have them yet
 
   const failText = e => {
     const m = String(e?.message || e);
@@ -70,7 +75,7 @@ export async function startLive(hub) {
   // ——— loading the courses ———
   async function load() {
     block(`<div class="course-top" aria-busy="true" aria-label="Loading your courses"><div class="sk sk-cover sk-pulse"></div><div class="sk sk-line sk-pulse"></div></div>`);
-    try { await backend.signIn(); await refreshSpaces(true); }
+    try { await backend.signIn(); await refreshSpaces(true); await live.profile.load().catch(() => {}); }
     catch (e) { return block(`<div class="empty" style="padding-top:12vh"><h2>Can’t reach Stash right now</h2><p>${esc(failText(e))}</p><div class="acts"><button class="btn primary" data-act="live-retry">Try again</button></div></div>`); }
     S.liveBlock = null;
     S.current = S.courses.some(c => c.id === S.current) ? S.current : S.courses[0]?.id;
@@ -100,10 +105,17 @@ export async function startLive(hub) {
     const [members, titles, stick] = await Promise.all([
       backend.people(c.id).catch(() => []), backend.weekTitles(c.id).catch(() => new Map()), backend.myStickers(c.id).catch(() => new Map())]);
     st.people = new Map(members.map(p => [p.person_id, p.display_name]));
+    st.myName = members.find(p => p.person_id === backend.me)?.display_name ?? null;
     st.mineStickers = stick;
     c.people = Math.max(1, members.length);
     c.allNames = members.filter(p => p.person_id !== backend.me).map(p => ({ name: p.display_name, role: p.role }));
     c.names = c.allNames.map(p => p.name).slice(0, 2);
+    c.myName = members.find(p => p.person_id === backend.me)?.display_name || "";
+    if (looksOn !== false) {   // colour or photo per person (migration 20261026_shared_profile); keyed by the name the page shows
+      const lk = await backend.looks(c.id).catch(() => undefined);
+      if (lk === null) looksOn = false;
+      else if (lk) { looksOn = true; c.looks = new Map(members.filter(p => lk.has(p.person_id)).map(p => [p.person_id === backend.me ? ME : p.display_name, lk.get(p.person_id)])); }
+    }
     const owner = members.find(p => p.role === "owner");
     c.owner = owner ? (owner.person_id === backend.me ? ME : owner.display_name) : "";
     c.weekTitles = Object.fromEntries([...titles]);
@@ -168,6 +180,44 @@ export async function startLive(hub) {
     busy = false;
   }
 
+  // ——— who's here now (Realtime Presence on the course channel; docs/shared/PRESENCE-REMINDERS.md) ———
+  // Only in the course on screen, only while the page is in front: hidden or closed = gone at once. "Show me as here"
+  // off = this device sends nothing (it still sees who's here). People you hid are never shown.
+  let here = null, hereFor = null, hereBusy = Promise.resolve();
+  const myPayload = id => Presence.payload(backend.me, spaces.get(id)?.myName, null, hub.showHere());
+  let sent = "";
+  function followHere(c) {
+    const want = c && !document.hidden ? c.id : null;
+    if (want === hereFor) {   // same course: send again only when what we send changed (a render is not news)
+      const p = want ? myPayload(want) : null, key = JSON.stringify(p);
+      if (here && key !== sent) { sent = key; here.set(p); }
+      return;
+    }
+    hereFor = want;
+    hereBusy = hereBusy.then(async () => {
+      here?.stop(); here = null;
+      for (const x of S.courses) if (x.present?.length) { x.present = []; }
+      hub.renderPresence();
+      if (!want || hereFor !== want) return;
+      try {
+        const hidden = await backend.myHides(want).catch(() => new Set());
+        const h = await backend.here(want, myPayload(want), state => {
+          const cc = S.courses.find(x => x.id === want); if (!cc) return;
+          cc.present = Presence.people(state, { me: backend.me, members: spaces.get(want)?.people ?? new Map(), hidden });
+          if (course()?.id === want) hub.renderPresence();
+        });
+        if (hereFor === want) here = h; else h.stop();
+        sent = JSON.stringify(myPayload(want));
+      } catch { /* no Realtime: no circles; everything else works */ }
+    });
+  }
+  hub.hooks.course = c => followHere(c);
+  hub.hooks.showHere = () => followHere(S.view === "class" ? null : course());
+  document.addEventListener("visibilitychange", () => followHere(S.view === "class" ? null : course()));
+  addEventListener("pagehide", () => { here?.set(null); });
+  if (SERVER.vapidPublicKey) hub.pwa?.(P => P.configure({ vapidPublicKey: SERVER.vapidPublicKey, pushSave: r => backend.savePush(r), pushDelete: e => backend.deletePush(e) }));
+  hub.hooks.reminders = (c, on) => { backend.setReminders(c.id, on).catch(() => { /* the server switch isn't there yet: kept on this device */ }); };
+
   // ——— the page's actions ———
   async function send(it, c, wk, due) {
     const tmp = it.id;
@@ -227,6 +277,43 @@ export async function startLive(hub) {
       } catch (e) { tab?.close(); say(`<span>${esc(failText(e))}</span>`, 4000); }
     },
     lookup,
+    // ——— Profile (optional): profile-ui.js ———
+    profile: {
+      /** Your colour/photo; sets S.looksOn (false while the server doesn't have looks yet). */
+      async load() {
+        const look = await backend.myLook().catch(() => null);
+        S.looksOn = look !== null && looksOn !== false; S.myLook = look && (look.color != null || look.photo) ? look : null;
+        return S.myLook;
+      },
+      async setLook(color, photo) {
+        await backend.setMyLook(color, photo);
+        S.myLook = color != null || photo ? { color, photo } : null;
+        for (const c of S.courses) { c.looks ??= new Map(); if (S.myLook) c.looks.set(ME, S.myLook); else c.looks.delete(ME); }
+        render();
+      },
+      /** Rename in every course (only = one course id). Returns [{name, ok, taken}] per course touched. */
+      async rename(name, ids) {
+        const out = [];
+        for (const id of ids) {
+          const c = S.courses.find(x => x.id === id); if (!c) continue;
+          try { await backend.setMyName(id, name); c.myName = name; out.push({ name: c.name, ok: true }); }
+          catch (e) { out.push({ name: c.name, ok: false, taken: e.code === "23505" || /pick another name|duplicate/i.test(e.message) }); }
+        }
+        if (out.some(r => r.ok)) { store.set("liveName", name); await refreshSpaces(false).catch(() => {}); render(); }
+        return out;
+      },
+      pairCode: () => backend.pairCode(),
+      /** Typing another device's code: this browser becomes that person (its courses move over). */
+      async claim(code) {
+        const status = await backend.link(code);
+        if (status === "linked") {
+          await backend.whoAmI(); backend.cursors.clear(); backend.materials.clear(); spaces.clear(); looksOn = null;
+          await refreshSpaces(true); await live.profile.load();
+          S.current = S.courses.some(c => c.id === S.current) ? S.current : S.courses[0]?.id; render();
+        }
+        return status;
+      },
+    },
   };
 
   // ——— Save on iPhone: the share sheet with the file itself ———
@@ -289,6 +376,7 @@ export async function startLive(hub) {
                     full: "This course is full.", blocked: "You can’t join this course.", expired: "That code has expired.", invalid: "That code doesn’t match a course." };
       if (r?.status === "joined" || r?.status === "requested") {
         store.set("liveName", name);
+        if (store.get("profileHint", "") !== "done") store.set("profileHint", "show");   // "Make it yours · Profile", once
         if (r.status === "requested") { closeAll(); say(`<span>${ic("check", "s")}</span><span>Asked to join. You’ll be in once the owner says yes.</span>`, 6000); return; }
         await refreshSpaces(false);
         S.current = r.space_id; store.set("course", S.current); S.welcome = true;

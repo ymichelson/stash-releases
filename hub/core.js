@@ -1079,3 +1079,158 @@ export const EssentialsNotice = Object.freeze({
     return null;
   },
 });
+
+// ——— Who's here now (SharedPresence.swift; cases in test/presence-cases.json) ———
+// Realtime Presence on the course's own channel (space:<id>): each open page or Mac sends only {p: person id,
+// n: display name, c: colour}. Names shown come from the member list (the server's truth), not from what a device
+// says; people you hid and people no longer in the course aren't shown; one circle per person however many devices.
+const PRESENCE_TONES = ["coral", "butter", "sky"];
+export const Presence = Object.freeze({
+  max: 4,
+  /** What this device sends; null when "Show me as here" is off (then it doesn't send anything). */
+  payload(me, name, colour, showMe = true) {
+    if (!showMe || !me) return null;
+    return { p: String(me), n: [...String(name ?? "").trim()].slice(0, 40).join(""), c: this.colour(colour, name) };
+  },
+  /** supabase-js presenceState() ({key: [{p, n, c, presence_ref}, …]}) → [{id, name, initials, colour}] in arrival order. */
+  people(state, { me = null, members = new Map(), hidden = new Set() } = {}) {
+    const out = new Map();
+    for (const metas of Object.values(state ?? {})) {
+      for (const m of Array.isArray(metas) ? metas : []) {
+        const id = typeof m?.p === "string" ? m.p : null;
+        if (!id || id === String(me) || out.has(id) || hidden.has(id) || !members.has(id)) continue;
+        const name = String(members.get(id) ?? "").trim() || "Someone";
+        out.set(id, { id, name, initials: this.initials(name), colour: this.colour(m.c, name) });
+      }
+    }
+    return [...out.values()];
+  },
+  /** Up to 4 circles, then "+N" for the rest. */
+  shown(people, max = this.max) {
+    const list = people ?? [];
+    return { shown: list.slice(0, max), more: Math.max(0, list.length - max) };
+  },
+  /** "Dana Levi" → "DL", "Omer" → "O", "נועה כהן" → "נכ", "Ilan (TA)" → "I". */
+  initials(name) {
+    const words = String(name ?? "").replace(/\([^)]*\)/g, " ").trim().split(/\s+/).filter(w => /[\p{L}\p{N}]/u.test(w));
+    if (!words.length) return "?";
+    const first = w => [...w].find(ch => /[\p{L}\p{N}]/u.test(ch)) ?? "";
+    return (first(words[0]) + (words.length > 1 ? first(words.at(-1)) : "")).toLocaleUpperCase("en");
+  },
+  /** One of the brand's three highlight tones: the person's own (profile) when it's one of them, else from the name. */
+  colour(wanted, name) {
+    if (PRESENCE_TONES.includes(wanted)) return wanted;
+    let h = 0;
+    for (const ch of String(name ?? "").trim().toLowerCase()) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+    return PRESENCE_TONES[h % PRESENCE_TONES.length];
+  },
+  /** "Dana and Omer are here" · "Dana, Omer and 3 others are here" — for screen readers. */
+  label(people, lang = "en") {
+    const { shown, more } = this.shown(people);
+    if (!shown.length) return "";
+    const names = shown.map(p => p.name);
+    if (lang === "he") {
+      const list = more ? `${names.join(", ")} ועוד ${more}` : names.length > 1 ? `${names.slice(0, -1).join(", ")} ו${names.at(-1)}` : names[0];
+      return `כאן עכשיו: ${list}`;
+    }
+    const list = more ? `${names.join(", ")} and ${more} ${more === 1 ? "other" : "others"}` : names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0];
+    return `${list} ${shown.length + more === 1 ? "is" : "are"} here now`;
+  },
+});
+
+// ——— Reminders from the dates card (SharedReminders.swift; cases in test/presence-cases.json "reminders") ———
+// The day before an exam and on a homework's due day, at 8:00 in the morning: "Algorithms exam tomorrow · 9:00 ·
+// Room 204". Something due before 10:00 is told the evening before (20:00) instead. Only what's at most `days` ahead;
+// nothing already past. The Mac schedules these as local notifications; the phone gets them as web push from the
+// server (admin.reminder_batch in shared.sql, the same times).
+export const Reminders = Object.freeze({
+  morning: 8, evening: 20, earlyDue: 10, days: 14,
+  plan({ materials = [], events = [] }, course, now = new Date(), timeZone, lang = "en") {
+    now = new Date(now);
+    const cards = [
+      ...materials.flatMap(m => Essentials.pick({ materials: [m] }, now, timeZone)),
+      ...events.filter(e => e.kind === "exam" || e.kind === "deadline").flatMap(e => Essentials.pick({ events: [e] }, now, timeZone)),
+    ].filter(c => c.slot === "exam" || c.slot === "due");
+    const out = new Map();
+    for (const c of cards) {
+      const r = this.one(c, course, timeZone, lang);
+      if (!r || r.at <= now || r.at > new Date(now.getTime() + this.days * 86_400_000)) continue;
+      out.set(r.id, r);
+    }
+    return [...out.values()].sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
+  },
+  /** {id, at, slot, text} for one Essentials card (exam or due). */
+  one(c, course, timeZone, lang = "en") {
+    const he = lang === "he", p = tzParts(c.at, timeZone), time = c.allDay ? null : `${p.h}:${String(p.mi).padStart(2, "0")}`;
+    const early = c.slot === "due" && !c.allDay && p.h < this.earlyDue;
+    const dayBefore = c.slot === "exam" || early;
+    const at = zonedToUTC(p.y, p.m, p.d - (dayBefore ? 1 : 0), early ? this.evening : this.morning, 0, 0, timeZone);
+    const when = dayBefore ? (he ? "מחר" : "tomorrow") : (he ? "היום" : "today");
+    const name = blank(String(course ?? "").trim()) ?? (he ? "הקורס" : "Your course");
+    const what = c.slot === "exam" ? (he ? `${c.title} ${when}` : `${this.lower(c.title)} ${when}`)
+      : (he ? `${c.title} להגשה ${when}` : `${this.lower(c.title)} due ${when}`);
+    const text = [he ? `${name}: ${what}` : `${name} ${what}`, time, blank(c.place)].filter(Boolean).join(" · ");
+    const source = c.materialId ?? c.eventId ?? c.title;
+    return { id: `${c.slot}|${source}|${new Date(c.at).toISOString()}`, at, slot: c.slot, text };
+  },
+  /** "Exam" → "exam", "Homework 4" → "homework 4"; names stay as typed ("CS Midterm", "Quiz B"). */
+  lower(title) { return /^[A-Z][a-z]+( \d+)?$/.test(title) ? title[0].toLowerCase() + title.slice(1) : title; },
+});
+// ——— Profile (optional): your name everywhere, a colour or a photo for your initial circle, your other devices ———
+// Twin: Sources/StashCore/SharedProfile.swift; same cases: test/profile-cases.json. Server: set_my_name (per course),
+// set_my_look / space_looks (migration 20261026_shared_profile), make_pair_code / claim_pair_code.
+const PHOTO_RE = /^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/]+={0,2}$/;
+export const Profile = Object.freeze({
+  /** The 8 colours (index = what the server keeps). Pale fill + dark ink (light), deep fill + pale ink (dark). */
+  COLORS: Object.freeze([
+    { id: "coral",  light: ["#FBE4DD", "#8A4536"], dark: ["#4A2D26", "#F5BFB1"] },
+    { id: "butter", light: ["#FAEBCB", "#70510D"], dark: ["#463A1F", "#F2D58F"] },
+    { id: "sky",    light: ["#E4EDFC", "#345EA0"], dark: ["#26334A", "#A9C4F5"] },
+    { id: "sage",   light: ["#E2EFE4", "#3C6B47"], dark: ["#26382B", "#A9D3B2"] },
+    { id: "lilac",  light: ["#ECE6F7", "#5B4791"], dark: ["#332B45", "#CBBDF0"] },
+    { id: "sand",   light: ["#F1E8DC", "#6E5640"], dark: ["#3B3229", "#DCC7AE"] },
+    { id: "rose",   light: ["#F8E1EA", "#8A3F5F"], dark: ["#45283A", "#F0B6CC"] },
+    { id: "slate",  light: ["#E3E8EE", "#45556A"], dark: ["#2B323C", "#BCC7D6"] },
+  ]),
+  maxPhotoChars: 12000,
+  photoSide: 96,
+  /** "dana" → "D"; one letter even for emoji or Hebrew. */
+  initial(name) { const t = DisplayName.clean(name) ?? ""; return t ? [...t][0].toLocaleUpperCase() : "?"; },
+  /** [fill, ink] for a colour index, or null for none / out of range. */
+  colors(index, dark = false) { const c = Profile.COLORS[index]; return c ? (dark ? c.dark : c.light) : null; },
+  /** The server's rule for photos: a small JPEG data address and nothing else. */
+  photoOK(data) { return typeof data === "string" && data.length <= Profile.maxPhotoChars && PHOTO_RE.test(data); },
+  /** null when fine, else why: "empty" | "tooLong" | "secret". */
+  nameRefusal(typed) {
+    const t = String(typed ?? "");
+    if (!DisplayName.clean(t)) return [...t.trim()].length > Limits.maxNameLength ? "tooLong" : "empty";
+    return looksSecret(t) ? "secret" : null;
+  },
+  /** Which courses a rename touches: `courses` = [{id, myName}], `only` = a course id or null for all. */
+  renamePlan(courses, typed, only = null) {
+    const name = DisplayName.clean(typed);
+    if (!name) return [];
+    return courses.filter(c => (only == null || c.id === only) && c.myName !== name).map(c => c.id);
+  },
+  /** One line after a rename: results = [{name: course name, ok: bool, taken: bool}]. */
+  renameSummary(results, name) {
+    const done = results.filter(r => r.ok).length, taken = results.filter(r => r.taken), failed = results.filter(r => !r.ok && !r.taken);
+    const parts = [];
+    if (done) parts.push(done === 1 && results.length === 1 ? `You’re ${name} now.` : `You’re ${name} in ${done} ${done === 1 ? "course" : "courses"}.`);
+    if (taken.length) parts.push(`Someone in ${taken.map(r => r.name).join(", ")} already uses that name — you kept your old one there.`);
+    if (failed.length) parts.push(`Couldn’t change it in ${failed.map(r => r.name).join(", ")}. Try again in a minute.`);
+    return parts.join(" ") || "Nothing to change.";
+  },
+  /** A linking code as typed ("abcd-2345") → "ABCD2345", or null. Same letters as invite codes (no 0/O/1/I). */
+  pairCode(typed) {
+    const c = String(typed ?? "").toUpperCase().replace(/[\s-]/g, "");
+    return /^[A-HJ-NP-Z2-9]{8}$/.test(c) ? c : null;
+  },
+  /** Shown 4-4 so it's easy to read out: "ABCD-2345". */
+  pairCodeShown(code) { return code ? `${code.slice(0, 4)}-${code.slice(4)}` : ""; },
+  /** The quiet "Make it yours · Profile" line: once, after joining, until opened or dismissed. */
+  hintVisible(state, { justJoined, hasLook }) {
+    if (state === "done" || hasLook) return false;
+    return state === "show" || !!justJoined;
+  },
+});

@@ -41,12 +41,20 @@ export const RPC = Object.freeze({
   import_events: ["s", "p_events"],
   space_pulse: ["s"],
   claim_pair_code: ["p_code", "p_platform"],
+  save_push_subscription: ["p_endpoint", "p_p256dh", "p_auth", "p_courses"],
+  delete_push_subscription: ["p_endpoint"],
+  set_push_zone: ["p_endpoint", "p_tz", "p_lang"],
+  set_reminders: ["s", "p_on"],
+  make_pair_code: [],
+  set_my_name: ["s", "p_name"],
+  set_my_look: ["p_color", "p_photo"],     // migration 20261026_shared_profile (until it's applied: "not available")
+  space_looks: ["s"],
   delete_me: ["p_confirm"],
 });
 
 /** Tables the web reads directly (row-level security decides what comes back). */
 export const TABLES = Object.freeze(["spaces", "space_courses", "space_materials", "universities", "space_reactions",
-                                     "space_week_titles", "space_info", "space_events"]);
+                                     "space_week_titles", "space_info", "space_events", "space_hides"]);
 /** Members: only these columns are readable (the People sheet shows names and roles, nothing else). */
 export const MEMBER_COLUMNS = Object.freeze(["space_id", "person_id", "display_name", "role"]);
 
@@ -151,22 +159,80 @@ export class SupabaseBackend {
     return result;
   }
 
+  /** The course's one Realtime channel (space:<id>), shared by everything that listens on it: pokes, upload progress
+   *  and who's here (Presence). Opened on first use, closed when the last listener stops. */
+  async channel(space) {
+    const sb = await this.client();
+    this.channels = this.channels ?? new Map();
+    let ch = this.channels.get(space);
+    if (ch) return ch;
+    const on = { changed: new Set(), progress: new Set(), presence: new Set() };
+    ch = sb.channel(`space:${space}`, { config: { private: true, presence: { key: String(this.me ?? "web") } } })
+      .on("broadcast", { event: "changed" }, () => on.changed.forEach(f => f()))
+      .on("broadcast", { event: "progress" }, ({ payload }) => on.progress.forEach(f => f(payload)))
+      .on("presence", { event: "sync" }, () => on.presence.forEach(f => f(ch.presenceState())));
+    ch.stash = { on, here: null, subscribed: false };
+    ch.subscribe(status => {
+      ch.stash.subscribed = status === "SUBSCRIBED";
+      if (ch.stash.subscribed && ch.stash.here) ch.track(ch.stash.here);
+    });
+    this.channels.set(space, ch);
+    return ch;
+  }
+  release(space) {
+    const ch = this.channels?.get(space);
+    if (!ch || [...Object.values(ch.stash.on)].some(s => s.size)) return;
+    this.channels.delete(space);
+    this._sb?.removeChannel(ch);
+  }
+
   /** Live: pokes ("space X changed" → pull), upload progress from others, and who's adding what (Presence).
    *  Falls back to polling (20 s visible, 2 min hidden) if the socket fails. */
-  async watch(space, onPoke, { onProgress = () => {}, onPresence = () => {} } = {}) {
-    const sb = await this.client();
-    const channel = sb.channel(`space:${space}`, { config: { private: true, presence: { key: String(this.me ?? "web") } } })
-      .on("broadcast", { event: "changed" }, () => onPoke())
-      .on("broadcast", { event: "progress" }, ({ payload }) => onProgress(payload))
-      .on("presence", { event: "sync" }, () => onPresence(channel.presenceState()))
-      .subscribe();
-    this.channels = this.channels ?? new Map();
-    this.channels.set(space, channel);
+  async watch(space, onPoke, { onProgress = () => {}, onPresence = null } = {}) {
+    const ch = await this.channel(space);
+    ch.stash.on.changed.add(onPoke); ch.stash.on.progress.add(onProgress);
+    if (onPresence) ch.stash.on.presence.add(onPresence);
     let timer = null;
     const poll = () => { clearTimeout(timer); timer = setTimeout(async () => { await onPoke(); poll(); }, document.hidden ? 120_000 : 20_000); };
     poll();
-    return () => { clearTimeout(timer); sb.removeChannel(channel); };
+    return () => {
+      clearTimeout(timer);
+      ch.stash.on.changed.delete(onPoke); ch.stash.on.progress.delete(onProgress); if (onPresence) ch.stash.on.presence.delete(onPresence);
+      this.release(space);
+    };
   }
+
+  /** Who's here now: this device says it's here with `payload` ({p, n, c} from core.js Presence.payload, or null to
+   *  stay unseen) and hears who else is (onState gets supabase-js presenceState()). Returns {set(payload), stop()}. */
+  async here(space, payload, onState) {
+    const ch = await this.channel(space);
+    ch.stash.on.presence.add(onState);
+    const set = p => {
+      ch.stash.here = p ?? null;
+      if (!ch.stash.subscribed) return;
+      if (p) ch.track(p); else ch.untrack();
+    };
+    set(payload);
+    if (ch.stash.subscribed) onState(ch.presenceState());
+    return { set, stop: () => { set(null); ch.stash.on.presence.delete(onState); this.release(space); } };
+  }
+  /** People you hid in a course (your own rows): they aren't shown as here. */
+  async myHides(space) {
+    const sb = await this.client();
+    const { data, error } = await sb.from("space_hides").select("hidden_person").eq("space_id", space);
+    if (error) throw error;
+    return new Set(data.map(r => r.hidden_person));
+  }
+  /** Reminders on/off for a course (the server's web push reminders; the Mac keeps its own switch). */
+  setReminders(space, on) { return this.rpc("set_reminders", space, !!on); }
+  /** Web push: this device's address (pwa-main.js pushSave/pushDelete) and its time zone + language for reminders. */
+  async savePush({ endpoint, p256dh, auth, courses }) {
+    await this.rpc("save_push_subscription", endpoint, p256dh, auth, courses ?? null);
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    await this.rpc("set_push_zone", endpoint, tz, document.documentElement.lang === "he" ? "he" : "en").catch(() => {});
+    return true;
+  }
+  deletePush(endpoint) { return this.rpc("delete_push_subscription", endpoint); }
 
   /** Share text or a link (files go through shareFile). Safe to retry: the client id makes it idempotent. */
   async share(space, draft, course = null, clientId = crypto.randomUUID()) {
@@ -186,7 +252,7 @@ export class SupabaseBackend {
                                 file.type || null, sha, false, null, "web"))?.[0];
     if (!row || row.duplicate_of || row.existed) return row;
     const channel = this.channels?.get(space);
-    channel?.track({ activity: "adding", material: row.id, title: file.name });
+    channel?.track({ ...(channel.stash?.here ?? {}), activity: "adding", material: row.id, title: file.name });
     const throttle = new ProgressThrottle();
     await this.upload(row.file_path, file, (sent, total) => {
       onLocalProgress(sent / total);
@@ -194,7 +260,7 @@ export class SupabaseBackend {
         channel?.send({ type: "broadcast", event: "progress", payload: { material: row.id, sent, total } });
     });
     await this.rpc("material_ready", row.id);
-    channel?.untrack();
+    if (channel?.stash?.here) channel.track(channel.stash.here); else channel?.untrack();
     return row;
   }
 
@@ -269,6 +335,27 @@ export class SupabaseBackend {
   /** Returns when you last looked before now (null the first time): "3 new since Tuesday". */
   seen(space, opened) { return this.rpc("mark_seen", space, !!opened); }
   link(code) { return this.rpc("claim_pair_code", code, "web"); }
+
+  // ——— Profile (optional) ———
+  /** Your name in one course (names are per course; "everywhere" is one call per course). */
+  setMyName(space, name) { return this.rpc("set_my_name", space, name); }
+  /** A code for your other device (10 minutes): typed there, that device becomes you. */
+  async pairCode() { return await this.rpc("make_pair_code"); }
+  /** After linking, this browser may be a different person: ask again. */
+  async whoAmI() { this.me = await this.rpc("shared_register", "web", "web-1"); return this.me; }
+  /** Colour and photo: null when the server doesn't have them yet (migration not applied). */
+  async myLook() {
+    const sb = await this.client();
+    const { data, error } = await sb.from("people").select("look_color,look_photo").limit(1);
+    if (error) return null;
+    return { color: data?.[0]?.look_color ?? null, photo: data?.[0]?.look_photo ?? null };
+  }
+  setMyLook(color, photo) { return this.rpc("set_my_look", color ?? null, photo ?? null); }
+  /** person id → {color, photo}; null when the server doesn't have looks yet. */
+  async looks(space) {
+    try { return new Map(((await this.rpc("space_looks", space)) ?? []).map(r => [r.person_id, { color: r.color, photo: r.photo }])); }
+    catch (e) { if (e.code === "PGRST202" || e.code === "42883" || /Could not find the function/i.test(e.message)) return null; throw e; }
+  }
 }
 
 async function sha256(file) {
