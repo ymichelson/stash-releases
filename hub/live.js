@@ -33,7 +33,7 @@ export function itemFrom(row, { people, me, lastSeen, mine = [], ME = "You" }) {
     id: row.id, cid: row.client_id, live: true, kind, week: row.week ?? null,
     title: row.title || (kind === "note" ? "" : row.file_path?.split("/").pop() || ""),
     by: row.added_by === me ? ME : (people.get(row.added_by) || "Someone"),
-    ago: agoOf(row.created_at), createdAt: row.created_at,
+    ago: agoOf(row.created_at), createdAt: row.created_at, at: row.added_by === me ? 0 : Date.parse(row.created_at) || 0,
     isNew: !!lastSeen && row.added_by !== me && new Date(row.created_at) > new Date(lastSeen),
     stickers: Object.fromEntries((row.stickers || []).map((n, i) => [i + 1, n]).filter(([, n]) => n > 0)),
     mine, filePath: row.file_path, fileType: row.file_type, pinned: !!row.pinned,
@@ -45,7 +45,7 @@ export function itemFrom(row, { people, me, lastSeen, mine = [], ME = "You" }) {
   if (row.due_at) {
     const d = new Date(row.due_at);
     it.due = d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }) + " · " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-    it.dueTitle = row.due_title || it.title; it.dueSort = (d.getTime() - Date.now()) / 864e5;
+    it.dueAt = row.due_at; it.dueTitle = row.due_title || it.title; it.dueSort = (d.getTime() - Date.now()) / 864e5;
   }
   return it;
 }
@@ -125,7 +125,7 @@ export async function startLive(hub) {
     const sending = c.items.filter(i => i.sending && i.live);
     for (const o of sending) { const m = all.find(x => x.cid === o.cid); if (m) { o.id = m.id; o.sending = false; } }   // the row got here before the upload call returned
     const stillSending = sending.filter(o => o.sending);
-    const keep = i => { const o = known.get(i.id); if (!o) return i; return Object.assign(o, { stickers: i.stickers, mine: i.mine, title: i.title, text: i.text, week: i.week, ago: i.ago, src: o.src || i.src, due: i.due, dueTitle: i.dueTitle, dueSort: i.dueSort }); };
+    const keep = i => { const o = known.get(i.id); if (!o) return i; return Object.assign(o, { stickers: i.stickers, mine: i.mine, title: i.title, text: i.text, week: i.week, ago: i.ago, src: o.src || i.src, due: i.due, dueAt: i.dueAt, dueTitle: i.dueTitle, dueSort: i.dueSort, pinned: i.pinned }); };
     const arrivals = initial ? [] : all.filter(i => !known.has(i.id) && !sending.some(o => o.cid === i.cid));
     c.items = [...stillSending, ...all.filter(i => !i.pinned).map(keep)];
     c.files = all.filter(i => i.pinned).map(keep);
@@ -193,6 +193,7 @@ export async function startLive(hub) {
 
   const live = {
     send,
+    setDue: (it, at, title) => backend.setDue(it.id, new Date(at).toISOString(), title),   // "Add to Essentials?" (essentials-ui.js)
     async sticker(it, sid, on) { try { await backend.sticker(it.id, sid, on); } catch (e) { say(`<span>${esc(failText(e))}</span>`, 4000); } },
     async remove(it) {
       if (it.sending) { it.cancelled = true; return; }

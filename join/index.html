@@ -121,6 +121,25 @@ body.empty-screen .backdrop { opacity:1; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .backdrop { display:none; } }
 footer { position:relative; padding:24px 16px calc(24px + env(safe-area-inset-bottom)); text-align:center; color:var(--ink2); font-size:12px; }
 @media (prefers-reduced-motion: reduce) { .enter, .sk, .nearby .dot span { animation:none; } .enter { animation:fade .15s linear both; } @keyframes fade { from { opacity:0; } } }
+/* the phone: the invite is one calm screen — the mark, the course, who invited you, your name, Join (docs/shared/HUB-SIMPLE.md) */
+.jmark { display:none; }
+@media (max-width:699px) {
+  body.invite-screen .top, body.invite-screen footer, body.invite-screen .backdrop, body.invite-screen .cover, body.invite-screen .meta,
+  body.invite-screen .hint, body.invite-screen .alt, body.invite-screen .more, body.invite-screen .note svg { display:none !important; }
+  body.invite-screen .field label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  body.invite-screen main { min-height:100dvh; display:flex; padding:env(safe-area-inset-top) 24px 0; max-width:none; }
+  body.invite-screen main > div { flex:1; display:flex; }
+  .card.invite { flex:1; display:flex; background:none; box-shadow:none; border-radius:0; overflow:visible; }
+  .card.invite .inner { flex:1; display:flex; flex-direction:column; padding:0 0 calc(20px + env(safe-area-inset-bottom)); text-align:center; }
+  .card.invite .jmark { display:block; width:44px; height:31px; margin:auto auto 26px; fill:var(--ink); }
+  .card.invite h1 { font:600 34px/1.1 var(--display); letter-spacing:-.022em; }
+  .card.invite .facts-line { margin-top:10px; font-size:17px; }
+  .card.invite .facts-line b { font-weight:400; color:var(--ink2); }
+  .card.invite form { margin-top:auto; text-align:start; }
+  .card.invite .input { height:56px; border-radius:16px; font-size:17px; padding:0 18px; }
+  .card.invite .btn.wide { height:54px; border-radius:16px; font:600 17px/1 var(--font); margin-top:12px; }
+  .card.invite .note { justify-content:center; margin-top:14px; }
+}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cstyle%3Epath%7Bfill:%23202427%7D@media(prefers-color-scheme:dark)%7Bpath%7Bfill:%23EFEAE1%7D%7D%3C/style%3E%3Cpath transform='translate(0 24)' d='M12 94 C7 92 7 87 11 82 C28 61 42 42 60 45 C76 47 76 69 87 70 C105 73 119 51 125 17 C126 9 134 5 140 8 C147 11 149 16 147 23 C139 62 122 95 98 96 C76 100 67 83 63 72 C60 64 57 62 51 64 C39 69 28 82 20 92 C17 96 14 96 12 94 Z'/%3E%3C/svg%3E">
 </head>
@@ -224,7 +243,7 @@ function heLocalize(root) {
   const h = root.querySelector?.("h1"); if (h && /^Join /.test(h.textContent) && h.closest(".problem, .inner") && HE[h.textContent]) h.textContent = HE[h.textContent];
 }
 if (lang === "he") new MutationObserver(() => heLocalize(document.body)).observe(document.body, { childList: true, subtree: true });
-function show(html, empty) { document.body.classList.toggle("empty-screen", !!empty); main.innerHTML = html; main.firstElementChild?.classList.add("enter"); }
+function show(html, empty) { document.body.classList.toggle("empty-screen", !!empty); document.body.classList.remove("invite-screen"); main.innerHTML = html; main.firstElementChild?.classList.add("enter"); }
 
 let nearList = [];
 if (window.stashNearby) window.stashNearby.onSharing(l => { nearList = l || []; const el = document.getElementById("near"); if (el) el.innerHTML = nearCards(); });
@@ -268,16 +287,17 @@ function invite(code, d) {
   document.title = `Join ${d.course} · Stash`;
   const name = store.get("name", "");
   const ask = d.status === "approval";
-  show(`<div class="card"><div class="cover"><img src="${art(d.coverKey || d.cover)}" data-art="${d.coverKey || d.cover}" alt=""></div><div class="inner">
+  show(`<div class="card invite"><div class="cover"><img src="${art(d.coverKey || d.cover)}" data-art="${d.coverKey || d.cover}" alt=""></div><div class="inner">
+    <svg class="jmark" viewBox="0 0 160 112" aria-hidden="true"><path d="M12 94 C7 92 7 87 11 82 C28 61 42 42 60 45 C76 47 76 69 87 70 C105 73 119 51 125 17 C126 9 134 5 140 8 C147 11 149 16 147 23 C139 62 122 95 98 96 C76 100 67 83 63 72 C60 64 57 62 51 64 C39 69 28 82 20 92 C17 96 14 96 12 94 Z"/></svg>
     <h1>${esc(d.course)}</h1>
     <p class="meta">${esc([d.code, d.term, d.instructor].filter(Boolean).join(" · "))}<br>${esc([d.uni, d.shelf].filter(Boolean).join(" · "))}</p>
-    <p class="facts-line"><b><bdi>${esc(d.inviter)}</bdi></b> invited you · ${esc(String(d.people))} people · ${esc(d.things)} files and notes</p>
+    <p class="facts-line"><b><bdi>${esc(d.inviter)}</bdi></b> invited you · ${esc(String(d.people))} people<span class="more"> · ${esc(d.things)} files and notes</span></p>
     <form id="join-form"><div class="field"><label for="name">Your name</label>
-      <input class="input" id="name" name="name" value="${esc(name)}" placeholder="Dana" maxlength="40" autocomplete="given-name" required aria-describedby="name-hint">
+      <input class="input" id="name" name="name" value="${esc(name)}" placeholder="Your first name" maxlength="40" autocomplete="given-name" required aria-describedby="name-hint">
       <p class="hint" id="name-hint">First name is enough. People here see only this name.</p></div>
       <p class="err" id="name-err" hidden>Add a name so people know who put things down.</p>
       <button class="btn primary wide" type="submit" id="join-btn">${ask ? "Ask to join" : `Join ${esc(d.course)}`}</button></form>
-    <p class="note">${ic("lock")}<span>${ask ? `${esc(d.inviter)} lets people in by hand — you'll see the course once they do. ` : ""}Only what you add is shared — nothing else from your phone or computer.</span></p>
+    <p class="note">${ic("lock")}<span>${ask ? `${esc(d.inviter)} lets people in by hand — you'll see the course once they do. ` : ""}Only what you add is shared<span class="more"> — nothing else from your phone or computer</span>.</span></p>
     <p class="alt"><a href="${CONFIG.appJoin(code)}">Open in the Stash app</a><br><a href="./${LQ ? "?lang=he" : ""}">Use a different code</a></p></div></div>`);
   const f = document.getElementById("join-form"), b = document.getElementById("join-btn");
   if (!name && !matchMedia("(pointer: coarse)").matches) f.name.focus(); // phones: no keyboard over the course
@@ -287,6 +307,7 @@ function invite(code, d) {
     store.set("name", n); b.setAttribute("aria-busy", "true"); b.innerHTML = `<span class="spin" aria-hidden="true"></span><span>${ask ? "Asking…" : "Joining…"}</span>`;
     setTimeout(() => { if (ask) { b.removeAttribute("aria-busy"); b.innerHTML = "Asked — you'll get in when Maya says yes"; b.disabled = true; return; }
       location.href = `${CONFIG.hub}?c=${d.id}&joined=1${LQ}`; }, 650); });
+  document.body.classList.add("invite-screen");
 }
 function problem(d) {
   const P = {

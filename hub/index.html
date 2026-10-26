@@ -833,6 +833,160 @@ a, button, [data-act] { -webkit-tap-highlight-color:transparent; }
   .empty .btn.big { height:48px; border-radius:12px; }
 }
 
+/* ===== the phone: the course as a paper folio (HUB-DIRECTION.md; renderFolio): the cover folds into the top bar on scroll, the dates sit in one card ===== */
+.sheet .cap, .sheet .mono { display:none; }
+:root { --note:#FAEBCB; --note-ink:#202427; --linkbg:#E4EDFC; }
+:root[data-theme="dark"] { --note:#3D3424; --note-ink:#EFEAE1; --linkbg:#26303F; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --note:#3D3424; --note-ink:#EFEAE1; --linkbg:#26303F; } }
+@media (max-width:699px) {
+  .foot p, #nudge-slot { display:none !important; }
+  .foot { padding-top:24px; }
+  /* the cover: the course's own paper wave, its name big, one line that changes with the moment */
+  .fcover { position:relative; isolation:isolate; overflow:hidden; margin-top:6px; min-height:178px; padding:18px 20px 58px; border-radius:22px; background:var(--sheet);
+    box-shadow:0 1px 2px rgba(32,36,39,.06), 0 0 0 1px var(--hair); }
+  .folio.during .fcover { min-height:0; padding-bottom:44px; }
+  .fcover .fart { position:absolute; z-index:-1; right:-18%; top:-14%; height:132%; width:auto; max-width:none; opacity:.95; filter:brightness(var(--img-dim,1)); }
+  [dir="rtl"] .fcover .fart { right:auto; left:-18%; transform:scaleX(-1); }
+  .fcover .sub { display:block; font:400 13px/18px var(--font); color:var(--ink2); }
+  .fcover h1 { margin:2px 0 0; }
+  .fname { display:inline-flex; align-items:center; gap:6px; max-width:100%; padding:0; border:0; background:none; font:600 34px/40px var(--display); letter-spacing:-.025em; text-align:start; }
+  .fname svg { width:16px; height:16px; stroke-width:2.2; color:var(--ink2); margin-top:6px; flex:none; }
+  .fname:active { opacity:.6; }
+  .moment { margin:8px 0 0; font:400 15px/20px var(--font); color:var(--ink2); }
+  .moment b { font-weight:500; color:var(--ink); }
+  .moment .ink { padding-bottom:5px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='6' viewBox='0 0 120 6' preserveAspectRatio='none'%3E%3Cpath d='M1 4.2C20 2.6 42 2.2 62 3.1S100 4.9 119 2.4' fill='none' stroke='%23202427' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") left bottom/100% 6px no-repeat; }
+  :root[data-theme="dark"] .moment .ink { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='6' viewBox='0 0 120 6' preserveAspectRatio='none'%3E%3Cpath d='M1 4.2C20 2.6 42 2.2 62 3.1S100 4.9 119 2.4' fill='none' stroke='%23EFEAE1' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E"); }
+  .now-dot { display:inline-block; width:8px; height:8px; margin-inline-end:7px; border-radius:50%; background:var(--red); vertical-align:1px; animation:nowPulse 2s ease-in-out infinite; }
+  @keyframes nowPulse { 50% { opacity:.45; } }
+  /* Essentials: index cards tucked into the cover's bottom edge (h2, h3) — or one flat card (h1) */
+  .ess { position:relative; z-index:2; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); margin:-42px 4px 0; padding:2px 0; border-radius:14px; background:var(--sheet);
+    box-shadow:0 2px 8px rgba(32,36,39,.07), 0 0 0 1px var(--hair); }
+  .icard { position:relative; min-width:0; min-height:76px; padding:12px 11px 11px; border-inline-start:1px solid var(--hair); }
+  .icard:first-child { border-inline-start:0; }
+  .icard.hot::after { content:""; position:absolute; top:-2px; inset-inline-start:11px; width:26px; height:3px; border-radius:0 0 2px 2px; background:var(--coral); }
+  .icard .l { display:block; font:500 11px/14px var(--font); color:var(--ink2); }
+  .icard .v { display:block; margin-top:5px; font:600 15.5px/20px var(--font); letter-spacing:-.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .icard .s { display:block; margin-top:1px; font:400 11.5px/15px var(--font); color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ess-ask { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:10px 4px 0; padding:12px 14px; border-radius:14px; background:var(--note); color:var(--note-ink); font-size:14px; line-height:1.4; }
+  .ess-ask > span:first-child { flex:1 1 200px; }
+  .ess-ask b { font-weight:500; }
+  .ess-ask-b { display:flex; gap:8px; margin-inline-start:auto; }
+  .ess-ask .btn { height:36px; border-radius:10px; }
+  .ess-strip { position:relative; z-index:2; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); margin:-30px 8px 0; padding:9px 0; border-radius:12px; background:var(--sheet); box-shadow:0 2px 8px rgba(32,36,39,.07), 0 0 0 1px var(--hair); }
+  .ess-strip > div { min-width:0; padding:0 12px; border-inline-start:1px solid var(--hair); }
+  .ess-strip > div:first-child { border-inline-start:0; }
+  .ess-strip b { display:block; font:600 13px/17px var(--font); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ess-strip span { display:block; font:400 12px/16px var(--font); color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .folio > .status { margin:14px 2px 0; }
+  .fsec { margin-top:26px; }
+  .fh { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin:0 2px 12px; font:600 19px/1.25 var(--display); letter-spacing:-.012em; }
+  .fh span { font:400 13px/1 var(--font); color:var(--ink2); }
+  .empty-line { grid-column:1/-1; margin:4px 2px; color:var(--ink2); }
+  .ftabs { display:flex; gap:22px; margin:0 2px 14px; }
+  .ftabs button { padding:4px 0 7px; border:0; background:none; font:400 16px/1 var(--font); color:var(--ink2); }
+  .ftabs button[aria-selected="true"] { color:var(--ink); font-weight:600; box-shadow:inset 0 -2px var(--coral); }
+  .ftabs button:active { opacity:.55; }
+  /* a tile: one sheet of paper, the picture on top, the words on it; notes on butter, links on pale sky */
+  #grid-now { grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px; }
+  .newrow { display:flex; gap:10px; margin:0 -16px; padding:2px 16px 4px; overflow-x:auto; scrollbar-width:none; scroll-snap-type:x proximity; }
+  .newrow .sheet { flex:none; width:142px; scroll-snap-align:start; }
+  .board-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .board-grid .sheet:first-child { grid-column:1/-1; aspect-ratio:4/3.3; }
+  .sheet, .sheet.file, [dir="rtl"] .sheet.file { aspect-ratio:4/5; overflow:hidden; clip-path:none; border-radius:16px; background:var(--sheet); rotate:none !important; translate:none !important;
+    box-shadow:0 1px 2px rgba(32,36,39,.06), 0 0 0 1px var(--hair); transition:transform .14s var(--ease-out); }
+  .sheet:hover, .sheet:focus-within { background:var(--sheet); box-shadow:0 1px 2px rgba(32,36,39,.06), 0 0 0 1px var(--hair); }
+  .sheet:active { transform:scale(.97); }
+  .sheet.file::after, .sheet.stack::before { display:none; }
+  .sheet .body { flex:1; min-height:0; padding:0; border-radius:0; }
+  .k-photo { padding:0 !important; }
+  .k-photo .ph { border-radius:0; box-shadow:none; }
+  .k-file { justify-content:center; padding:12px 12px 0 !important; background:color-mix(in srgb, var(--paper) 70%, var(--sheet)); }
+  .k-file .page { width:62%; }
+  .k-file b { display:none; }
+  .sheet:has(.k-note) { background:var(--note); }
+  .k-note { padding:12px 12px 0 !important; }
+  .k-note p { font:500 14px/1.35 var(--font); color:var(--note-ink); -webkit-line-clamp:6; }
+  .sheet:has(.k-link) { background:var(--linkbg); }
+  .k-link { display:flex; flex-direction:column; align-items:flex-start; gap:6px; padding:12px 12px 0 !important; }
+  .k-link h3 { display:none; }
+  .k-link .dom { display:flex; align-items:center; gap:6px; font-size:12px; max-width:100%; overflow:hidden; white-space:nowrap; direction:ltr; }
+  .k-link .dom i { display:none; }
+  .sheet .mono { display:grid; place-items:center; width:22px; height:22px; border-radius:6px; font:600 12px/1 var(--display); flex:none; }
+  .k-link { flex-direction:row; align-items:flex-start; }
+  .k-link.has-pic .pic { left:0; right:0; bottom:0; height:52%; border-radius:0; }
+  .sheet .cap { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; margin:0; padding:8px 11px 0; font:500 13.5px/1.3 var(--font); overflow:hidden; overflow-wrap:anywhere; flex:none; }
+  .sheet .cap:empty { display:none; }
+  .sheet .label { flex:none; height:auto; padding:2px 11px 10px; font:400 12px/1.3 var(--font); }
+  .sheet .label .stk { display:none; }
+  .sheet .newtab { top:0; inset-inline-start:14px; width:22px; height:5px; border-radius:0 0 3px 3px; box-shadow:none; z-index:2; }
+  .sheet .bar { margin:6px 11px 0; }
+  .sheet.uploading .body { display:flex; }
+  /* scrolled, the cover folds into the top bar — its thumb, the name and the moment */
+  .topbar .ttl .thumb, .topbar .ttl small { display:none; }
+  .topbar:not(.scrolled) .ttl { max-width:0; }
+  .topbar.scrolled { grid-template-columns:auto minmax(0,1fr) auto; }
+  .topbar.scrolled #tb-back { display:none; }
+  .topbar.scrolled .ttl { display:flex; align-items:center; gap:10px; max-width:none; justify-self:stretch; text-align:start; font:inherit; }
+  .topbar .ttl .thumb { display:block; position:relative; flex:none; width:40px; height:28px; border-radius:7px; overflow:hidden; box-shadow:0 0 0 1px var(--hair); }
+  .topbar .ttl .thumb img { position:absolute; width:180px; height:60px; max-width:none; }
+  .topbar .ttl .tt { min-width:0; display:grid; }
+  .topbar .ttl b { font:600 16px/1.2 var(--display); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .topbar .ttl small { display:block; font:400 12.5px/1.3 var(--font); color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .topbar .ttl small b { font:500 12.5px/1.3 var(--font); color:var(--ink); }
+  .topbar .ttl small .ink { background:none; padding:0; text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px; }
+  .topbar .ttl b { font-weight:inherit; }
+  /* one bar: a quiet Add pill between classes; during class the camera leads */
+  .bottombar { justify-content:center; background:linear-gradient(transparent, var(--paper) 45%); border-top:0; padding-top:28px; pointer-events:none; }
+  .bottombar > * { pointer-events:auto; }
+  .bottombar .btn.pill { flex:none; height:50px; padding:0 26px; border-radius:25px; font:600 17px/1 var(--font); box-shadow:0 6px 18px rgba(32,36,39,.18); }
+  .bottombar.during .btn.cam { flex:1; height:60px; border-radius:20px; font:600 17px/1 var(--font); gap:10px; }
+  .bottombar.during .btn.plus { flex:0 0 60px; height:60px; padding:0; border-radius:20px; background:var(--sheet); box-shadow:0 0 0 1px var(--hair), 0 4px 12px rgba(32,36,39,.08); }
+  .bottombar .btn svg.i { width:20px; height:20px; }
+  .info-sheet .rcard { box-shadow:none; padding:0; background:none; margin-bottom:22px; }
+  /* a thing, opened: the page itself, who and when, Thanks, one or two big buttons */
+  .panel.pv { background:var(--paper); }
+  .panel.pv .lift-bar { justify-content:space-between; padding:6px 12px 0; }
+  .panel.pv .lift-bar .grow { flex:1; }
+  .panel.pv .lift-bar .close { width:36px; height:36px; border-radius:18px; }
+  .pv-stage { display:flex; flex-direction:column; padding:8px 24px 8px !important; overflow:auto; flex:1; min-height:0; }
+  .pv-media { flex:1; min-height:180px; display:grid; place-items:center; padding:8px 0 20px; }
+  .pv-page { width:min(72%, 260px); aspect-ratio:1/1.3; border-radius:6px; overflow:hidden; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.06), 0 12px 32px rgba(32,36,39,.14); filter:brightness(var(--img-dim,1)); }
+  .pv-page svg { display:block; width:100%; height:100%; }
+  .pv-photo { width:100%; border-radius:16px; overflow:hidden; background:var(--well); box-shadow:0 0 0 1px var(--hair); filter:brightness(var(--img-dim,1)); }
+  .pv-photo img, .pv-photo svg { display:block; width:100%; height:auto; }
+  .pv-media.pv-note { place-items:start stretch; }
+  .pv-note { padding:24px 22px; border-radius:18px; background:#FAEBCB; color:#202427; font:500 21px/1.42 var(--font); white-space:pre-wrap; overflow-wrap:anywhere; unicode-bidi:plaintext; }
+  .pv-meta h3 { margin:0; font:600 22px/1.25 var(--display); letter-spacing:-.012em; overflow-wrap:anywhere; unicode-bidi:plaintext; }
+  .pv-meta p { margin:4px 0 0; font-size:15px; color:var(--ink2); }
+  .pv-row { display:flex; align-items:center; gap:10px; margin-top:16px; }
+  .pv-row .grow { flex:1; }
+  .thanks { display:inline-flex; align-items:center; gap:7px; height:40px; padding:0 15px; border:0; border-radius:20px; background:var(--well); font:500 15px/1 var(--font); color:var(--ink); transition:transform .12s var(--ease-out), background-color .15s; }
+  .thanks:active { transform:scale(.95); }
+  .thanks[aria-pressed="true"] { background:var(--sky-pale); color:var(--sky-ink); box-shadow:inset 0 0 0 1.5px var(--sky); }
+  .thanks[aria-pressed="true"] svg { fill:currentColor; fill-opacity:.18; }
+  .quiet-link { color:var(--ink2); font-weight:400; font-size:14px; text-decoration:none; }
+  .pv-acts { flex:none; display:grid; gap:10px; padding:14px 20px calc(14px + env(safe-area-inset-bottom)); }
+  .pv-acts.two { grid-template-columns:1fr 1fr; }
+  .pv-acts .btn { height:54px; border-radius:16px; font:600 17px/1 var(--font); }
+  .pv-acts .btn:not(.primary) { background:var(--well); box-shadow:none; }
+  .pv-media.pv-note { flex:none; }
+  /* Add: four rows, then the thing itself and one Add button (it goes to this week; nothing to choose) */
+  .addlist { display:grid; margin:-4px -8px 0; }
+  .arow { display:flex; align-items:center; gap:14px; min-height:58px; padding:0 8px; border:0; border-radius:14px; background:none; font:500 17px/1.2 var(--font); text-align:start; transition:background-color .12s; }
+  .arow:active { background:var(--well); }
+  .arow .ai { width:40px; height:40px; border-radius:20px; display:grid; place-items:center; background:var(--well); }
+  .panel.add .p-foot:empty { display:none; }
+  .panel.add .p-foot { border-top:0; padding:8px 18px calc(14px + env(safe-area-inset-bottom)); }
+  .panel.add .p-foot .btn.quiet, .panel.add .p-foot > .grow { display:none; }
+  .panel.add .p-foot .btn.primary { flex:1; height:54px; border-radius:16px; font:600 17px/1 var(--font); }
+  .panel.add .p-foot .btn.primary svg { display:none; }
+  .preview-wrap { grid-template-columns:1fr; gap:6px; }
+  .preview-wrap > div:first-child { width:min(220px, 62%); margin:0 auto; }
+  .preview-wrap .field:not(:has(#f-link, #f-note)), .preview-wrap .reason { display:none; }
+  .preview-wrap .who-sees { justify-content:center; text-align:center; margin-top:12px; font-size:14px; }
+  .preview-wrap .who-sees svg { display:none; }
+}
+
 /* installed (PWA standalone, nearby-share's pwa.js sets the class): no "get the app" nudge; clear the status bar and home indicator */
 html.pwa-standalone .nudge { display:none !important; }
 html.pwa-standalone .hd { padding-top:max(14px, env(safe-area-inset-top)); }
@@ -891,6 +1045,7 @@ const LIVE = (() => { const q = params.get("live"); if (HOSTED) return q !== "0"
 if (params.get("code") && !LIVE) location.replace(`../join/?code=${encodeURIComponent(params.get("code"))}${params.get("lang") ? "&lang=" + encodeURIComponent(params.get("lang")) : ""}`);
 const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const phone = () => matchMedia("(max-width: 699px)").matches;
+matchMedia("(max-width: 699px)").addEventListener("change", () => { closeAll(true); render(); }); // phone ↔ computer layout (a turned iPad, a resized window)
 /* iPhone/iPad Safari turns a download link into "open the file": there Save hands the file to the share sheet instead (live.js) */
 const ios = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const shareSave = () => ios() && typeof navigator.canShare === "function";
@@ -922,18 +1077,18 @@ const art = key => {
 /* ============ words (English + Hebrew chrome) ============ */
 const HE = {
   courses:"קורסים", joinCourse:"הצטרפות לקורס", yourCourses:"הקורסים שלך", onTheirOwn:"קורסים", bring:"הזמנה",
-  add:"הוספה ל", week:"שבוע", thisWeek:"השבוע", courseFiles:"קבצי הקורס", earlier:"קודם", things:"פריטים", thing:"פריט",
+  next:"הבא", add:"הוספה ל", week:"שבוע", thisWeek:"השבוע", courseFiles:"קבצי הקורס", earlier:"קודם", things:"פריטים", thing:"פריט",
   newSince:"חדשים מאז", show:"להראות", others:"ועוד", and:"ו-", people:"אנשים", photo:"תמונה", file:"קובץ", link:"קישור", note:"פתק",
-  thanks:"תודה", gotIt:"הבנתי", same:"גם לי יש שאלה", helpful:"עזר לי", open:"פתיחה", save:"שמירה", saveFiles:"שמירה בקבצים", savePhoto:"שמירת התמונה", close:"סגירה", copy:"העתקה",
+  thanks:"תודה", gotIt:"הבנתי", same:"גם לי יש שאלה", helpful:"עזר לי", addOne:"הוספה", info:"על הקורס", invitePeople:"הזמנת אנשים", thanksW:"תודה", open:"פתיחה", save:"שמירה", saveFiles:"שמירה בקבצים", savePhoto:"שמירת התמונה", close:"סגירה", copy:"העתקה",
   nothingYet:"עוד אין כלום על השולחן", nothingYetP:"אפשר להניח את הסילבוס, מצגות או תמונה של הלוח — כולם בקורס יקבלו את זה.",
   offline:"אין חיבור · עודכן", offlineP:"מה שכאן עדיין עובד; מה שתוסיפו יישלח כשהחיבור יחזור.",
 };
 if (["dark", "light"].includes(params.get("theme"))) document.documentElement.dataset.theme = params.get("theme");
 const lang = params.get("lang") === "he" ? "he" : "en";
 const EN = { courses:"Courses", joinCourse:"Join a course", yourCourses:"Your courses", onTheirOwn:"Courses", bring:"Invite",
-  add:"Add to ", week:"Week", thisWeek:"This week", courseFiles:"Course files", earlier:"Earlier", things:"things", thing:"thing",
+  next:"Next", add:"Add to ", week:"Week", thisWeek:"This week", courseFiles:"Course files", earlier:"Earlier", things:"things", thing:"thing",
   newSince:"new since", show:"Show", others:"others", and:"and", people:"people", photo:"Photo", file:"File", link:"Link", note:"Note",
-  thanks:"Thanks", gotIt:"Got it", same:"Same question", helpful:"Helpful", open:"Open", save:"Save", saveFiles:"Save to Files", savePhoto:"Save Photo", close:"Close", copy:"Copy",
+  thanks:"Thanks", gotIt:"Got it", same:"Same question", helpful:"Helpful", addOne:"Add", info:"Course info", invitePeople:"Invite people", thanksW:"Thanks", open:"Open", save:"Save", saveFiles:"Save to Files", savePhoto:"Save Photo", close:"Close", copy:"Copy",
   nothingYet:"Nothing here yet", nothingYetP:"Add the syllabus, slides or a photo of the board. Everyone in the course sees it.",
   offline:"Offline · updated", offlineP:"What's here still works; what you add goes when you're back." };
 const t = k => (lang === "he" ? HE[k] : null) ?? EN[k] ?? k;
@@ -1030,6 +1185,7 @@ if (lang === "he") new MutationObserver(ms => { for (const m of ms) for (const n
 const I = {
   plus:'<path d="M10 4v12M4 10h12"/>', chev:'<path d="M8 5l5 5-5 5"/>', down:'<path d="M5 8l5 5 5-5"/>',
   x:'<path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/>', more:'<circle cx="5" cy="10" r=".9" fill="currentColor"/><circle cx="10" cy="10" r=".9" fill="currentColor"/><circle cx="15" cy="10" r=".9" fill="currentColor"/>',
+  down:'<path d="M5.5 8l4.5 4.5L14.5 8"/>',
   photo:'<rect x="2.5" y="5" width="15" height="11" rx="2.5"/><path d="M7 5l1.2-2h3.6L13 5"/><circle cx="10" cy="10.5" r="2.8"/>',
   file:'<path d="M5 2.5h6.5L15.5 6.5v11H5z"/><path d="M11.5 2.5v4h4"/>',
   link:'<path d="M8.5 11.5a3.2 3.2 0 0 0 4.5 0l2.6-2.6a3.2 3.2 0 0 0-4.5-4.5l-1 1"/><path d="M11.5 8.5a3.2 3.2 0 0 0-4.5 0l-2.6 2.6a3.2 3.2 0 0 0 4.5 4.5l1-1"/>',
@@ -1037,6 +1193,7 @@ const I = {
   code:'<rect x="3" y="3" width="5.5" height="5.5" rx="1"/><rect x="11.5" y="3" width="5.5" height="5.5" rx="1"/><rect x="3" y="11.5" width="5.5" height="5.5" rx="1"/><path d="M11.5 11.5h2v2M17 11.5v5.5h-5.5M14.5 15h.01"/>',
   nearby:'<circle cx="10" cy="10" r="1.6" fill="currentColor"/><path d="M6.5 13.5a5 5 0 0 1 0-7M13.5 6.5a5 5 0 0 1 0 7M4 16a8.5 8.5 0 0 1 0-12M16 4a8.5 8.5 0 0 1 0 12"/>',
   copy:'<rect x="7" y="7" width="10" height="10" rx="2"/><path d="M13 4.5V4a1.5 1.5 0 0 0-1.5-1.5h-7A1.5 1.5 0 0 0 3 4v7a1.5 1.5 0 0 0 1.5 1.5H5"/>',
+  thumb:'<path d="M6 9.5V16.5H3.5v-7zM8 9.5l2.6-5.4c1-.6 2.2 0 2.1 1.2L12.3 8.5h3.6c1 0 1.8 1 1.5 2l-1.5 4.8c-.2.7-.8 1.2-1.5 1.2H8z"/>',
   share:'<path d="M10 12.5V3M6.5 6.5L10 3l3.5 3.5"/><path d="M6 9.5H5a1.5 1.5 0 0 0-1.5 1.5v5A1.5 1.5 0 0 0 5 17.5h10a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 15 9.5h-1"/>',
   save:'<path d="M10 3v9.5M6.5 9L10 12.5 13.5 9"/><path d="M4 14.5v1A1.5 1.5 0 0 0 5.5 17h9a1.5 1.5 0 0 0 1.5-1.5v-1"/>',
   open:'<path d="M8 4H5.5A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16h9a1.5 1.5 0 0 0 1.5-1.5V12"/><path d="M11 3.5h5.5V9M16.5 3.5L9.5 10.5"/>',
@@ -1232,12 +1389,14 @@ function render() {
   document.title = `${c.name} · Stash`;
   $("#tb-title").textContent = c.name; $("#tb-back").textContent = c.shelf || t("courses");
   if (S.state === "loading" && !S._loaded) { renderLoading(); setTimeout(() => { S._loaded = true; render(); }, 1400); return; }
-  const sections = [...new Set(c.items.map(i => i.section).filter(Boolean))];
-  if (S.section !== "All" && !sections.includes(S.section)) S.section = "All";
-  const weekNow = c.items.filter(i => i.week === c.week && shows(i)), earlier = [...new Set(c.items.filter(i => i.week < c.week && shows(i)).map(i => i.week))].sort((a, b) => b - a);
+  const sections = [...new Set(c.items.map(i => i.section).filter(Boolean))], shelf = phone(); // phone: the shelf (docs/shared/HUB-SIMPLE.md, Jonathan's pick B)
+  if (S.section !== "All" && (shelf || !sections.includes(S.section))) S.section = "All";
+  const weekNow = shelf ? c.items.filter(shows).map((it, i) => [it, i]).sort((a, b) => (b[0].week ?? 0) - (a[0].week ?? 0) || a[1] - b[1]).map(x => x[0])
+    : c.items.filter(i => i.week === c.week && shows(i)), earlier = shelf ? [] : [...new Set(c.items.filter(i => i.week < c.week && shows(i)).map(i => i.week))].sort((a, b) => b - a);
   const coming = c.items.filter(i => i.due).sort((a, b) => a.dueSort - b.dueSort);
   const removed = S.state === "removed", deleted = S.state === "deleted", canAdd = !removed && !deleted;
   const isEmpty = c.items.length === 0 && c.files.length === 0;
+  if (shelf && !removed && !deleted) return renderFolio(c, isEmpty);
   $("#course").innerHTML = `
     <div class="course-top">
       <header class="hd">
@@ -1250,7 +1409,7 @@ function render() {
           ${isEmpty ? "" : `<button class="btn primary add-top" data-act="add">${ic("plus","s")}<span>${addLabel(c)}</span></button>`}` : ""}
           <button class="btn icon quiet" data-act="more" aria-label="More" aria-haspopup="menu">${ic("more")}</button></span>
       </header>
-      ${S.welcome ? `<aside class="welcome" aria-labelledby="w-h"><img data-art="c2-added" src="${art("c2-added")}" alt="">
+      ${S.welcome && !shelf ? `<aside class="welcome" aria-labelledby="w-h"><img data-art="c2-added" src="${art("c2-added")}" alt="">
         <div><h2 id="w-h">You're in ${esc(c.name)}</h2><ul>
           <li><b>New things land on the desk</b> — the yellow tab marks what you haven't seen.</li>
           <li><b>Add what you have</b> — ${phone() ? "a photo of the board is two taps" : "paste or drop a file anywhere on the page"}.</li>
@@ -1268,7 +1427,8 @@ function render() {
         ${c.liveNow && S.state !== "removed" && S.state !== "deleted" ? `<div class="live" role="note"><span class="dotl" aria-hidden="true"></span><span><b>${esc(c.liveNow.what)}</b> is on now <span class="k">· <bdi>${esc(lang === "he" ? c.liveNow.where.replace(/^Room\b/, "חדר").replace(/^Hall\b/, "אולם") : c.liveNow.where)}</bdi> · ${lang === "he" ? "עד" : "until"} ${esc(c.liveNow.until)}</span></span><span class="grow"></span>
           <button class="btn primary" data-act="quick" data-q="photo" data-section="${esc(c.liveNow.section)}">${ic("photo","s")}<span>Photo of the board</span></button></div>` : ""}
         <div class="info"><div class="status" id="status" role="status" aria-live="polite"></div></div>
-        <div class="grid" id="grid-now" data-week="${c.week}">${weekNow.map(sheet).join("") || `<p style="grid-column:1/-1;margin:0;color:var(--ink2)">${S.q ? `Nothing matches “${esc(S.q)}” this week.` : `Nothing in ${esc(S.section)} this week yet.`}</p>`}</div>
+        <div class="grid" id="grid-now" data-week="${c.week}">${(shelf ? weekNow.slice(0, S.shelfLim = S.shelfFor === c.id ? Math.max(SHELF_PAGE, S.shelfLim || 0) : (S.shelfFor = c.id, SHELF_PAGE)) : weekNow).map(sheet).join("") || `<p style="grid-column:1/-1;margin:0;color:var(--ink2)">${S.q ? `Nothing matches “${esc(S.q)}” this week.` : `Nothing in ${esc(S.section)} this week yet.`}</p>`}</div>
+        ${shelf && weekNow.length > S.shelfLim ? `<div id="shelf-more" aria-hidden="true"></div>` : ""}
         ${earlier.length ? `<div class="weeks" aria-label="${t("earlier")}">${earlier.map(w => weekRow(c, w)).join("")}</div>` : ""}
         ${canAdd ? `<div class="you" id="you"><span class="ini" aria-hidden="true">Y</span><p><b>You</b> · paste or drop anything here — it lands on the desk for ${c.people > 1 ? `${c.people} people` : "everyone you invite"}.</p>
           <span class="q"><button class="btn" data-act="quick" data-q="photo">${ic("photo","s")}<span>${t("photo")}</span></button><button class="btn" data-act="quick" data-q="file">${ic("file","s")}<span>${t("file")}</span></button>
@@ -1279,12 +1439,112 @@ function render() {
     <div id="nudge-slot">${S.nudge ? nudgeCard() : ""}</div>`;
   if (isEmpty) { const st = $("#desk"); if (st && !$("#status", st)) st.insertAdjacentHTML("afterbegin", `<div class="status" id="status" role="status" aria-live="polite"></div>`); }
   $("#foot").innerHTML = LIVE ? `<p>Connected to the real Stash server · what you add is shared with the course · <a href="../">Stash for Mac</a></p>` : `<p>Prototype with made-up courses · nothing leaves this page · <a href="../">Stash for Mac</a></p>`;
-  $("#bottombar").innerHTML = !(canAdd && !isEmpty) ? "" : c.liveNow // during a lecture/tutorial the one obvious thing is the photo of the board
+  $("#bottombar").innerHTML = !(canAdd && !isEmpty) ? "" : shelf ? `<button class="btn primary" data-act="add">${ic("photo","s")}<span>${t("addOne")}</span></button>` : c.liveNow // during a lecture/tutorial the one obvious thing is the photo of the board
     ? `<button class="btn primary" data-act="quick" data-q="photo" data-section="${esc(c.liveNow.section)}">${ic("photo","s")}<span>Photo of the board</span></button><button class="btn" style="flex:0 0 46px;padding:0" data-act="add" aria-label="${esc(addLabel(c))}">${ic("plus")}</button>`
     : `<button class="btn primary" data-act="add">${ic("plus","s")}<span>${addLabel(c)}</span></button>`;
   $("#bottombar").style.display = canAdd && !isEmpty ? "" : "none";
   renderStatus();
   observeTitle();
+  if (shelf) shelfMore(weekNow);
+  hooks.rendered?.(c);
+}
+/* ============ the phone: the course as a paper folio (docs/shared/HUB-DIRECTION.md; Jonathan's pick: the cover folds into
+   the top bar as you scroll, the three dates in one card) ============
+   Cover with the moment line → Essentials (Next exam · Due · Next class, core.js Essentials) → New since … → the shelf
+   (This week / Earlier) → one bar. During class: the line says so, today's board leads, the bar is camera-first. */
+let CORE = null; import("./core.js").then(mod => { CORE = mod; if (phone() && course() && S.view !== "class") render(); }).catch(() => {});
+const tzHere = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return undefined; } };
+function wallClock(text) { // the prototype's made-up courses carry display strings ("Thu 12 Nov · 9:00"); live rows carry due_at
+  const p = String(text ?? "").toLowerCase(), day = CORE.EssentialsNotice.date(p, new Date(), tzHere()), t = CORE.EssentialsNotice.clock(p);
+  return day ? new Date(day.y, day.m - 1, day.d, t?.h ?? 0, t?.m ?? 0) : null;
+}
+function essRows(c) { // what Essentials.pick reads, in the server's row shapes
+  const files = new Set(c.files.map(i => i.id));
+  const materials = [...c.items, ...c.files].filter(i => i.due || i.dueAt).map(i => ({ id: i.id, title: i.title,
+    due_at: i.dueAt ?? wallClock(i.due)?.toISOString(), due_title: i.dueTitle, pinned: files.has(i.id) || !!i.pinned })).filter(r => r.due_at);
+  const events = (c.events || []).filter(e => !e.due).map((e, n) => { // the prototype's due:true rows mirror its dated sheets
+    const [time, ...where] = String(e.k || "").split(" · "), at = e.starts_at ? new Date(e.starts_at) : wallClock(`${e.wd} ${time}`);
+    return at && { id: e.id ?? `demo-${n}`, kind: e.kind ?? CORE.CourseEvents.guessKind(e.t), title: e.t, starts_at: at.toISOString(),
+      ends_at: e.ends_at ?? null, location: e.location ?? where[0] ?? null, repeat_until: e.repeat_until ?? null }; }).filter(Boolean);
+  return { materials, events, lessons: c.lessons || [] };
+}
+function essentialsOf(c, now = new Date()) { if (!CORE?.Essentials) return []; try { return CORE.Essentials.pick(essRows(c), now, tzHere()); } catch { return []; } }
+function essCard(e, now = new Date()) { // {l, v, s}: "Next exam" / "12 Nov" / "Wed · 9:00"
+  const d = new Date(e.at), loc = lang === "he" ? "he" : "en-GB", days = Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date(now).setHours(0, 0, 0, 0)) / 864e5);
+  const wd = d.toLocaleDateString(loc, { weekday: "short" }), time = e.allDay ? "" : d.toLocaleTimeString(loc, { hour: "numeric", minute: "2-digit" });
+  const day = days === 0 ? (lang === "he" ? "היום" : "Today") : days === 1 ? (lang === "he" ? "מחר" : "Tomorrow") : wd;
+  const l = CORE.Essentials.label(e.slot, lang);
+  const short = x => String(x || "").replace(/^Homework\s*/i, "HW ").replace(/^Assignment\s*/i, "Assn ").replace(/^Exercise\s*/i, "Ex ").trim(); // index cards are ~100 pt wide
+  if (e.slot === "exam") return { l, v: d.toLocaleDateString(loc, { day: "numeric", month: "short" }), s: [day, time].filter(Boolean).join(" · "), place: e.place };
+  if (e.slot === "due") return { l, v: short(e.title), s: [day, time].filter(Boolean).join(" · ") };
+  if (e.isNow) return { l, v: lang === "he" ? "עכשיו" : "Now", s: e.place || "" };
+  return { l, v: days <= 1 ? time || day : [wd, time].filter(Boolean).join(" "), s: [days <= 1 && time ? day : "", e.place].filter(Boolean).join(" · "), when: [days <= 1 ? day : wd, time].filter(Boolean).join(" ") };
+}
+const soonWords = (e, now = new Date()) => CORE.Essentials.headline(e, now, tzHere(), lang); // "Exam in 5 days"
+function duringClass(c, ess) { // the timetable says a class is on, or 2+ things arrived in the last 30 min
+  if (params.get("moment") === "during") return c.liveNow || { what: lang === "he" ? "שיעור" : "Class" };
+  if (params.get("moment") === "between" || (!LIVE && params.get("moment") !== "auto")) return null;
+  const now = ess.find(e => e.slot === "class" && e.isNow); if (now) return { what: now.title || "Class", where: now.place || "" };
+  return c.items.filter(i => i.at && Date.now() - i.at < 30 * 60000).length >= 2 ? { what: lang === "he" ? "שיעור" : "Class" } : null;
+}
+function renderFolio(c, isEmpty) {
+  const ess = essentialsOf(c), live = duringClass(c, ess), nNew = c.items.filter(i => i.isNew);
+  const exam = ess.find(e => e.slot === "exam"), soon = ess.filter(e => e.slot !== "class").sort((a, b) => a.at - b.at)[0];
+  const examDays = exam ? (new Date(exam.at) - Date.now()) / 864e5 : 99;
+  const moment = live ? `<span class="now-dot" aria-hidden="true"></span><b>${esc(live.what)} ${lang === "he" ? "עכשיו" : "now"}</b>${live.where ? ` <span class="k">· <bdi>${esc(live.where)}</bdi>${live.until ? ` · ${lang === "he" ? "עד" : "until"} ${esc(live.until)}` : ""}</span>` : ""}`
+    : exam && examDays <= 13 ? `<b class="ink">${esc(soonWords(exam))}</b>${nNew.length ? ` <span class="k">· ${nNew.length} new</span>` : ""}`
+    : soon && (new Date(soon.at) - Date.now()) / 864e5 <= 2 ? `<b class="ink">${esc(soonWords(soon))}</b>`
+    : nNew.length ? `<b>${nNew.length} ${t("newSince")} ${esc(lang === "he" ? heWhen(c.lastVisit) : c.lastVisit)}</b>` : "";
+  const sub = [c.code, c.instructor].filter(Boolean).join(" · ");
+  const essHTML = !ess.length ? "" : live
+    ? `<div class="ess-strip" role="list" aria-label="Essentials">${ess.map(e => { const k = essCard(e); return `<div role="listitem"><b dir="auto">${esc(e.slot === "class" ? t("next") : e.slot === "exam" ? e.title : k.v)}</b><span>${esc(e.slot === "exam" ? k.v : e.slot === "due" ? k.s.replace(/ · .*/, "") : k.when || k.v)}</span></div>`; }).join("")}</div>`
+    : `<div class="ess" role="list" aria-label="Essentials">${ess.map(e => { const k = essCard(e);
+        return `<div class="icard ${e.slot === "exam" && examDays <= 7 ? "hot" : ""}" role="listitem"><span class="l">${esc(k.l)}</span><b class="v" dir="auto">${esc(k.v)}</b><span class="s">${esc(k.s)}</span></div>`; }).join("")}</div>`;
+  const ask = S.essAsk && S.essAsk.c === c.id && CORE ? (() => { const a = S.essAsk.s, now = new Date();
+    return `<div class="ess-ask" role="group" aria-label="Add to Essentials?"><span>${lang === "he" ? "להוסיף לתאריכים?" : "Add to the dates?"} <b dir="auto">${esc(CORE.Essentials.label(a.slot, lang))} · ${esc(a.slot === "due" ? CORE.Essentials.line(a, now, tzHere(), lang) : `${a.title} · ${CORE.Essentials.line(a, now, tzHere(), lang)}`)}</b></span>
+      <span class="ess-ask-b"><button class="btn" data-act="ess-no">${lang === "he" ? "לא עכשיו" : "Not now"}</button><button class="btn primary" data-act="ess-add">${lang === "he" ? "הוספה" : "Add"}</button></span></div>`; })() : "";
+  const thisWeek = c.items.filter(i => (i.week ?? c.week) >= c.week), earlier = c.items.filter(i => (i.week ?? c.week) < c.week).map((it, i) => [it, i]).sort((a, b) => (b[0].week ?? 0) - (a[0].week ?? 0) || a[1] - b[1]).map(x => x[0]);
+  if (!earlier.length) S.shelfTab = "week";
+  const tab = S.shelfTab === "earlier" ? "earlier" : "week", list = tab === "earlier" ? earlier : thisWeek;
+  S.shelfLim = S.shelfFor === c.id + tab ? Math.max(SHELF_PAGE, S.shelfLim || 0) : (S.shelfFor = c.id + tab, SHELF_PAGE);
+  const board = live ? c.items.filter(i => i.kind === "photo" && (i.week ?? c.week) >= c.week).slice(0, 3) : [];
+  document.title = `${c.name} · Stash`; $("#tb-title").innerHTML = `${thumb(c.cover)}<span class="tt"><b>${esc(c.name)}</b>${moment ? `<small>${moment.replace(/<span class="now-dot"[^>]*><\/span>/, "")}</small>` : ""}</span>`;
+  $("#tb-back").textContent = c.shelf || t("courses");
+  $("#course").innerHTML = `<div class="folio ${live ? "during" : ""}">
+    <header class="fcover"><img class="fart" data-art="${COVERS[c.cover]}" src="${art(COVERS[c.cover])}" alt="" decoding="async">
+      ${sub ? `<span class="sub">${esc(sub)}</span>` : ""}
+      <h1 id="course-name"><button class="fname" data-act="switcher" aria-haspopup="dialog">${esc(c.name)}${ic("down","s")}</button></h1>
+      ${moment ? `<p class="moment">${moment}</p>` : ""}</header>
+    ${essHTML}${ask}
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    ${isEmpty ? emptyCourse(c) : `
+    ${board.length ? `<section class="fsec board" aria-labelledby="h-board"><h2 class="fh" id="h-board">${lang === "he" ? "הלוח של היום" : "Today’s board"}<span>${board.length} ${board.length === 1 ? "photo" : "photos"}</span></h2>
+      <div class="board-grid">${board.map(sheet).join("")}</div></section>` : ""}
+    ${!live && nNew.length ? `<section class="fsec" aria-labelledby="h-new"><h2 class="fh" id="h-new">${t("newSince")[0].toUpperCase() + t("newSince").slice(1)} ${esc(lang === "he" ? heWhen(c.lastVisit) : c.lastVisit)}<span>${nNew.length}</span></h2>
+      <div class="newrow">${nNew.slice(0, 4).map(sheet).join("")}</div></section>` : ""}
+    <section class="fsec" aria-label="${esc(c.name)}">
+      ${earlier.length ? `<div class="ftabs" role="tablist">${[["week", t("thisWeek")], ["earlier", t("earlier")]].map(([k, w]) => `<button role="tab" data-act="shelf-tab" data-tab="${k}" aria-selected="${k === tab}">${w}</button>`).join("")}</div>` : `<h2 class="fh">${t("thisWeek")}</h2>`}
+      <div class="grid" id="grid-now" data-week="${c.week}">${list.slice(0, S.shelfLim).map(sheet).join("") || `<p class="empty-line">${lang === "he" ? "עוד אין כלום השבוע." : "Nothing this week yet."}</p>`}</div>
+      ${list.length > S.shelfLim ? `<div id="shelf-more" aria-hidden="true"></div>` : ""}</section>`}
+  </div>`;
+  $("#foot").innerHTML = "";
+  const bar = $("#bottombar");
+  bar.innerHTML = isEmpty ? "" : live
+    ? `<button class="btn primary cam" data-act="quick" data-q="photo" data-section="${esc(c.liveNow?.section || "")}">${ic("photo")}<span>${lang === "he" ? "צילום הלוח" : "Photo of the board"}</span></button><button class="btn plus" data-act="add" aria-label="${esc(t("addOne"))}">${ic("plus")}</button>`
+    : `<button class="btn primary pill" data-act="add">${ic("plus","s")}<span>${t("addOne")}</span></button>`;
+  bar.className = "bottombar" + (live ? " during" : ""); bar.style.display = isEmpty ? "none" : "";
+  renderStatus(); observeTitle();
+  shelfMore(list);
+}
+const SHELF_PAGE = 24; // the phone shelf draws 24 tiles, then 24 more as you near the end (500 things stay light)
+let shelfObs = null;
+function shelfMore(list) {
+  shelfObs?.disconnect(); const end = $("#shelf-more"); if (!end) return;
+  shelfObs = new IntersectionObserver(es => { if (!es.some(e => e.isIntersecting)) return;
+    const g = $("#grid-now"), next = list.slice(S.shelfLim, S.shelfLim + SHELF_PAGE); S.shelfLim += next.length;
+    g?.insertAdjacentHTML("beforeend", next.map(sheet).join(""));
+    if (S.shelfLim >= list.length) { shelfObs.disconnect(); end.remove(); } }, { rootMargin: "600px 0px" });
+  shelfObs.observe(end);
 }
 const dueSoon = it => it.due && it.dueSort != null && it.dueSort <= 3; // a deadline within 3 days
 const KIND_WORDS = { photo: ["a board photo", "photos"], link: ["a link", "links"], pdf: ["a lecture file", "lecture files"], note: ["a note", "notes"] };
@@ -1389,7 +1649,7 @@ function stickerStack(it) {
 function body(it) {
   if (it.crisp && hooks.body) { const b = hooks.body(it); if (b) return b; } // Crisp Swap (hidden flag)
   if (it.kind === "note") return `<div class="body k-note"><p dir="auto">${esc(it.text)}</p></div>`;
-  if (it.kind === "link") return `<div class="body k-link ${it.pic ? "has-pic" : ""}"><div class="dom"><i></i>${esc(it.dom)}</div><h3 dir="auto">${esc(it.title)}</h3>${it.pic ? `<div class="pic">${pic(it.pic)}</div>` : ""}</div>`;
+  if (it.kind === "link") return `<div class="body k-link ${it.pic ? "has-pic" : ""}">${mono(it.dom)}<div class="dom"><i></i>${esc(it.dom)}</div><h3 dir="auto">${esc(it.title)}</h3>${it.pic ? `<div class="pic">${pic(it.pic)}</div>` : ""}</div>`;
   if (it.kind === "photo") return `<div class="body k-photo"><div class="ph">${it.src ? `<img src="${it.src}" alt="">` : pic(it.pic)}</div></div>`;
   return `<div class="body k-file"><div class="page">${page(it.title)}</div><b dir="auto">${esc(it.title)}</b></div>`;
 }
@@ -1408,12 +1668,20 @@ function sheet(it) {
     <button class="press" data-open="${it.id}" aria-label="${esc(accName(it))}"></button>
     ${it.isNew ? `<span class="newtab" aria-hidden="true"></span>` : ""}
     ${body(it)}
+    <b class="cap" dir="auto" aria-hidden="true">${esc(capOf(it))}</b>
     ${it.sending && S.online ? `<span class="bar"><i></i></span>` : ""}
     <div class="label">${!it.sending && dueSoon(it) ? `<span class="due">Due ${esc(it.due.split(" · ")[0])}</span>` : ""}<span class="who">${it.sending ? (S.online ? "Sending…" : "Waiting to send") : `<bdi>${esc(it.by)}</bdi>${it.also?.length ? ` + <bdi>${esc(it.also[0])}</bdi>` : ""}${dueSoon(it) ? "" : ` · ${esc(it.ago)}`}`}</span><span class="grow"></span>${stickerStack(it)}</div>
     ${it.sending ? "" : `<div class="quick">${it.kind === "note" || it.kind === "link"
       ? `<button class="qbtn" data-act="qcopy" data-id="${it.id}" aria-label="${it.kind === "link" ? "Copy link" : "Copy"}" title="${it.kind === "link" ? "Copy link" : "Copy"}">${ic("copy","s")}</button>`
       : `<button class="qbtn" data-act="qsave" data-id="${it.id}" aria-label="Save" title="Save">${ic("save","s")}</button>`}<button class="react-btn" data-act="tray" data-id="${it.id}" aria-label="Add a sticker" title="Sticker" aria-haspopup="true" aria-expanded="false">${ic("sticker","s")}</button></div>`}
   </div>`;
+}
+const capOf = it => it.kind === "note" ? "" : String(it.title || it.dom || "").replace(/\.(pdf|docx?|pptx?|key)$/i, "");
+// A site's icon without fetching anything (link previews never call out): its first letter on one of the brand's pale fills
+const MONO = [["#E4EDFC", "#345EA0"], ["#FBE4DD", "#8A4536"], ["#FAEBCB", "#70510D"], ["#E7EFE9", "#2F5B45"]];
+function mono(dom) {
+  const d = String(dom || "").replace(/^www\./, ""), [bg, fg] = MONO[[...d].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % MONO.length];
+  return `<span class="mono" aria-hidden="true" style="background:${bg};color:${fg}">${esc(([...d][0] || "?").toUpperCase())}</span>`;
 }
 function weekRow(c, w) {
   const n = c.items.filter(i => i.week === w && shows(i)).length;
@@ -1460,9 +1728,9 @@ function renderStatus(animate) {
   const c = S.view === "class" ? { items: S.courses.filter(x => x.shelf === theClass().name).flatMap(x => x.items).concat(theClass().items), lastVisit: "Tuesday" } : course(); let html = "";
   if (S.statusMsg) html = S.statusMsg;
   else if (!S.online) html = `<span class="off">${ic("wifioff","s")}</span><span>${t("offline")} 10:42.</span><span>${t("offlineP")}</span>`;
-  else if (S.view === "class") html = "";
+  else if (S.view === "class" || phone()) html = "";
   else { const n = c.items.filter(i => i.isNew).length;
-    if (n) { const sum = lang === "he" ? "" : newSummary(c.items.filter(i => i.isNew)), long = sum.length > 46;
+    if (n) { const sum = lang === "he" || phone() ? "" : newSummary(c.items.filter(i => i.isNew)), long = sum.length > 46;
       html = `<span class="tab" aria-hidden="true"></span><span><b>${lang === "he" && n === 1 ? "חדש אחד מאז" : `${n} ${t("newSince")}`} ${esc(lang === "he" ? heWhen(c.lastVisit) : c.lastVisit)}</b>${sum && !long ? ` · ${esc(sum)}` : ""}</span><button class="linkbtn" data-act="show-new">${t("show")}</button>`; } }
   el.innerHTML = html ? `<div class="line ${animate && !reduced() ? "in" : ""}">${html}</div>` : "";
 }
@@ -1559,7 +1827,7 @@ let lastFocus = null;
 function openPanel(html, { w = 560, label = "", onMount, from, cls = "" } = {}) {
   const keep = document.activeElement?.closest(".panel") || document.activeElement === document.body ? lastFocus : document.activeElement; // (from ⌘K the bar is already gone: keep its return point) // stepping between cards keeps the original return point
   closeAll(true);
-  lastFocus = keep;
+  lastFocus = keep?.closest?.(".menu") ? keep.closest(".menu")._btn || keep : keep;
   const scrim = document.createElement("div"); scrim.className = "scrim"; scrim.dataset.act = "close";
   const p = document.createElement("div"); p.className = "panel" + (cls ? " " + cls : ""); p.setAttribute("role", "dialog"); p.setAttribute("aria-modal", "true");
   if (label) p.setAttribute("aria-label", label);
@@ -1632,6 +1900,7 @@ function openItem(id, from, dir = 0) {
   const share = `${SITE}hub/?${c ? "c=" + c.id : "class=" + theClass().id}`;
   const waText = `${it.kind === "note" ? it.text.slice(0, 120) : it.title} — ${c ? c.name : theClass().name} on Stash: ${share}`;
   const saves = 3 + (it.id.charCodeAt(it.id.length - 1) % 17);
+  if (phone()) return openItemPhone(it, title, share, waText);
   const p = openPanel(`<div class="lift-bar"><button class="close" data-act="close" aria-label="${t("close")}">${ic("x","s")}</button></div><h2 class="vh" id="lift-h" tabindex="-1" autofocus>${esc(title)}</h2>
     <div class="lift-stage"><div class="bigsheet">${media}<div class="stuck" role="group" aria-label="Stickers">${STICKERS.map(s => stButton(it, s)).join("")}</div></div>
       <aside class="tag"><button class="close" data-act="close" aria-label="Close">${ic("x","s")}</button>
@@ -1657,6 +1926,32 @@ function openItem(id, from, dir = 0) {
   const el = $(`.sheet[data-id="${id}"] .newtab`); el?.remove(); renderStatus();
   hooks.openItem?.(it, p);
 }
+function openItemPhone(it, title, share, waText) { // the phone: the thing itself, who and when, Thanks, one or two buttons
+  const media = it.kind === "pdf" ? `<div class="pv-page">${page(it.title)}</div>`
+    : it.kind === "photo" ? `<div class="pv-photo">${it.src ? `<img src="${it.src}" alt="${esc(it.title)}">` : pic(it.pic)}</div>`
+    : it.kind === "link" ? (it.pic ? `<div class="pv-photo">${pic(it.pic)}</div>` : "")
+    : `<div class="pv-note" dir="auto">${esc(it.text)}</div>`;
+  const when = it.ago === "now" ? "just now" : it.ago + (/^\d/.test(it.ago) ? " ago" : "");
+  const sub = [`<bdi>${esc(it.by)}</bdi>`, esc(when), it.kind === "pdf" && it.meta ? esc(it.meta.replace(/^PDF · /, "")) : it.kind === "link" ? `<bdi dir="ltr">${esc(it.dom || "")}</bdi>` : ""].filter(Boolean).join(" · ");
+  const acts = it.kind === "pdf" ? `<button class="btn" data-act="save" data-id="${it.id}">${saveWord(it)}</button><button class="btn primary" data-act="fake-open">${t("open")}</button>`
+    : it.kind === "photo" ? `<button class="btn primary" data-act="save" data-id="${it.id}">${saveWord(it)}</button>`
+    : it.kind === "link" ? `<button class="btn" data-act="copy" data-text="${esc(it.url)}">${t("copy")}</button><a class="btn primary" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">${t("open")}</a>`
+    : `<button class="btn primary" data-act="copy" data-text="${esc(it.text)}">${t("copy")}</button>`;
+  const p = openPanel(`<div class="lift-bar"><button class="close" data-act="close" aria-label="${t("close")}">${ic("x","s")}</button><span class="grow"></span>
+      <button class="close" data-act="share-item" data-id="${it.id}" data-url="${esc(it.url || share)}" data-wa="${esc(waText)}" aria-label="Share">${ic("share","s")}</button></div>
+    <h2 class="vh" id="lift-h" tabindex="-1" autofocus>${esc(title)}</h2>
+    <div class="lift-stage pv-stage">${media ? `<div class="pv-media pv-${it.kind}">${media}</div>` : ""}
+      <div class="pv-meta">${it.kind === "note" ? "" : `<h3 dir="auto">${esc(capOf(it) || it.title)}</h3>`}<p>${sub}</p>
+        <div class="pv-row">${thanksBtn(it)}<span class="grow"></span>${isOwn(it) ? `<button class="linkbtn quiet-link" data-act="delete" data-id="${it.id}">Delete</button>` : `<button class="linkbtn quiet-link" data-act="report" data-id="${it.id}">Report</button>`}</div></div></div>
+    <div class="pv-acts ${acts.split("</").length > 2 ? "two" : ""}">${acts}</div>`, { w: 560, label: title, cls: "lift pv" });
+  p.dataset.item = it.id; p.setAttribute("aria-labelledby", "lift-h");
+  $(`.sheet[data-id="${it.id}"] .newtab`)?.remove(); renderStatus();
+  hooks.openItem?.(it, p);
+}
+function thanksBtn(it) { // the phone keeps one sticker: Thanks
+  const on = it.mine.includes(1), n = it.stickers[1] || 0;
+  return `<button class="thanks" data-act="stick" data-id="${it.id}" data-s="1" aria-pressed="${on}" aria-label="${t("thanksW")}${n ? ", " + n : ""}">${ic("thumb","s")}<span>${t("thanksW")}${n ? ` · ${n}` : ""}</span></button>`;
+}
 function stButton(it, s) {
   const on = it.mine.includes(s.id), n = it.stickers[s.id] || 0;
   return `<button class="st ${n ? "" : "ghost"}" data-act="stick" data-id="${it.id}" data-s="${s.id}" aria-pressed="${on}" aria-label="${t(s.word)}${n ? ", " + n : ""}"><img data-art="${s.key}" src="${art(s.key)}" alt="">
@@ -1669,6 +1964,7 @@ function stick(id, sid) {
   if (on) { it.mine = it.mine.filter(x => x !== sid); it.stickers[sid] = Math.max(0, (it.stickers[sid] || 1) - 1); }
   else { it.mine.push(sid); it.stickers[sid] = (it.stickers[sid] || 0) + 1; }
   $$(`.st[data-id="${id}"][data-s="${sid}"]`).forEach(b => b.outerHTML = stButton(it, STICKERS[sid - 1]));
+  if (sid === 1) $$(`.thanks[data-id="${id}"]`).forEach(b => { b.outerHTML = thanksBtn(it); if (!on && !reduced()) $(`.thanks[data-id="${id}"] svg`)?.animate([{ transform: "scale(.4) rotate(-12deg)" }, { transform: "scale(1.15)", offset: .6 }, { transform: "none" }], { duration: 360, easing: "ease-out" }); });
   const sh = $(`.sheet[data-id="${id}"] .label`);
   if (sh) { const old = $(".stk", sh); const html = stickerStack(it); if (old) old.outerHTML = html || ""; else sh.insertAdjacentHTML("beforeend", html);
     if (!on) $(".stk", sh)?.classList.add("pop"); }
@@ -1694,8 +1990,9 @@ function closeTray() { const tr = $(".tray"); if (!tr) return; tr._btn?.setAttri
 function openMenu(btn) {
   closeMenu();
   const c = course(); const mu = document.createElement("div"); mu.className = "menu"; mu.setAttribute("role", "menu");
-  mu.innerHTML = c ? `<button role="menuitem" data-act="people">${ic("people","s")}People in this course</button>
-    <button role="menuitem" data-act="covers">${ic("cover","s")}Change the cover</button>
+  mu.innerHTML = c ? `${phone() ? `<button role="menuitem" data-act="invite">${ic("plus","s")}${t("invitePeople")}</button>
+    <button role="menuitem" data-act="course-info">${ic("note","s")}${t("info")}</button>` : ""}<button role="menuitem" data-act="people">${ic("people","s")}People in this course</button>
+    ${phone() ? "" : `<button role="menuitem" data-act="covers">${ic("cover","s")}Change the cover</button>`}
     <button role="menuitem" data-act="leave" class="danger">${ic("leave","s")}Leave ${esc(c.name)}…</button><hr>
     <button role="menuitem" data-act="forget">${ic("forget","s")}Forget this browser…</button><hr>` : "";
   if (!LIVE) mu.innerHTML += `<div class="lab">Prototype</div><button role="menuitem" data-act="states">${ic("note","s")}States…</button>
@@ -1705,13 +2002,13 @@ function openMenu(btn) {
     const items = [...mu.querySelectorAll('[role="menuitem"]')], i = items.indexOf(document.activeElement);
     const n = e.key === "ArrowDown" ? (i + 1) % items.length : e.key === "ArrowUp" ? (i - 1 + items.length) % items.length : e.key === "Home" ? 0 : e.key === "End" ? items.length - 1 : -1;
     if (n >= 0) { e.preventDefault(); items[n].focus(); } });
-  document.body.append(mu);
+  mu._btn = btn; document.body.append(mu);
   const r = btn.getBoundingClientRect(); const w = mu.offsetWidth;
   mu.style.top = Math.min(r.bottom + 6, innerHeight - mu.offsetHeight - 8) + "px";
   mu.style.left = Math.max(8, Math.min(r.right - w, innerWidth - w - 8)) + "px";
   requestAnimationFrame(() => mu.classList.add("in")); mu.querySelector("button")?.focus({ preventScroll: true });
 }
-function closeMenu() { $(".menu")?.remove(); }
+function closeMenu() { const mu = $(".menu"); if (!mu) return; if (mu.contains(document.activeElement)) mu._btn?.focus({ preventScroll: true }); mu.remove(); } // focus goes back to ⋯, never to <body>
 
 /* ============ add (composer) ============ */
 let draft = null;
@@ -1719,11 +2016,17 @@ let draft = null;
 const SECRET = /\bsk-(?:ant-)?[A-Za-z0-9_-]{20,}|\bghp_[A-Za-z0-9]{36}\b|\bxox[abpr]-[A-Za-z0-9-]{10,}|(password|passwd|passcode|pwd)\s*[:=]|\b(sk|pk|rk)[-_][A-Za-z0-9]{16,}|\bAKIA[0-9A-Z]{16}\b|-----BEGIN [A-Z ]*PRIVATE KEY|\b(code|otp|pin)\s*(is|:)?\s*\d{4,8}\b|\b\d{6}\b(?=.*\b(code|verify|verification)\b)/i;
 function openAdd(prefill) {
   const c = course(); draft = prefill || null;
-  openPanel(`${head(esc(addLabel(c)))}<div class="p-body" id="add-body"></div><div class="p-foot" id="add-foot"></div>`, { w: 560, label: addLabel(c) });
+  const title = phone() ? t("addOne") : addLabel(c);
+  openPanel(`${head(esc(title))}<div class="p-body" id="add-body"></div><div class="p-foot" id="add-foot"></div>`, { w: 560, label: title, cls: "add" });
   drawAdd();
 }
 function drawAdd(kind) {
   const c = course(), bodyEl = $("#add-body"), foot = $("#add-foot"); if (!bodyEl) return;
+  if (!draft && kind !== "link" && kind !== "note" && phone()) { // the phone: four plain rows, nothing to read
+    const row = (k, i, w) => `<button class="arow" data-act="way" data-k="${k}"><span class="ai">${ic(i)}</span><span>${w}</span></button>`;
+    bodyEl.innerHTML = `<div class="addlist" role="group" aria-label="What to add">${row("photo", "photo", "Take a photo")}${row("file", "file", "Choose a photo or file")}${row("link", "link", t("link"))}${row("note", "note", t("note"))}</div>`;
+    foot.innerHTML = ""; return;
+  }
   if (!draft && kind !== "link" && kind !== "note") {
     bodyEl.innerHTML = `<div class="ways" role="group" aria-label="What to add">
       <button class="way" data-act="way" data-k="photo">${ic("photo")}<span>${t("photo")}</span></button>
@@ -1789,6 +2092,11 @@ function commit() {
   if (due) { const d = new Date(due); draft.due = d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }) + " · " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
     draft.dueTitle = draft.kind === "note" ? draft.text.split(/[.\n]/)[0].slice(0, 28) : draft.title.replace(/\.[a-z0-9]+$/i, ""); draft.dueSort = d.getTime() / 864e5 - Date.now() / 864e5; }
   const it = m({ ...draft, refuse: undefined, week: wk, by: ME, ago: "now", sending: true, section: S.addSection || draft.section }); S.addSection = null;
+  hooks.added?.(it);
+  if (it.by === ME && ["note", "pdf", "photo"].includes(it.kind) && !it.due && CORE?.EssentialsNotice) { // it names an exam or a deadline: offer it, never add it
+    const sg = CORE.EssentialsNotice.find([it.text, it.ocr].filter(Boolean).join("\n"), it.kind === "note" ? null : it.title, new Date(), tzHere());
+    if (sg) { S.essAsk = { it, s: sg, c: course()?.id }; setTimeout(() => { if (phone()) render(); }, 450); }
+  }
   if (LIVE) { it.cid = crypto.randomUUID(); it.live = true; it.section = null; }
   draft = null; closeAll();
   if (LIVE) hub.live.send(it, c, wk, due);
@@ -1966,6 +2274,17 @@ document.addEventListener("click", async e => {
     case "new-code": { const c = course(); c.invite = LIVE ? await hub.live.newCode(c) : newCode(); const which = $('[data-act="inv"][aria-pressed="true"]')?.dataset.k || "code"; $("#inv-body").innerHTML = invBody(which, c, c.invite.slice(0, 3) + "‑" + c.invite.slice(3)); break; }
     case "projector": openProjector(); break;
     case "people": closeMenu(); openPeople(); break;
+    case "ess-no": S.essAsk = null; render(); break;
+    case "ess-add": { const { it, s: a } = S.essAsk || {}; S.essAsk = null; if (!it) { render(); break; }
+      const title = CORE.Essentials.dueTitle(a.title, a.place);
+      it.dueAt = a.at.toISOString(); it.dueTitle = title; it.dueSort = (a.at - Date.now()) / 864e5;
+      it.due = a.at.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }) + (a.allDay ? "" : " · " + a.at.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }));
+      render();
+      if (it.live && hub.live?.setDue) { for (let i = 0; i < 40 && it.sending; i++) await new Promise(r => setTimeout(r, 500)); // the server's id first
+        try { await hub.live.setDue(it, a.at, title); } catch { say(`<span>Couldn’t save the date. Try again in a minute.</span>`, 4000); } }
+      break; }
+    case "shelf-tab": S.shelfTab = a.dataset.tab; { const y = scrollY; render(); scrollTo(0, y); $(`[data-act="shelf-tab"][data-tab="${S.shelfTab}"]`)?.focus({ preventScroll: true }); } break;
+    case "course-info": { closeMenu(); const c = course(); openPanel(`${head(esc(c.name))}<div class="p-body info-sheet">${railCards(c, c.items.filter(i => i.due).sort((x, y) => x.dueSort - y.dueSort)) || ""}</div>`, { w: 480, label: t("info") }); break; }
     case "switcher": openSwitcher(); break;
     case "join": closeAll(true); openJoin(); break;
     case "covers": closeMenu(); openCovers(); break;
@@ -1984,11 +2303,16 @@ document.addEventListener("click", async e => {
       if (a.closest(".panel.lift")) { didIt(a, "Copied"); say(`<span>Copied.</span>`, 1800); } else { closeAll(); say(`<span>${ic("check","s")}</span><span>Copied.</span>`, 2500); } break;
     case "qcopy": { const it = findItem(id); try { await navigator.clipboard.writeText(it.kind === "link" ? it.url : it.text); } catch {} didIt(a); say(`<span>Copied.</span>`, 1800); break; }
     case "qsave": if (LIVE) hub.live.open(findItem(id), true); S.saves++; didIt(a); say(`<span>Saved to this device.</span>`, 1800); maybeNudge(); break;
+    case "share-item": { const it = findItem(id); if (!it) break;
+      if (LIVE && it.filePath && shareSave()) { hub.live.open(it, true); break; } // the file itself
+      const data = it.kind === "note" ? { text: it.text } : { title: it.title, url: a.dataset.url };
+      if (navigator.share) { try { await navigator.share(data); } catch {} break; }
+      location.href = `https://wa.me/?text=${encodeURIComponent(a.dataset.wa)}`; break; }
     case "share-link": if (navigator.share) { try { await navigator.share({ url: a.dataset.text }); } catch {} } else { try { await navigator.clipboard.writeText(a.dataset.text); } catch {} say(`<span>Link copied.</span>`, 2500); } break;
     case "save": if (LIVE) { hub.live.open(findItem(id), true); if (a.closest(".panel.lift")) break; } if (a.closest(".panel.lift")) { S.saves++; didIt(a, "Saved"); pwa(P => { P.noteMoment("save"); P.haptic?.("light"); }); say(`<span>Saved to this device.</span>`, 1800); maybeNudge(); break; }
       closeAll(); S.saves++; say(`<span>${ic("check","s")}</span><span>Saved to this device.</span>`, 2500);
-      if (S.saves >= 2 && !S.nudge && desktopOS() && (store.get("nudgeNo", 0) < 2) && store.get("nudgeDay", "") !== new Date().toDateString()) { S.nudge = true; store.set("nudgeDay", new Date().toDateString()); $("#nudge-slot").innerHTML = nudgeCard(); } break;
-    case "nudge-no": store.set("nudgeNo", store.get("nudgeNo", 0) + 1); S.nudge = false; $("#nudge-slot").innerHTML = ""; break;
+      if (S.saves >= 2 && !S.nudge && desktopOS() && (store.get("nudgeNo", 0) < 2) && store.get("nudgeDay", "") !== new Date().toDateString()) { S.nudge = true; store.set("nudgeDay", new Date().toDateString()); const ns = $("#nudge-slot"); if (ns) ns.innerHTML = nudgeCard(); } break;
+    case "nudge-no": store.set("nudgeNo", store.get("nudgeNo", 0) + 1); S.nudge = false; const ns = $("#nudge-slot"); if (ns) ns.innerHTML = ""; break;
     case "fake-open": if (LIVE) { hub.live.open(findItem($(".panel.lift")?.dataset.item), false); break; } closeAll(); say(`<span>In the real hub this opens in your browser's PDF viewer.</span>`, 3500); break;
     case "nearby-send": closeAll(); openInvite(null, "nearby"); break;
     case "report": S.reportId = id; confirmSheet("Report this?", "A course helper will look at it. If three people report it, it's hidden until then.", "Report", "do-report"); break;
@@ -2124,6 +2448,7 @@ if ((() => { try { return localStorage.getItem("stash.crisp") === "1"; } catch {
   const sc = document.createElement("script"); sc.type = "module"; sc.src = "crisp/crisp-hub.js"; document.head.append(sc);
 }
 
+
 /* ============ go ============ */
 render(); heLocalize(document.body);
 if (LIVE) { window.stashHub = hub; import("./live.js").then(m => m.startLive(hub)).catch(e => { console.warn("live mode didn't start", e); S.liveBlock = null; render(); }); }
@@ -2133,7 +2458,7 @@ if (params.get("joined")) { // arriving from the invite: the cover stays, the co
   setTimeout(() => say(`<span>${ic("check","s")}</span><span>You're in <b>${esc(course().name)}</b>. Everything here is yours to open and save.</span>`, 6000), 500);
 }
 if (S.state === "normal" && !LIVE) { setTimeout(arrival, 9000); setInterval(arrival, 32000); }
-if (S.state === "nudge") { S.nudge = true; $("#nudge-slot").innerHTML = nudgeCard(); }
+if (S.state === "nudge") { S.nudge = true; const n = $("#nudge-slot"); if (n) n.innerHTML = nudgeCard(); } // (the phone folio has no nudge)
 if (params.get("show") === "projector") openProjector();
 if (params.get("show") === "palette") setTimeout(() => { palette(); if (params.get("pq")) { $("#pq").value = params.get("pq"); drawPalette(params.get("pq")); } }, 150);
 if (params.get("show") === "filed") setTimeout(() => { const it = findItem($("#grid-now .sheet")?.dataset.id); if (it) say(`<span>${ic("check","s")}</span><span>Filed in <b>${t("week")} ${it.week}${it.section ? " · " + esc(it.section) : ""}</b></span><button class="linkbtn" data-act="refile" data-id="${it.id}">Change</button><button class="linkbtn" data-act="undo">Undo</button>`, 60000); }, 200);

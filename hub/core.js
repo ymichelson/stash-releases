@@ -823,3 +823,259 @@ export const SharedOCR = Object.freeze({
     return kept ? [...kept].slice(0, this.maxCharacters).join("") : null;
   },
 });
+
+// ——— Essentials (SharedEssentials.swift; docs/shared/HUB-DIRECTION.md §1; cases in test/essentials-cases.json) ———
+// Up to three cards at the top of a course — Next exam, Due, Next class — from dated materials (due_at / due_title,
+// "Exam · Room 204"), the calendar (space_events), the timetable (space_lessons); Course info one tap away.
+// EssentialsNotice spots an exam or deadline in what people add and only ever *suggests* it ("Add to Essentials?").
+const tzParts = (d, timeZone) => {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric",
+    hour: "numeric", minute: "numeric", second: "numeric", weekday: "short" }).formatToParts(new Date(d)).map(x => [x.type, x.value]));
+  return { y: +p.year, m: +p.month, d: +p.day, h: +p.hour % 24, mi: +p.minute, s: +p.second, wd: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(p.weekday) };
+};
+const dayNo = (y, m, d) => Math.round(Date.UTC(y, m - 1, d) / 86_400_000);
+const daysApart = (a, b, tz) => { const x = tzParts(a, tz), y = tzParts(b, tz); return dayNo(y.y, y.m, y.d) - dayNo(x.y, x.m, x.d); };
+const addDaysIn = (d, n, tz) => { const p = tzParts(d, tz); return zonedToUTC(p.y, p.m, p.d + n, p.h, p.mi, p.s, tz); };
+const startOfDayIn = (d, tz, plus = 0) => { const p = tzParts(d, tz); return zonedToUTC(p.y, p.m, p.d + plus, 0, 0, 0, tz); };
+const blank = s => (s == null || String(s).trim() === "" ? null : String(s));
+const rxAll = (pattern, s) => [...s.matchAll(new RegExp(pattern, "g"))].map(m => ({ at: m.index, groups: [...m].map(g => g ?? null) }));
+const rxFirst = (pattern, s) => rxAll(pattern, s)[0] ?? null;
+const rxHas = (pattern, s) => new RegExp(pattern).test(s);
+
+const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], HE_DAYS = ["יום א׳", "יום ב׳", "יום ג׳", "יום ד׳", "יום ה׳", "יום ו׳", "שבת"];
+const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+export const Essentials = Object.freeze({
+  examDays: 180, dueDays: 60, classDays: 14, classLength: 3_600_000,
+  slots: ["exam", "due", "class"],
+  /** [{slot, title, at, allDay, place, isNow, materialId|eventId|lessonId}] in slot order; past ones drop off; at the same
+   *  moment the calendar beats a pinned item, which beats any other item. Rows as the server sends them. */
+  pick({ materials = [], events = [], lessons = [] }, now = new Date(), timeZone) {
+    now = new Date(now);
+    const best = new Map();
+    const consider = (c, rank) => {
+      const days = c.slot === "exam" ? this.examDays : c.slot === "due" ? this.dueDays : this.classDays;
+      if (c.at > new Date(now.getTime() + days * 86_400_000)) return;
+      const b = best.get(c.slot);
+      if (b && (b.card.at < c.at || (+b.card.at === +c.at && b.rank <= rank))) return;
+      best.set(c.slot, { card: c, rank });
+    };
+    for (const m of materials) {
+      if (m.ready === false || m.hidden || m.deleted_at || !m.due_at) continue;
+      const at = new Date(m.due_at), { title, place } = this.split(m.due_title ?? SmartNames.tidy(m.title ?? ""));
+      const p = tzParts(at, timeZone), allDay = p.h === 0 && p.mi === 0;
+      if (this.end(at, allDay, 0, timeZone) <= now) continue;
+      consider({ slot: SmartNames.parse(title).kind === "exam" ? "exam" : "due", title, at, allDay, place, isNow: false, materialId: m.id }, m.pinned ? 1 : 2);
+    }
+    for (const e of events) {
+      const slot = { exam: "exam", deadline: "due", lecture: "class", tutorial: "class" }[e.kind];
+      if (!slot) continue;
+      const start = new Date(e.starts_at), length = e.ends_at ? new Date(e.ends_at) - start : slot === "class" ? this.classLength : 0;
+      const at = this.next(start, length, !!e.all_day, e.repeat_until, now, timeZone);
+      if (!at) continue;
+      consider({ slot, title: e.title, at, allDay: !!e.all_day, place: blank(e.location), isNow: slot === "class" && !e.all_day && at <= now, eventId: e.id }, 0);
+    }
+    for (const l of lessons) {
+      const start = new Date(l.starts_at), length = l.ends_at ? new Date(l.ends_at) - start : this.classLength;
+      const at = this.next(start, length, false, null, now, timeZone);
+      if (!at) continue;
+      const title = blank(l.title) ?? (l.number != null ? `Class ${l.number}` : "Class");
+      consider({ slot: "class", title, at, allDay: false, place: null, isNow: at <= now, lessonId: l.id }, 1);
+    }
+    return this.slots.map(s => best.get(s)?.card).filter(Boolean);
+  },
+  next(start, length, allDay, repeatUntil, now, tz) {
+    const last = repeatUntil ? (([y, m, d]) => zonedToUTC(y, m, d + 1, 0, 0, 0, tz))(String(repeatUntil).slice(0, 10).split("-").map(Number)) : null;
+    let d = start;
+    for (let i = 0; i < 400; i++) {
+      if (last && d >= last) return null;
+      if (this.end(d, allDay, length, tz) > now) return d;
+      if (!repeatUntil) return null;
+      d = addDaysIn(d, 7, tz);
+    }
+    return null;
+  },
+  end(d, allDay, length, tz) { return allDay ? startOfDayIn(d, tz, 1) : new Date(new Date(d).getTime() + Math.max(0, length)); },
+  /** "Exam · Room 204": what set_due saves (≤ 60, shared.sql due_title), and back. */
+  dueTitle(title, place) { return [...[title, blank(place)].filter(Boolean).join(" · ")].slice(0, 60).join(""); },
+  split(dueTitle) {
+    const t = String(dueTitle ?? "").trim(), i = t.indexOf(" · ");
+    if (i < 0) return { title: t || "Due", place: null };
+    return { title: t.slice(0, i).trim() || "Due", place: blank(t.slice(i + 3).trim()) };
+  },
+  label(slot, lang = "en") {
+    const he = lang === "he";
+    return slot === "exam" ? (he ? "המבחן הבא" : "Next exam") : slot === "due" ? (he ? "להגשה" : "Due") : (he ? "השיעור הבא" : "Next class");
+  },
+  /** "now" · "today" · "tomorrow" · "in 5 days" · "in 2 weeks". */
+  soon(c, now = new Date(), timeZone, lang = "en") {
+    const he = lang === "he", days = daysApart(now, c.at, timeZone);
+    if (c.isNow) return he ? "עכשיו" : "now";
+    if (days <= 0) return he ? "היום" : "today";
+    if (days === 1) return he ? "מחר" : "tomorrow";
+    if (days <= 13) return he ? (days === 2 ? "בעוד יומיים" : `בעוד ${days} ימים`) : `in ${days} days`;
+    const w = Math.floor(days / 7);
+    return he ? (w === 2 ? "בעוד שבועיים" : `בעוד ${w} שבועות`) : `in ${w} weeks`;
+  },
+  /** "Exam in 5 days" — the folio header's line. */
+  headline(c, now = new Date(), timeZone, lang = "en") { return `${c.title} ${this.soon(c, now, timeZone, lang)}`; },
+  /** Exam "Thu 12 Nov · 9:00 · Room 204" · Due "Homework 4 · Thu" · Class "Tue 10:00 · Room 204" / "Now · Room 118". */
+  line(c, now = new Date(), timeZone, lang = "en") {
+    const he = lang === "he", days = daysApart(now, c.at, timeZone), p = tzParts(c.at, timeZone);
+    const time = c.allDay ? null : `${p.h}:${String(p.mi).padStart(2, "0")}`;
+    const full = he ? `${HE_DAYS[p.wd]} ${p.d}/${p.m}` : `${EN_DAYS[p.wd]} ${p.d} ${EN_MONTHS[p.m - 1]}`;
+    const word = days <= 0 ? (he ? "היום" : "Today") : days === 1 ? (he ? "מחר" : "Tomorrow") : days <= 6 ? (he ? HE_DAYS : EN_DAYS)[p.wd]
+      : he ? `${p.d}/${p.m}` : `${p.d} ${EN_MONTHS[p.m - 1]}`;
+    const parts = c.slot === "exam" ? [full, time, c.place]
+      : c.slot === "due" ? [c.title, word + (days <= 0 && time ? ` ${time}` : ""), c.place]
+      : c.isNow ? [he ? "עכשיו" : "Now", c.place] : [[word, time].filter(Boolean).join(" "), c.place];
+    return parts.map(blank).filter(Boolean).join(" · ");
+  },
+  /** {lecturer, email, hours, links: [label]} from space_info rows; null when there's nothing. */
+  info(entries = []) {
+    const sorted = [...entries].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+    const people = sorted.filter(e => e.kind === "person"), who = people.find(e => e.role === "lecturer") ?? people[0];
+    const links = sorted.filter(e => e.kind === "link").map(e => blank(e.name) ?? (() => { try { return new URL(e.url).host; } catch { return null; } })()).filter(Boolean);
+    if (!who && !links.length) return null;
+    return { lecturer: blank(who?.name), email: blank(who?.email), hours: blank(who?.hours), links };
+  },
+});
+
+const N = {
+  due: String.raw`(?<![a-z])(due|deadline|submit|submission|hand in|turn in)(?![a-z])|(?<![א-ת])[והבל]{0,2}(הגשה|הגשת|להגיש)(?![א-ת])`,
+  exam: String.raw`(?<![a-z])(exams?|midterms?|final exam|finals|quiz|quizzes|test|moed)(?![a-z])|(?<![א-ת])[והבלמשכ]{0,2}(מבחן|מבחנים|בוחן|מועד)(?![א-ת])`,
+  homework: String.raw`(?<![a-z])(homework|hw|assignment|problem set|pset|essay|lab report)(?![a-z])|(?<![a-z])(exercise|ex|project)\s*#?\s*\d|(?<![א-ת])[והבלמשכ]{0,2}(תרגיל בית|מטלה|ש"ב|שיעורי בית)(?![א-ת])|(?<![א-ת])[והבלמשכ]{0,2}תרגיל\s*(?:מס['׳]?\s*)?\d`,
+  cue: String.raw`(?<![a-z])(by|until|before|no later than)(?![a-z])|(?<![א-ת])(עד|לא יאוחר)(?![א-ת])`,
+  month: String.raw`(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)`,
+};
+const EN_NAMES = { homework: "Homework", hw: "Homework", assignment: "Assignment", exercise: "Exercise", ex: "Exercise", "problem set": "Problem set",
+                   pset: "Problem set", project: "Project", essay: "Essay", "lab report": "Lab report", lab: "Lab" };
+const MONTH_KEYS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+const HE_MONTHS = { ינואר: 1, פברואר: 2, מרץ: 3, מרס: 3, אפריל: 4, מאי: 5, יוני: 6, יולי: 7, אוגוסט: 8, ספטמבר: 9, אוקטובר: 10, נובמבר: 11, דצמבר: 12 };
+const HE_WEEKDAYS = { ראשון: 0, א: 0, שני: 1, ב: 1, שלישי: 2, ג: 2, רביעי: 3, ד: 3, חמישי: 4, ה: 4, שישי: 5, ו: 5 };
+const EN_PLACES = { "lecture hall": "Lecture hall", room: "Room", rm: "Room", "rm.": "Room", hall: "Hall", auditorium: "Auditorium", aud: "Auditorium",
+                    "aud.": "Auditorium", classroom: "Classroom", building: "Building", bldg: "Building", "bldg.": "Building" };
+
+export const EssentialsNotice = Object.freeze({
+  maxText: 4000,
+  /** A material row: its note, file name and text read from the picture or PDF. Null when it already has a date. */
+  findIn(row, now = new Date(), timeZone) {
+    if (row.due_at) return null;
+    return this.find([row.body, row.ocr_text].filter(s => s != null).join("\n"), row.title ?? row.file_path?.split("/").pop() ?? null, now, timeZone);
+  },
+  /** {slot: "exam"|"due", title, at, allDay, place} — the soonest upcoming exam or deadline one sentence names with a date. */
+  find(text, title = null, now = new Date(), timeZone) {
+    now = new Date(now);
+    const raw = [...String(text ?? "")].slice(0, this.maxText).join("");
+    if (!raw) return null;
+    const pieces = raw.split(/\n+|[;!?]\s+|\.\s+(?=[A-Zא-ת])/).filter(Boolean).map(p => p.toLowerCase());
+    const titleKind = title != null ? SmartNames.parse(title).kind : null;
+    let found = null;
+    for (const p of pieces) { const s = this.suggestion(p, title, titleKind, now, timeZone); if (s && (!found || s.at < found.at)) found = s; }
+    return found;
+  },
+  suggestion(p, title, titleKind, now, tz) {
+    let slot;
+    if (rxHas(N.due, p)) slot = "due";
+    else if (rxHas(N.exam, p)) slot = "exam";
+    else if (rxHas(N.homework, p)) slot = "due";
+    else if ((titleKind === "exam" || titleKind === "homework") && rxHas(N.cue, p)) slot = titleKind === "exam" ? "exam" : "due";
+    else return null;
+    const day = this.date(p, now, tz);
+    if (!day) return null;
+    const time = this.clock(p), allDay = !time;
+    const at = zonedToUTC(day.y, day.m, day.d, time?.h ?? (slot === "due" ? 23 : 0), time?.m ?? (slot === "due" ? 59 : 0), 0, tz);
+    const ends = slot === "exam" && allDay ? addDaysIn(at, 1, tz) : at;
+    if (ends <= now || at > new Date(now.getTime() + 400 * 86_400_000)) return null;
+    const name = slot === "exam" ? this.examTitle(p, title) : this.dueTitle(p, title, titleKind);
+    return { slot, title: name, at, allDay, place: this.place(p) };
+  },
+  examTitle(p, title) {
+    if (rxHas(String.raw`(?<![a-z])midterms?(?![a-z])`, p)) return "Midterm";
+    if (rxHas(String.raw`(?<![a-z])(final exam|finals)(?![a-z])`, p)) return "Final exam";
+    const q = rxFirst(String.raw`(?<![a-z])quiz\s*#?\s*0*(\d{1,2})(?!\d)`, p);
+    if (q) return `Quiz ${q.groups[1]}`;
+    if (rxHas(String.raw`(?<![a-z])quiz(?![a-z])`, p)) return "Quiz";
+    if (p.includes("בוחן")) return "בוחן";
+    if (/[א-ת]/.test(p)) return "מבחן";
+    if (!rxHas(N.exam, p) && title != null) return SmartNames.tidy(title);
+    return "Exam";
+  },
+  dueTitle(p, title, titleKind) {
+    let g = rxFirst(String.raw`(?<![a-z])(homework|hw|assignment|exercise|problem set|pset|project|essay|lab report|lab|ex)\s*#?\s*0*(\d{1,2})(?!\d)`, p);
+    if (g) return `${EN_NAMES[g.groups[1]]} ${g.groups[2]}`;
+    g = rxFirst(String.raw`(?<![א-ת])[והבלמשכ]?(תרגיל בית|תרגיל|מטלה|ש"ב|שיעורי בית)(?:\s*(?:מס['׳]?\s*|#)?0*(\d{1,2})(?!\d))?`, p);
+    if (g) return [g.groups[1] === 'ש"ב' ? "שיעורי בית" : g.groups[1], g.groups[2]].filter(Boolean).join(" ");
+    g = rxFirst(String.raw`(?<![a-z])(homework|hw|assignment|project|essay|lab report|problem set)(?![a-z])`, p);
+    if (g) return EN_NAMES[g.groups[1]];
+    if (titleKind === "homework" && title != null) return SmartNames.tidy(title);
+    return /[א-ת]/.test(p) ? "הגשה" : "Due";
+  },
+  /** A written or numeric date first (12/11 = 12 Nov unless that can't be), then a weekday, then today/tomorrow. A date
+   *  already past (up to 60 days back) means nothing to add; further back is next year's. */
+  date(p, now, tz) {
+    const explicit = [], year = s => (s == null ? null : +s < 100 ? 2000 + +s : +s);
+    for (const g of rxAll(String.raw`(?<!\d)(\d{1,2})(?:st|nd|rd|th)?(?:\s+of)?\s+` + N.month + String.raw`\.?(?:,?\s+(\d{4}))?(?![a-z])`, p))
+      explicit.push({ at: g.at, y: year(g.groups[3]), m: MONTH_KEYS.indexOf(g.groups[2].slice(0, 3)) + 1, d: +g.groups[1] });
+    for (const g of rxAll(String.raw`(?<![a-z])` + N.month + String.raw`\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?![\d:])(?:,?\s+(\d{4})(?!\d))?`, p))
+      explicit.push({ at: g.at, y: year(g.groups[3]), m: MONTH_KEYS.indexOf(g.groups[1].slice(0, 3)) + 1, d: +g.groups[2] });
+    for (const g of rxAll(String.raw`(?<!\d)(\d{1,2})\s*[בל]?-?\s*(ינואר|פברואר|מרץ|מרס|אפריל|מאי|יוני|יולי|אוגוסט|ספטמבר|אוקטובר|נובמבר|דצמבר)(?:\s+(\d{4}))?`, p))
+      explicit.push({ at: g.at, y: year(g.groups[3]), m: HE_MONTHS[g.groups[2]], d: +g.groups[1] });
+    for (const pattern of [String.raw`(?<![\d/.:])(\d{1,2})/(\d{1,2})(?:/(\d{4}|\d{2}))?(?!/?\d)`,
+                           String.raw`(?<![\d.:])(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})(?!\d)`,
+                           String.raw`(?:^|:\s*|(?<![a-z])(?:on|by|until|due|date|before|sun|mon|tue|wed|thu|fri|sat)[a-z]*\.?,?\s+|(?<![א-ת])(?:ב|עד|ל|ה|בתאריך)\s?-?\s?|['׳]\s+)(\d{1,2})\.(\d{1,2})(?!\.?\d)`]) {
+      for (const g of rxAll(pattern, p)) {
+        const a = +g.groups[1], b = +g.groups[2], [d, m] = b > 12 && a <= 12 ? [b, a] : [a, b];
+        explicit.push({ at: g.at, y: g.groups.length > 3 ? year(g.groups[3]) : null, m, d });
+      }
+    }
+    const today = tzParts(now, tz);
+    const valid = (y, m, d) => m >= 1 && m <= 12 && d >= 1 && d <= new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const e = explicit.sort((a, b) => a.at - b.at).find(x => valid(x.y ?? today.y, x.m, x.d));
+    if (e) {
+      if (e.y != null) return { y: e.y, m: e.m, d: e.d };
+      const ahead = dayNo(today.y, e.m, e.d) - dayNo(today.y, today.m, today.d);
+      if (ahead >= 0) return { y: today.y, m: e.m, d: e.d };
+      return ahead < -60 && valid(today.y + 1, e.m, e.d) ? { y: today.y + 1, m: e.m, d: e.d } : null;
+    }
+    const shifted = n => { const x = new Date(Date.UTC(today.y, today.m - 1, today.d + n)); return { y: x.getUTCFullYear(), m: x.getUTCMonth() + 1, d: x.getUTCDate() }; };
+    const weekdays = [
+      ...rxAll(String.raw`(?<![a-z])(sunday|monday|tuesday|wednesday|thursday|friday|saturday|sun|mon|tues|tue|wed|thurs|thur|thu|fri)(?![a-z])`, p)
+        .map(g => ({ at: g.at, wd: ["sun", "mon", "tue", "wed", "thu", "fri", "sat"].indexOf(g.groups[1].slice(0, 3)) })),
+      ...rxAll(String.raw`(?<![א-ת])[בל]?יום\s+(ראשון|שני|שלישי|רביעי|חמישי|שישי|א|ב|ג|ד|ה|ו)(?![א-ת])`, p).map(g => ({ at: g.at, wd: HE_WEEKDAYS[g.groups[1]] })),
+    ].sort((a, b) => a.at - b.at);
+    if (weekdays.length) { const ahead = (weekdays[0].wd - today.wd + 7) % 7; return shifted(ahead === 0 ? 7 : ahead); }
+    const rel = [...rxAll(String.raw`(?<![a-z])(today|tonight|tomorrow)(?![a-z])`, p), ...rxAll(String.raw`(?<![א-ת])[ול]?(היום|מחרתיים|מחר)(?![א-ת])`, p)].sort((a, b) => a.at - b.at);
+    if (rel.length) return shifted({ today: 0, tonight: 0, tomorrow: 1, היום: 0, מחר: 1, מחרתיים: 2 }[rel[0].groups[1]]);
+    return null;
+  },
+  /** "9:00", "2pm", "at 9", "בשעה 10", "noon"; the first one wins. A bare "at 2" / "בשעה 2" is the afternoon. */
+  clock(p) {
+    const found = [];
+    const ampm = (h, s) => (s == null ? h : s.startsWith("p") ? (h < 12 ? h + 12 : h) : h === 12 ? 0 : h);
+    const afternoon = h => (h >= 1 && h <= 6 ? h + 12 : h >= 7 && h <= 23 ? h : null);
+    for (const g of rxAll(String.raw`(?<![\d:./])([01]?\d|2[0-3]):([0-5]\d)(?!\d)(?:\s*(am|pm|a\.m\.|p\.m\.))?`, p)) found.push({ at: g.at, h: ampm(+g.groups[1], g.groups[3]), m: +g.groups[2] });
+    for (const g of rxAll(String.raw`(?<![\d:./])(1[0-2]|0?[1-9])\s*(am|pm|a\.m\.|p\.m\.)(?![a-z])`, p)) found.push({ at: g.at, h: ampm(+g.groups[1], g.groups[2]), m: 0 });
+    for (const g of rxAll(String.raw`(?<![a-z])at\s+(\d{1,2})(?![\d:./])`, p)) { const h = afternoon(+g.groups[1]); if (h != null) found.push({ at: g.at, h, m: 0 }); }
+    for (const g of rxAll(String.raw`בשעה\s*(\d{1,2})(?::([0-5]\d))?(?!\d)`, p)) { const h = afternoon(+g.groups[1]); if (h != null) found.push({ at: g.at, h, m: g.groups[2] != null ? +g.groups[2] : 0 }); }
+    for (const g of rxAll(String.raw`(?<![a-z])noon(?![a-z])`, p)) found.push({ at: g.at, h: 12, m: 0 });
+    found.sort((a, b) => a.at - b.at);
+    return found.length ? { h: found[0].h, m: found[0].m } : null;
+  },
+  /** "Room 204", "Building 32, Room 101", "חדר 118", else Zoom / Moodle / Online. */
+  place(p) {
+    const places = [
+      ...rxAll(String.raw`(?<![a-z])(lecture hall|room|rm\.?|hall|auditorium|aud\.?|classroom|building|bldg\.?)\s*#?\s*([a-z]?\d{1,4}[a-z]?(?:[-/]\d{1,4})?)(?!\d)`, p)
+        .map(g => ({ at: g.at, label: `${EN_PLACES[g.groups[1]]} ${g.groups[2].toUpperCase()}` })),
+      ...rxAll(String.raw`(?<![א-ת])[בל]?(חדר|כיתה|אולם|בניין|בנין)\s*(?:מס['׳]?\s*)?(\d{1,4}(?:[-/]\d{1,4})?)(?!\d)`, p)
+        .map(g => ({ at: g.at, label: `${g.groups[1] === "בנין" ? "בניין" : g.groups[1]} ${g.groups[2]}` })),
+    ].sort((a, b) => a.at - b.at);
+    const building = s => s.startsWith("Building") || s.startsWith("בניין");
+    const joined = [places.find(x => building(x.label))?.label, places.find(x => !building(x.label))?.label].filter(Boolean);
+    if (joined.length) return joined.join(", ");
+    if (rxHas(String.raw`(?<![a-z])zoom(?![a-z])|(?<![א-ת])בזום(?![א-ת])`, p)) return "Zoom";
+    if (rxHas(String.raw`(?<![a-z])moodle(?![a-z])|(?<![א-ת])[בל]?מודל(?![א-ת])`, p)) return "Moodle";
+    if (rxHas(String.raw`(?<![a-z])online(?![a-z])|אונליין|מקוון`, p)) return "Online";
+    return null;
+  },
+});
