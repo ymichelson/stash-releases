@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>People Near You · Stash</title>
+<meta name="description" content="Nearby sharing for the class hub — prototype. Browser to browser over WebRTC; a stub server only introduces you.">
+<meta name="robots" content="noindex">
+<style>
+/* Nearby sharing — PROTOTYPE (docs/shared/NEARBY.md). Paper Folios tokens + hub-design's rules (HUB-DESIGN.md):
+   looking = thin SKY rings (`.nearby-anim`, same as the hub's Bring someone in → Nearby tile; voice auras stay on the
+   notch); progress is INK; no toast stack — the receiver gets one panel. */
+:root{
+  --paper:#F6F3EC; --sheet:#FFFEFB; --sheet-hover:#FFFFFF; --well:#EDE9E1; --ink:#202427; --ink-2:#646A73;
+  --hair:rgba(32,36,39,.09); --hair-2:rgba(32,36,39,.16);
+  --sky:#82AAF1; --focus:#345EA0; --ease-out:cubic-bezier(.23,1,.32,1);
+  --btn:#202427; --btn-fg:#FFFFFF; --btn-hover:#30353A;
+  --sheet-shadow:0 1px 3px rgba(0,0,0,.06); --lift-shadow:0 3px 8px rgba(0,0,0,.09);
+  --float-shadow:0 10px 30px rgba(40,32,20,.14), 0 1px 3px rgba(0,0,0,.08);
+  --text:-apple-system,"SF Pro Text",BlinkMacSystemFont,system-ui,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --display:-apple-system,"SF Pro Display",BlinkMacSystemFont,system-ui,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --spring:cubic-bezier(.22,1,.36,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#211E19; --sheet:#302B25; --sheet-hover:#36312A; --well:#2A2621; --ink:#EFEAE1; --ink-2:#B5AC9E;
+    --hair:rgba(239,234,225,.10); --hair-2:rgba(239,234,225,.18); --sky:#6584B8; --focus:#82AAF1;
+    --btn:#EFEAE1; --btn-fg:#211E19; --btn-hover:#FFFFFF;
+    --sheet-shadow:0 1px 2px rgba(0,0,0,.30); --lift-shadow:0 3px 8px rgba(0,0,0,.4);
+    --float-shadow:0 12px 32px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.3);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#211E19; --sheet:#302B25; --sheet-hover:#36312A; --well:#2A2621; --ink:#EFEAE1; --ink-2:#B5AC9E;
+  --hair:rgba(239,234,225,.10); --hair-2:rgba(239,234,225,.18); --sky:#6584B8; --focus:#82AAF1;
+  --btn:#EFEAE1; --btn-fg:#211E19; --btn-hover:#FFFFFF; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.45 var(--text);letter-spacing:-.006em;
+  -webkit-font-smoothing:antialiased;overflow-x:clip;padding-bottom:calc(120px + env(safe-area-inset-bottom))}
+h1,h2,p{margin:0}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:12px}
+[hidden]{display:none !important}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
+@media (min-width:700px){ .wrap{padding:0 28px} }
+
+header{padding-top:env(safe-area-inset-top);border-bottom:1px solid var(--hair)}
+.top{display:flex;align-items:center;gap:12px;padding:14px 0 14px}
+.mark{width:22px;height:auto;fill:var(--ink);flex:none}
+.title{flex:1;min-width:0}
+h1{font:500 22px/1.2 var(--display);letter-spacing:-.015em}
+.sub{font-size:13px;color:var(--ink-2)}
+.back{font-size:14px;color:var(--ink-2);text-decoration:none;padding:8px;border-radius:8px}
+@media (hover:hover){ .back:hover{color:var(--ink);background:var(--well)} }
+
+/* What a tap sends */
+.what{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;background:var(--well);border-radius:10px;padding:3px;box-shadow:inset 0 0 0 1px var(--hair)}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:8px;font-size:14px;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--sheet);color:var(--ink);font-weight:500;box-shadow:0 0 0 1px var(--hair),var(--sheet-shadow)}
+.field{width:100%;margin-top:10px;border:0;border-radius:10px;background:var(--sheet);padding:12px 14px;font-size:16px;
+  box-shadow:0 0 0 1px var(--hair),var(--sheet-shadow);min-height:64px;resize:vertical}
+.filebox{margin-top:10px;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:var(--sheet);
+  box-shadow:0 0 0 1px var(--hair),var(--sheet-shadow);font-size:14px}
+.filebox b{font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.textbtn{border:0;background:none;padding:6px 4px;color:var(--ink);font-weight:500;text-decoration:underline;text-decoration-color:var(--hair-2);
+  text-underline-offset:3px;border-radius:6px;white-space:nowrap}
+
+/* People */
+.people{margin-top:26px;display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:18px 10px;min-height:180px}
+.person{border:0;background:none;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:6px;border-radius:14px;
+  animation:pop .42s var(--spring) both}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.disc{position:relative;width:56px;height:56px;border-radius:50%;background:var(--well);display:grid;place-items:center;
+  font:500 20px/1 var(--display);color:var(--ink);box-shadow:inset 0 0 0 1px var(--hair);transition:transform .14s ease-out}
+@media (hover:hover){ .person:hover .disc{transform:scale(1.04)} }
+.person:active .disc{transform:scale(.96)}
+.disc svg.ring{position:absolute;inset:-4px;width:64px;height:64px;transform:rotate(-90deg)}
+.disc circle{fill:none;stroke-width:2}
+.disc .track{stroke:var(--hair)}
+.disc .bar{stroke:var(--ink);stroke-linecap:round;transition:stroke-dashoffset .2s linear}
+.disc .check{position:absolute;inset:0;display:grid;place-items:center;background:var(--ink);color:var(--paper);border-radius:50%}
+.disc.fading .check,.disc.fading svg.ring{opacity:0;transition:opacity .4s ease-out}
+.person b{font:500 12px/1.2 var(--text);max-width:88px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.person small{font-size:12px;line-height:1.3;color:var(--ink-2);margin-top:-4px;max-width:112px;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.looking{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px 0;text-align:center}
+/* Same as site/hub's Bring someone in → Nearby tile. */
+.nearby-anim{position:relative;width:84px;height:84px;margin:4px auto 10px}
+.nearby-anim span{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--sky);opacity:0;animation:ring 2.4s var(--ease-out) infinite}
+.nearby-anim span:nth-child(2){animation-delay:.8s} .nearby-anim span:nth-child(3){animation-delay:1.6s}
+.nearby-anim i{position:absolute;inset:30px;border-radius:50%;background:var(--ink)}
+@keyframes ring{from{transform:scale(.4);opacity:.9}to{transform:scale(1);opacity:0}}
+@media (prefers-reduced-motion: reduce){
+  .nearby-anim span{animation:none;opacity:.5}
+  .nearby-anim span:nth-child(1){transform:scale(.6)} .nearby-anim span:nth-child(2){transform:scale(.8)} .nearby-anim span:nth-child(3){transform:scale(1)}
+  .person{animation:none}
+}
+.looking p{color:var(--ink-2);font-size:14px;max-width:320px}
+
+/* Bottom: who can see me */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--sheet);border-top:1px solid var(--hair);
+  padding:12px 0 calc(12px + env(safe-area-inset-bottom))}
+.dock .wrap{display:flex;align-items:center;gap:12px}
+.dock .grow{flex:1;min-width:0}
+.dock b{font-weight:500;font-size:14px;display:block}
+.dock small{font-size:13px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.dock small{display:block}
+.dock .btn.stop{flex:none;min-width:110px}
+.soundline{margin-top:22px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
+/* Static: the ticking "0:48" already says the mic is live. */
+.soundline .dot{width:8px;height:8px;border-radius:50%;background:var(--sky)}
+.soundline b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.textbtn.quiet{color:var(--ink-2);font-weight:400}
+.room{font-size:13px;color:var(--ink-2);margin-top:22px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.room input{width:84px;border:0;border-radius:8px;background:var(--well);padding:6px 10px;font:500 15px/1 var(--text);letter-spacing:.12em;
+  text-align:center;box-shadow:inset 0 0 0 1px var(--hair)}
+
+/* Asking card (receiver) and toasts */
+.scrim{position:fixed;inset:0;z-index:20;background:rgba(20,16,10,.28);display:flex;align-items:flex-end;justify-content:center;animation:fade .16s ease-out both}
+@media (min-width:700px){ .scrim{align-items:center} }
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.panel{width:100%;max-width:440px;background:var(--sheet);border-radius:20px 20px 0 0;padding:22px 20px calc(20px + env(safe-area-inset-bottom));
+  box-shadow:var(--float-shadow);animation:up .38s var(--spring) both}
+@media (min-width:700px){ .panel{border-radius:20px;padding:26px 28px 24px} }
+@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){ .panel{animation:fade .15s ease-out both} }
+.panel h2{font:500 20px/1.28 var(--display);letter-spacing:-.012em}
+.panel .meta{margin-top:4px;font-size:14px;color:var(--ink-2)}
+.mini{margin-top:14px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;width:120px;height:130px;padding:10px;
+  background:var(--sheet);border-radius:12px;box-shadow:0 0 0 1px var(--hair),var(--lift-shadow);
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)}
+.mini::before{content:"";position:absolute;top:0;right:0;width:14px;height:14px;background:var(--well);clip-path:polygon(0 0,100% 100%,0 100%)}
+.mini b{font-weight:500;font-size:13px;line-height:1.25;word-break:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.mini small{font:500 12px/1.3 var(--text);color:var(--ink-2)}
+.preview{margin-top:14px;border-radius:12px;background:var(--paper);box-shadow:0 0 0 1px var(--hair);padding:12px 14px;font-size:15px;
+  white-space:pre-wrap;word-break:break-word;max-height:30dvh;overflow:auto}
+.code{margin-top:16px;font-size:13px;color:var(--ink-2)}
+.code b{display:block;margin-top:2px;font:500 22px/1.2 var(--display);font-variant-numeric:tabular-nums;color:var(--ink);letter-spacing:.02em}
+.acts{display:flex;gap:10px;margin-top:18px}
+.btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;border:0;border-radius:12px;
+  background:var(--btn);color:var(--btn-fg);font:500 15px/1 var(--text);transition:background-color .12s ease-out,transform .1s ease-out;text-decoration:none}
+@media (hover:hover){ .btn:hover{background:var(--btn-hover)} }
+.btn:active{transform:scale(.97)}
+.btn.secondary{background:var(--sheet);color:var(--ink);box-shadow:0 0 0 1px var(--hair-2)}
+.toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));z-index:30;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);
+  background:var(--sheet);border-radius:10px;box-shadow:0 0 0 1px var(--hair),var(--float-shadow);padding:10px 14px;font-size:14px;
+  animation:drop .42s var(--spring) both}
+@keyframes drop{from{opacity:0;translate:0 -8px}to{opacity:1;translate:0 0}}
+.got{margin-top:28px}
+.got h2{font:500 15px/1.3 var(--text);margin-bottom:10px}
+.item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--sheet);box-shadow:0 0 0 1px var(--hair),var(--sheet-shadow);
+  margin-bottom:8px;animation:pop .42s var(--spring) both}
+.item .t{flex:1;min-width:0}
+.item .t b{display:block;font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .t small{font-size:12px;color:var(--ink-2)}
+footer{padding:30px 0 0;font-size:13px;color:var(--ink-2)}
+footer code{font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap top">
+    <svg class="mark" viewBox="0 0 160 112" aria-hidden="true"><path d="M12 94 C7 92 7 87 11 82 C28 61 42 42 60 45 C76 47 76 69 87 70 C105 73 119 51 125 17 C126 9 134 5 140 8 C147 11 149 16 147 23 C139 62 122 95 98 96 C76 100 67 83 63 72 C60 64 57 62 51 64 C39 69 28 82 20 92 C17 96 14 96 12 94 Z"/></svg>
+    <div class="title">
+      <h1>People near you</h1>
+      <p class="sub" id="sub">Tap someone to send. They choose whether to take it.</p>
+    </div>
+    <a class="back" href="../">CS Year 2</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="what" role="group" aria-label="What to send">
+    <div class="seg" id="seg">
+      <button data-kind="text" aria-pressed="true">Text</button>
+      <button data-kind="file" aria-pressed="false">File</button>
+      <button data-kind="invite" aria-pressed="false">Invite to class</button>
+    </div>
+  </div>
+  <textarea class="field" id="text" placeholder="Type or paste something to send" aria-label="Text to send">Question 4 is on page 212</textarea>
+  <div class="filebox" id="filebox" hidden><b id="fileName">No file chosen</b><button class="textbtn" id="chooseFile">Choose…</button></div>
+  <div class="filebox" id="invitebox" hidden><b>CS Year 2 · code K7Q‑4MZ</b><span class="sub">They get “Join CS Year 2?”</span></div>
+  <input type="file" id="filePick" hidden>
+
+  <div class="people" id="people" aria-live="polite"></div>
+
+  <section class="got" id="got" hidden><h2>Received</h2><div id="gotList"></div></section>
+
+  <p class="soundline" id="soundLine"><button class="textbtn" id="soundBtn">Find people in this room by sound</button></p>
+  <script src="sound.js"></script>
+
+  <p class="room">Not seeing them? Both type the same room code:
+    <input id="roomCode" inputmode="numeric" maxlength="4" placeholder="1234" aria-label="Room code">
+    <button class="textbtn" id="roomGo">Join room</button>
+    <span id="roomNow"></span>
+  </p>
+
+  <footer>
+    <p>Prototype. A stub server (or, with no server, this browser’s other tabs) only introduces you; what you send goes
+    browser to browser, encrypted by WebRTC. Nothing is kept.</p>
+    <p style="margin-top:6px" id="mode"></p>
+  </footer>
+</main>
+
+<div class="dock">
+  <div class="wrap">
+    <div class="grow">
+      <b id="visTitle">Let people near you find me</b>
+      <small id="visLine">For 10 minutes, then hidden again</small>
+    </div>
+    <button class="btn stop" id="visible">Turn on</button>
+  </div>
+</div>
+
+<div id="layer"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = s => document.querySelector(s);
+  const params = new URLSearchParams(location.search);
+  const VISIBLE_FOR = 10 * 60e3, ROTATE = 15 * 60e3, CHUNK = 64 * 1024, MAX_FILE = 50e6, MAX_TEXT = 1e6;
+  const names = ["Dana", "Omer", "Noa", "Yael", "Ariel", "Tamar", "Itai", "Maya"];
+  const myName = (params.get("name") || sessionStorage.getItem("nearby.name") || names[Math.floor(Math.random() * names.length)]).slice(0, 24);
+  try { sessionStorage.setItem("nearby.name", myName) } catch {}
+  const forceRelay = params.get("relay") === "1";
+
+  // ---------- small helpers ----------
+  const randomID = () => { const a = "abcdefghjkmnpqrstuvwxyz23456789", r = crypto.getRandomValues(new Uint8Array(10)); return [...r].map(x => a[x % a.length]).join("") };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const cleanName = s => (String(s || "").replace(/[\u0000-\u001f‎‏‪-‮⁦-⁩]/g, " ").replace(/\s+/g, " ").trim().slice(0, 24)) || "Someone";
+  const initials = n => n.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase();
+  const bytes = n => n < 1024 ? n + " bytes" : n < 1048576 ? (n / 1024).toFixed(0) + " KB" : (n / 1048576).toFixed(1) + " MB";
+  function toast(text) {
+    const t = document.createElement("div"); t.className = "toast"; t.textContent = text;
+    document.body.append(t); setTimeout(() => t.remove(), 2600);
+  }
+  // SHA-256 (crypto.subtle is missing on plain-http LAN pages, so a small one is inlined).
+  function sha256(bytesIn) {
+    const K = new Uint32Array([0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+    const H = new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    const l = bytesIn.length, padded = new Uint8Array(((l + 9 + 63) >> 6) << 6);
+    padded.set(bytesIn); padded[l] = 0x80;
+    const dv = new DataView(padded.buffer); dv.setUint32(padded.length - 4, l * 8); dv.setUint32(padded.length - 8, Math.floor(l / 2 ** 29));
+    const W = new Uint32Array(64), r = (x, n) => (x >>> n) | (x << (32 - n));
+    for (let o = 0; o < padded.length; o += 64) {
+      for (let i = 0; i < 16; i++) W[i] = dv.getUint32(o + i * 4);
+      for (let i = 16; i < 64; i++) W[i] = (W[i-16] + (r(W[i-15],7) ^ r(W[i-15],18) ^ (W[i-15] >>> 3)) + W[i-7] + (r(W[i-2],17) ^ r(W[i-2],19) ^ (W[i-2] >>> 10))) >>> 0;
+      let [a, b, c, d, e, f, g, h] = H;
+      for (let i = 0; i < 64; i++) {
+        const t1 = (h + (r(e,6) ^ r(e,11) ^ r(e,25)) + ((e & f) ^ (~e & g)) + K[i] + W[i]) >>> 0;
+        const t2 = ((r(a,2) ^ r(a,13) ^ r(a,22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+        h = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+      }
+      H[0] += a; H[1] += b; H[2] += c; H[3] += d; H[4] += e; H[5] += f; H[6] += g; H[7] += h;
+    }
+    return [...H].map(x => x.toString(16).padStart(8, "0")).join("");
+  }
+  const utf8 = s => new TextEncoder().encode(s);
+  // Check code: both sides hash the two DTLS fingerprints from the SDP, so a signalling server that swapped keys
+  // (a middleman) shows different codes on the two screens.
+  function checkCode(localSdp, remoteSdp) {
+    const fp = sdp => ((sdp || "").match(/a=fingerprint:\S+ (\S+)/) || [])[1] || "";
+    const pair = [fp(localSdp), fp(remoteSdp)].sort().join("|");
+    const n = parseInt(sha256(utf8("stash-nearby-v1|" + pair)).slice(0, 8), 16) % 1e6;
+    const d = String(n).padStart(6, "0"); return d.slice(0, 3) + " " + d.slice(3);
+  }
+
+  // ---------- identity + visibility (rotating ID, 10 minutes) ----------
+  let me = { id: randomID(), born: Date.now() };
+  let visibleUntil = 0;
+  const startedAt = Date.now();
+  const isVisible = () => Date.now() < visibleUntil;
+
+  // ---------- signalling: stub server (SSE + POST) or, with no server, BroadcastChannel between tabs ----------
+  let room = "auto", signal = null;
+  async function connectSignal() {
+    signal?.close?.();
+    let server = false;
+    if (location.protocol.startsWith("http")) { try { server = (await fetch("/nearby-api/ping", { cache: "no-store" })).ok } catch {} }
+    if (server) {
+      const es = new EventSource(`/nearby-api/events?id=${me.id}&room=${encodeURIComponent(room)}`);
+      es.onmessage = e => { const { from, msg } = JSON.parse(e.data); onSignal(from, msg) };
+      signal = {
+        kind: "stub server",
+        send: (msg, to) => fetch("/nearby-api/send", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ room, from: me.id, to, msg }) }).catch(() => {}),
+        close: () => es.close(),
+      };
+      await new Promise(r => es.onopen = r);
+    } else {
+      const bc = new BroadcastChannel("stash-nearby:" + room);
+      bc.onmessage = e => { const { from, to, msg } = e.data; if (from !== me.id && (!to || to === me.id)) onSignal(from, msg) };
+      signal = { kind: "this browser’s tabs (no server)", send: (msg, to) => bc.postMessage({ from: me.id, to, msg }), close: () => bc.close() };
+    }
+    $("#mode").textContent = `Introduced by: ${signal.kind} · room ${room === "auto" ? "same network" : room.startsWith("sound:") ? "found by sound " + room.slice(6) : room.slice(5)} · you are ${myName}`;
+    announce();
+  }
+  // While sharing a course invite, the hello says which (nearby.js shows "Algorithms is nearby · Dana is sharing it").
+  const announce = to => signal?.send({ type: "hello", name: myName, platform: "web", visible: isVisible(), reply: !to,
+    sharing: kind === "invite" && isVisible() && Date.now() < codeExpires ? { course, code } : undefined }, to);
+
+  // ---------- people ----------
+  const peers = new Map(); // id → { name, platform, visible, seen }
+  const status = new Map(); // id → { text, progress, sent }
+  function onSignal(from, msg) {
+    if (!/^[a-z0-9]{10}$/.test(from) && from !== "server") return;
+    switch (msg.type) {
+      case "room": break;
+      case "hello":
+        peers.set(from, { name: cleanName(msg.name), platform: msg.platform === "mac" ? "mac" : "web", visible: !!msg.visible, seen: Date.now() });
+        if (msg.reply) announce(from);
+        render(); break;
+      case "bye": peers.delete(from); render(); break;
+      case "sdp": case "ice": rtcSignal(from, msg); break;
+      case "relay": relayIn(from, msg); break;
+    }
+  }
+  setInterval(() => {
+    if (Date.now() - me.born > ROTATE) { signal?.send({ type: "bye" }); me = { id: randomID(), born: Date.now() }; connectSignal() }
+    else announce();
+    for (const [id, p] of peers) if (Date.now() - p.seen > 15000) peers.delete(id);
+    if (visibleUntil && !isVisible()) { visibleUntil = 0; announce() }
+    render(); renderVisibility();
+  }, 5000);
+
+  function render() {
+    const list = [...peers.entries()].filter(([, p]) => p.visible);
+    const el = $("#people");
+    if (!list.length) {
+      if (!el.querySelector(".looking")) el.innerHTML = `<div class="looking"><div class="nearby-anim" aria-hidden="true"><span></span><span></span><span></span><i></i></div><p></p></div>`;
+      el.querySelector(".looking p").textContent = Date.now() - startedAt < 4000 ? "Looking for people near you…" : "Nobody near you yet — they need the hub open on their phone or laptop";
+      return;
+    }
+    el.querySelector(".looking")?.remove();
+    for (const node of [...el.children]) if (!peers.get(node.dataset.id)?.visible) node.remove();
+    for (const [id, p] of list) {
+      let node = el.querySelector(`[data-id="${id}"]`);
+      if (!node) {
+        node = document.createElement("button"); node.className = "person"; node.dataset.id = id;
+        node.addEventListener("click", () => sendTo(id));
+        el.append(node);
+      }
+      const s = status.get(id) || {};
+      const C = 2 * Math.PI * 31, off = C * (1 - (s.progress || 0));
+      const ring = s.progress == null ? "" : `<svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="track" cx="32" cy="32" r="31"/>
+          <circle class="bar" cx="32" cy="32" r="31" stroke-dasharray="${C}" stroke-dashoffset="${off}"/></svg>`;
+      const check = s.sent ? `<span class="check" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4.5 10.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>` : "";
+      node.setAttribute("aria-label", `Send to ${p.name}`);
+      node.innerHTML = `<span class="disc${s.fading ? " fading" : ""}">${esc(initials(p.name))}${ring}${check}</span>
+        <b>${esc(p.name)}</b><small>${esc(s.text || "")}</small>`;
+    }
+  }
+  function setStatus(id, s) { status.set(id, { ...(status.get(id) || {}), ...s }); render() }
+
+  // ---------- visibility ----------
+  $("#visible").addEventListener("click", () => { visibleUntil = isVisible() ? 0 : Date.now() + VISIBLE_FOR; announce(); renderVisibility() });
+  function renderVisibility() {
+    const on = isVisible(), left = Math.max(0, visibleUntil - Date.now());
+    $("#visible").textContent = on ? "Stop" : "Turn on";
+    $("#visible").className = on ? "btn secondary stop" : "btn stop";
+    const clock = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, "0")}`;
+    // Final words: HUB-DESIGN.md §4.8.
+    $("#visTitle").textContent = on && kind === "invite" ? `Sharing ${course} nearby · ${clock} left` : "Let people near you find me";
+    $("#visLine").textContent = on ? (kind === "invite" ? "Then hidden again" : `Visible for ${clock}, then hidden again`) : "For 10 minutes, then hidden again";
+  }
+  setInterval(renderVisibility, 1000);
+
+  // ---------- what to send ----------
+  // Hooks for the hub (HUB-DESIGN.md): nearby/?invite=K7Q4MZ&course=Algorithms (Bring someone in → Nearby) and
+  // nearby/?material=Lecture%203.pdf&url=… (a material's "Send to someone nearby"). Either one locks what's sent:
+  // nearby shares a course invite or one material, never the clipboard.
+  // `invite` must be a NEARBY code from `nearby_invite(s)` (15 minutes, ≤ 60 joins; THREAT-MODEL.md), never the
+  // course's main code: the hello carries it in the clear to everyone in range. `&expires=<ms since 1970>` (the
+  // code's end) stops sharing it then, even if the 10 minutes aren't over.
+  const code = (params.get("invite") || "K7Q4MZ").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+  const codeExpires = Number(params.get("expires")) || Infinity;
+  const course = cleanName(params.get("course") || "CS Year 2");
+  const material = params.get("material") ? String(params.get("material")).slice(0, 200) : null;
+  // QA-09: only the course's own files — this site, or a signed Storage link of our Supabase project — never any
+  // address someone put in a link, and never with cookies.
+  const materialURL = (() => {
+    try {
+      const u = new URL(params.get("url") || "", location.href);
+      const ours = u.origin === location.origin
+        || (u.protocol === "https:" && u.hostname === "gvxouyoucqojpghqzuks.supabase.co" && u.pathname.startsWith("/storage/v1/object/sign/"));
+      return ours ? u.href : "";
+    } catch { return "" }
+  })();
+  let kind = params.get("invite") ? "invite" : material ? "material" : "text", file = null;
+  $("#invitebox b").textContent = `${course} · code ${code.slice(0, 3)}\u2011${code.slice(3)}`;
+  $("#invitebox .sub").textContent = `They get “Join ${course}?”`;
+  if (kind !== "text") {
+    $("#seg").parentElement.hidden = true; $("#text").hidden = true;
+    if (kind === "invite") $("#invitebox").hidden = false;
+    else { $("#filebox").hidden = false; $("#fileName").textContent = material; $("#chooseFile").hidden = true }
+    // No separate room code from the hub: the fallback is the course code itself (or the course page for a material).
+    $(".room").textContent = kind === "invite" ? `Not seeing them? Read out the code: ${code.slice(0, 3)}\u2011${code.slice(3)}` : "Not seeing them? They’ll find it in the course too.";
+    $("#sub").textContent = kind === "invite" ? `Tap someone to invite them to ${course}.` : "Tap someone to send. They choose whether to take it.";
+  }
+  $("#seg").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    kind = b.dataset.kind;
+    for (const x of $("#seg").children) x.setAttribute("aria-pressed", x === b);
+    $("#text").hidden = kind !== "text"; $("#filebox").hidden = kind !== "file"; $("#invitebox").hidden = kind !== "invite";
+    if (kind === "file" && !file) $("#filePick").click();
+  });
+  $("#chooseFile").addEventListener("click", () => $("#filePick").click());
+  $("#filePick").addEventListener("change", e => { file = e.target.files[0] || null; $("#fileName").textContent = file ? `${file.name} · ${bytes(file.size)}` : "No file chosen" });
+
+  async function payload() {
+    if (kind === "invite") { if (Date.now() >= codeExpires) { toast("This nearby code has ended — open Nearby again"); return false } return { kind: "invite", title: course, data: utf8(code) } }
+    if (kind === "material") {
+      // From the hub's "Send to someone nearby" on one material: fetch it (same origin in the prototype) and send it.
+      if (!materialURL) { toast("Can’t send this file from here — open it in the course"); return false }
+      let data = null; try { const r = await fetch(materialURL, { credentials: "omit", redirect: "error" }); if (r.ok) data = new Uint8Array(await r.arrayBuffer()) } catch {}
+      if (!data) { toast("Couldn’t get the file — try again"); return false }
+      if (data.length > MAX_FILE) { toast("Files up to 50 MB"); return false }
+      return { kind: "file", title: material, data };
+    }
+    if (kind === "file") {
+      if (!file) return null;
+      if (file.size > MAX_FILE) { toast("Files up to 50 MB"); return false }
+      return { kind: "file", title: file.name, mime: file.type, data: new Uint8Array(await file.arrayBuffer()) };
+    }
+    const t = $("#text").value; if (!t.trim()) return null;
+    const data = utf8(t); if (data.length > MAX_TEXT) { toast("Text up to 1 MB"); return false }
+    return { kind: /^https?:\/\/\S+$/.test(t.trim()) ? "link" : "text", title: "Text", data };
+  }
+
+  // ---------- spam limits (same numbers as the Mac's NearbyGate) ----------
+  const gate = { offers: [], declines: new Map(), muted: new Map() };
+  function gateCheck(peer, offer, weConnected) {
+    const now = Date.now();
+    gate.offers = gate.offers.filter(o => now - o.at < 60e3);
+    if ((gate.muted.get(peer) || 0) > now) return "busy";
+    if (!isVisible() && !weConnected) return "not-visible";
+    if (gate.offers.filter(o => o.peer === peer).length >= 3 || gate.offers.length >= 6) return "busy";
+    gate.offers.push({ peer, at: now });
+    if (offer.kind === "invite" && offer.bytes > 16) return "bad-code";
+    const limit = offer.kind === "file" ? MAX_FILE : MAX_TEXT;
+    if (!(offer.bytes > 0 && offer.bytes <= limit)) return "too-big";
+    return null;
+  }
+  function gateDeclined(peer) {
+    const now = Date.now(), list = (gate.declines.get(peer) || []).filter(t => now - t < 600e3); list.push(now);
+    gate.declines.set(peer, list); if (list.length >= 3) gate.muted.set(peer, now + 600e3);
+  }
+
+  // ---------- WebRTC: one connection per person, a data channel carries the same messages as the Mac protocol ----------
+  const links = new Map(); // peerId → { pc, dc, weConnected, outgoing: Map, incoming: Map, code }
+  const rtcConfig = { iceServers: params.get("stun") ? [{ urls: "stun:stun.l.google.com:19302" }] : [] }; // LAN: host candidates only
+
+  function newLink(peer, weConnected) {
+    const pc = new RTCPeerConnection(rtcConfig);
+    const link = { pc, dc: null, weConnected, outgoing: new Map(), incoming: new Map(), code: "", open: false, queue: [] };
+    links.set(peer, link);
+    pc.onicecandidate = e => e.candidate && signal.send({ type: "ice", candidate: e.candidate }, peer);
+    pc.onconnectionstatechange = () => { if (["failed", "closed"].includes(pc.connectionState)) fallBack(peer) };
+    pc.ondatachannel = e => wire(peer, link, e.channel);
+    return link;
+  }
+  function wire(peer, link, dc) {
+    link.dc = dc; dc.binaryType = "arraybuffer";
+    dc.onopen = () => {
+      link.open = true;
+      link.code = checkCode(link.pc.localDescription?.sdp, link.pc.remoteDescription?.sdp);
+      for (const m of link.queue.splice(0)) dc.send(m);
+    };
+    dc.onmessage = e => onMessage(peer, link, e.data);
+  }
+  async function rtcSignal(peer, msg) {
+    let link = links.get(peer);
+    if (msg.type === "sdp" && msg.sdp.type === "offer") {
+      link?.pc.close(); link = newLink(peer, false);
+      await link.pc.setRemoteDescription(msg.sdp);
+      await link.pc.setLocalDescription(await link.pc.createAnswer());
+      signal.send({ type: "sdp", sdp: link.pc.localDescription }, peer);
+    } else if (msg.type === "sdp" && link) {
+      await link.pc.setRemoteDescription(msg.sdp);
+    } else if (msg.type === "ice" && link) {
+      try { await link.pc.addIceCandidate(msg.candidate) } catch {}
+    }
+  }
+  async function connectTo(peer) {
+    const existing = links.get(peer);
+    if (existing && existing.pc.connectionState !== "failed" && existing.pc.connectionState !== "closed") return existing;
+    const link = newLink(peer, true);
+    wire(peer, link, link.pc.createDataChannel("stash", { ordered: true }));
+    await link.pc.setLocalDescription(await link.pc.createOffer());
+    signal.send({ type: "sdp", sdp: link.pc.localDescription }, peer);
+    // Campus Wi-Fi often stops devices reaching each other: after 8 s, go through the relay instead.
+    setTimeout(() => { if (!link.open) fallBack(peer) }, 8000);
+    return link;
+  }
+  function out(peer, link, obj, binary) {
+    if (link.relay) return relayOut(peer, obj, binary);
+    const m = binary || JSON.stringify(obj);
+    if (link.open) link.dc.send(m); else link.queue.push(m);
+  }
+
+  async function sendTo(peer) {
+    const p = await payload(); if (!p) { if (p === null) toast("Add something to send first"); return } // false: payload() already said why
+    const link = forceRelay ? relayLink(peer) : await connectTo(peer);
+    const id = crypto.randomUUID ? crypto.randomUUID() : randomID();
+    const digest = sha256(p.data);
+    link.outgoing.set(id, p);
+    setStatus(peer, { text: "Waiting…", progress: 0, sent: false, fading: false });
+    out(peer, link, { type: "offer", offer: { id, kind: p.kind, title: p.title, mime: p.mime || null, bytes: p.data.length, sha256: digest,
+      preview: (p.kind === "text" || p.kind === "link") ? new TextDecoder().decode(p.data.slice(0, 600)).slice(0, 140) : null } });
+  }
+
+  async function onMessage(peer, link, raw) {
+    if (typeof raw !== "string") { // binary chunk of the transfer in progress
+      const t = [...link.incoming.values()].find(t => t.accepted && !t.done); if (!t) return closeLink(peer);
+      const chunk = new Uint8Array(raw);
+      if (t.got + chunk.length > t.offer.bytes) return closeLink(peer);
+      t.parts.push(chunk); t.got += chunk.length; return;
+    }
+    let m; try { m = JSON.parse(raw) } catch { return closeLink(peer) }
+    if (m.type === "offer") {
+      const o = m.offer || {};
+      const why = gateCheck(peer, o, link.weConnected);
+      if (why) return out(peer, link, { type: "decline", id: o.id, reason: why });
+      link.incoming.set(o.id, { offer: o, parts: [], got: 0 });
+      ask(peer, link, o);
+    } else if (m.type === "accept") {
+      const p = link.outgoing.get(m.id); if (!p) return;
+      setStatus(peer, { text: "Sending…" });
+      for (let i = 0; i < p.data.length; i += CHUNK) {
+        if (!link.relay) while (link.dc.bufferedAmount > 1 << 20) await new Promise(r => setTimeout(r, 20));
+        out(peer, link, null, p.data.slice(i, i + CHUNK));
+        setStatus(peer, { progress: Math.min(1, (i + CHUNK) / p.data.length) });
+      }
+      out(peer, link, { type: "done", id: m.id });
+      link.outgoing.delete(m.id);
+      setStatus(peer, { text: "Sent", progress: 1, sent: true });
+      setTimeout(() => setStatus(peer, { fading: true }), 2000);
+      setTimeout(() => setStatus(peer, { text: "", progress: null, sent: false, fading: false }), 2500);
+    } else if (m.type === "decline") {
+      if (!link.outgoing.delete(m.id)) return;
+      setStatus(peer, { text: m.reason === "busy" ? "Busy — try again soon" : m.reason === "declined" ? "Declined" : "Didn’t send", progress: null });
+    } else if (m.type === "done") {
+      const t = link.incoming.get(m.id); if (!t || !t.accepted) return closeLink(peer);
+      link.incoming.delete(m.id);
+      const data = new Uint8Array(t.got); let o = 0; for (const c of t.parts) { data.set(c, o); o += c.length }
+      if (t.got !== t.offer.bytes || sha256(data) !== t.offer.sha256) { toast("That didn’t arrive whole — ask them to send again"); return }
+      received(peer, t.offer, data);
+    }
+  }
+  function closeLink(peer) { const l = links.get(peer); l?.pc?.close(); links.delete(peer) }
+
+  // ---------- consent: the receiver always says yes first ----------
+  function ask(peer, link, o) {
+    const who = esc(peers.get(peer)?.name || "Someone");
+    const what = o.kind === "file" ? `<i>${esc(o.title)}</i> · ${bytes(o.bytes)}` : o.kind === "link" ? "a link" : "some text";
+    const layer = $("#layer");
+    layer.innerHTML = `<div class="scrim"><div class="panel" role="dialog" aria-modal="true" aria-labelledby="askT">
+      <h2 id="askT">${o.kind === "invite" ? `${who} invites you to ${esc(o.title)}` : `${who} wants to send you ${what}`}</h2>
+      <p class="meta">Nothing is saved unless you accept.</p>
+      ${o.kind === "file" ? `<div class="mini"><b>${esc(o.title)}</b><small>${bytes(o.bytes)}</small></div>` : ""}
+      ${o.preview ? `<div class="preview">${esc(o.preview)}</div>` : ""}
+      <p class="code">${link.relay ? "Sent through Stash’s relay — your networks can’t reach each other directly. It’s deleted within an hour." : `Same code on ${who}’s screen? <b>${esc(link.code || "…")}</b> — if not, decline.`}</p>
+      <div class="acts"><button class="btn secondary" id="no">Decline</button><button class="btn" id="yes">Accept</button></div></div></div>`;
+    const done = yes => {
+      layer.innerHTML = "";
+      const t = link.incoming.get(o.id); if (!t) return;
+      if (yes) { t.accepted = true; out(peer, link, { type: "accept", id: o.id }) }
+      else { link.incoming.delete(o.id); gateDeclined(peer); out(peer, link, { type: "decline", id: o.id, reason: "declined" }) }
+    };
+    $("#yes").onclick = () => done(true); $("#no").onclick = () => done(false); $("#yes").focus();
+  }
+  function received(peer, o, data) {
+    const who = peers.get(peer)?.name || "Someone";
+    $("#got").hidden = false;
+    const row = document.createElement("div"); row.className = "item";
+    if (o.kind === "file") {
+      const url = URL.createObjectURL(new Blob([data], { type: o.mime || "application/octet-stream" }));
+      row.innerHTML = `<div class="t"><b>${esc(o.title)}</b><small>From ${esc(who)} · ${bytes(o.bytes)}</small></div>
+        <a class="btn secondary" style="flex:none" download="${esc(o.title.replace(/[\\/:]/g, "-"))}" href="${url}">Save</a>`;
+    } else if (o.kind === "invite") {
+      row.innerHTML = `<div class="t"><b>Join ${esc(o.title)}?</b><small>Invite from ${esc(who)}</small></div>
+        <a class="btn" style="flex:none" href="../../join/?code=${encodeURIComponent(new TextDecoder().decode(data).replace(/[^A-Za-z0-9]/g, "").slice(0, 6))}">Join</a>`;
+    } else {
+      const text = new TextDecoder().decode(data);
+      row.innerHTML = `<div class="t"><b>${esc(text.slice(0, 120))}</b><small>From ${esc(who)} · ${o.kind}</small></div>
+        <button class="btn secondary" style="flex:none">Copy</button>`;
+      row.querySelector("button").onclick = () => navigator.clipboard?.writeText(text).then(() => toast("Copied"));
+    }
+    $("#gotList").prepend(row);
+  }
+
+  // ---------- relay fallback (client isolation): through the introducer, in production encrypted end to end ----------
+  function relayLink(peer, weConnected = true) {
+    let link = links.get(peer);
+    if (!link || !link.relay) { link = { relay: true, weConnected, outgoing: new Map(), incoming: new Map(), code: "" }; links.set(peer, link) }
+    return link;
+  }
+  function fallBack(peer) {
+    const old = links.get(peer); if (!old || old.relay || old.open) return;
+    old.pc?.close();
+    const link = relayLink(peer); link.weConnected = old.weConnected;
+    for (const [id, p] of old.outgoing) { link.outgoing.set(id, p) }
+    for (const m of old.queue) relayOut(peer, JSON.parse(m));
+    setStatus(peer, { text: "Waiting…" });
+  }
+  const b64 = u8 => { let s = ""; for (let i = 0; i < u8.length; i += 32768) s += String.fromCharCode(...u8.subarray(i, i + 32768)); return btoa(s) };
+  function relayOut(peer, obj, binary) { signal.send({ type: "relay", body: binary ? { bin: b64(binary) } : obj }, peer) }
+  function relayIn(peer, msg) {
+    const link = links.get(peer)?.relay ? links.get(peer) : relayLink(peer, false);
+    if (msg.body?.bin) onMessage(peer, link, Uint8Array.from(atob(msg.body.bin), c => c.charCodeAt(0)).buffer);
+    else onMessage(peer, link, JSON.stringify(msg.body || {}));
+  }
+
+  // ---------- room codes ----------
+  $("#roomGo")?.addEventListener("click", () => {
+    const c = $("#roomCode").value.replace(/\D/g, "");
+    room = c.length === 4 ? "code:" + c : "auto";
+    peers.clear(); render(); connectSignal();
+    $("#roomNow").textContent = room === "auto" ? "" : `In room ${c}`;
+  });
+
+  // ---------- by sound (sound.js): "it just finds the people in this room" ----------
+  // Everyone who turns it on plays a short, very high chirp carrying a random 20-bit token, and listens for 1 minute.
+  // Each device sits in the room named after a token: first its own; when it hears a smaller token it moves there
+  // (so a group ends up together); when it hears a bigger one and nobody has come to its own room within 4 s, it
+  // moves too (one-way hearing still works). It keeps chirping the token of the room it's in, so others follow.
+  // The mic only feeds the decoder (17 tones above 18.5 kHz); nothing is recorded, kept or sent.
+  const sound = { on: false, own: 0, current: 0, ctx: null, stream: null, until: 0, timer: null, waits: new Map(), seen: new Map() };
+  function soundConsent() {
+    if (!window.StashSound || !navigator.mediaDevices?.getUserMedia) { toast("Sound isn’t available in this browser — use the code"); return }
+    $("#layer").innerHTML = `<div class="scrim"><div class="panel" role="dialog" aria-modal="true" aria-labelledby="sndT">
+      <h2 id="sndT">Find people in this room by sound?</h2>
+      <p class="meta">Your device plays a short, very high sound — most people can’t hear it — and listens for the same sound
+      from people near you, for 1 minute. The microphone only checks for these sounds: nothing is recorded, kept or sent.</p>
+      <p class="meta" style="margin-top:8px">You’ll be visible to people in this room for 10 minutes.</p>
+      <div class="acts"><button class="btn secondary" id="no">Not now</button><button class="btn" id="yes">Start</button></div></div></div>`;
+    $("#no").onclick = () => $("#layer").innerHTML = "";
+    $("#yes").onclick = () => {
+      $("#layer").innerHTML = "";
+      // Safari (iPhone and Mac) only lets audio start inside the tap itself — before the microphone prompt.
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      ctx.resume();
+      soundStart(ctx);
+    };
+    $("#yes").focus();
+  }
+  async function soundStart(ctx) {
+    try {
+      // Voice processing filters out exactly these frequencies: ask for the raw microphone.
+      sound.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    } catch { ctx.close(); toast("The microphone is off — use the code instead"); return }
+    sound.ctx = ctx;
+    await ctx.resume();
+    const decoder = new StashSound.Decoder(ctx.sampleRate);
+    const src = ctx.createMediaStreamSource(sound.stream), proc = ctx.createScriptProcessor(2048, 1, 1), mute = ctx.createGain();
+    mute.gain.value = 0; src.connect(proc); proc.connect(mute); mute.connect(ctx.destination);
+    proc.onaudioprocess = e => { for (const t of decoder.push(e.inputBuffer.getChannelData(0))) soundHeard(t) };
+    sound.on = true; sound.own = sound.current = StashSound.randomToken(); sound.until = Date.now() + 60e3;
+    visibleUntil = Date.now() + VISIBLE_FOR; renderVisibility();
+    joinSoundRoom(sound.own);
+    // Three quick ones to find people fast, then slower; once someone's here, only now and then (for latecomers).
+    // Random gaps, so two devices don't keep chirping over each other.
+    let sent = 0;
+    const chirp = () => {
+      if (!sound.on) return;
+      const pk = StashSound.encode(sound.current, ctx.sampleRate), buf = ctx.createBuffer(1, pk.length, ctx.sampleRate);
+      buf.copyToChannel(pk, 0);
+      const node = ctx.createBufferSource(); node.buffer = buf; node.connect(ctx.destination); node.start();
+      const found = [...peers.values()].some(p => p.visible);
+      const gap = ++sent < 3 ? 1200 + Math.random() * 800 : found ? 7000 + Math.random() * 3000 : 3500 + Math.random() * 2000;
+      sound.timer = setTimeout(chirp, gap);
+    };
+    chirp();
+    renderSound();
+  }
+  function soundStop() {
+    sound.on = false; clearTimeout(sound.timer);
+    sound.stream?.getTracks().forEach(t => t.stop()); sound.ctx?.close();
+    sound.stream = sound.ctx = null; renderSound();
+  }
+  function joinSoundRoom(token) {
+    sound.current = token;
+    const want = "sound:" + StashSound.hex(token);
+    if (room === want) return;
+    room = want; peers.clear(); render(); connectSignal();
+  }
+  function soundHeard(token) {
+    if (!sound.on && !sound.testing) return;
+    if (token === sound.current || token === sound.own) return;
+    // Act only on a token heard twice within 6 s (each device repeats every 1.2–2 s): one odd decode never moves you.
+    const now = Date.now(), seen = sound.seen.get(token);
+    sound.seen.set(token, now);
+    if (!seen || now - seen > 6000) return;
+    if (token < sound.current) { joinSoundRoom(token); toast("Found people in this room"); return }
+    // A bigger token: give them 4 s to come to us; if nobody does, they can't hear us — go to them.
+    if (!sound.waits.has(token)) sound.waits.set(token, setTimeout(() => {
+      sound.waits.delete(token);
+      if (![...peers.values()].some(p => p.visible)) { joinSoundRoom(token); toast("Found people in this room") }
+    }, 4000));
+  }
+  function renderSound() {
+    const line = $("#soundLine");
+    if (!sound.on) { line.innerHTML = `<button class="textbtn" id="soundBtn">Find people in this room by sound</button>${room.startsWith("sound:") ? ` <span>· found by sound</span>` : ""}`; $("#soundBtn").onclick = soundConsent; return }
+    const left = Math.max(0, Math.ceil((sound.until - Date.now()) / 1000));
+    if (!left) { soundStop(); return }
+    line.innerHTML = `<span class="dot" aria-hidden="true"></span><span>Listening for people in this room · <b>0:${String(left).padStart(2, "0")}</b></span> <button class="textbtn" id="soundStop">Stop</button>`;
+    $("#soundStop").onclick = soundStop;
+  }
+  setInterval(() => sound.on && renderSound(), 1000);
+  $("#soundBtn").onclick = soundConsent;
+  // From the hub's Nearby tile ("Find people in this room by sound"): open the consent sheet straight away. The mic
+  // and the chirp still start only on its Start button (a real tap, which browsers need for audio anyway).
+  if (params.get("sound") === "1") setTimeout(soundConsent, 300);
+
+  // ---------- start ----------
+  if (params.get("visible") === "1") visibleUntil = Date.now() + VISIBLE_FOR;
+  render(); renderVisibility(); connectSignal();
+  addEventListener("pagehide", () => signal?.send({ type: "bye" }));
+  window.__nearby = { peers, links, me: () => me, name: myName, sendTo, setText: t => { $("#text").value = t },
+    // Tests without a microphone: pretend this device chirps `own` and heard `heardHex`.
+    soundTest: (ownHex, heardHex) => { sound.testing = true; if (ownHex) { sound.own = parseInt(ownHex, 16); joinSoundRoom(sound.own) } if (heardHex) { soundHeard(parseInt(heardHex, 16)); soundHeard(parseInt(heardHex, 16)) } }, // heard twice, like two repeats
+    room: () => room };
+})();
+</script>
+</body>
+</html>

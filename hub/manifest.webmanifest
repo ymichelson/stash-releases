@@ -1,0 +1,37 @@
+{
+  "id": "./",
+  "name": "Stash — your courses",
+  "short_name": "Stash",
+  "description": "Your courses' shared desk: what everyone in the course puts down, on your phone.",
+  "lang": "en",
+  "dir": "auto",
+  "start_url": "./?source=home-screen",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "orientation": "any",
+  "background_color": "#F6F3EC",
+  "theme_color": "#F6F3EC",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "share_target": {
+    "action": "./share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        { "name": "files", "accept": ["image/*", "application/pdf", ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".txt", ".key", ".pages"] }
+      ]
+    }
+  },
+  "shortcuts": [
+    { "name": "Add a photo", "short_name": "Photo", "url": "./?add=photo", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

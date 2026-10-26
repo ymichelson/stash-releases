@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Classroom poster · Stash</title>
+<style>
+/* An A4 poster for the classroom wall: the round-7 A4 plate, the course name in its free top quarter,
+   a real QR + the code inside its card (safe rect x 440–2040, y 1040–2590 of 2480 × 3508). Always light paper. */
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #D9D6CF; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif; color: #202427; }
+.bar { position: sticky; top: 0; display: flex; justify-content: center; gap: 10px; padding: 14px; }
+.bar button, .bar a { height: 36px; padding: 0 16px; border: 0; border-radius: 9px; font: 500 14px/36px inherit; font-family: inherit; text-decoration: none; cursor: pointer; }
+.bar .primary { background: #202427; color: #fff; }
+.bar .quiet { background: rgba(32,36,39,.07); color: #202427; }
+.sheet { position: relative; width: min(92vw, 70vh); aspect-ratio: 2480 / 3508; margin: 8px auto 40px; container-type: size; box-shadow: 0 12px 32px rgba(0,0,0,.14); }
+.sheet > img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.head { position: absolute; left: 10%; right: 10%; top: 8%; text-align: center; }
+.head h1 { margin: 0; font-weight: 500; font-size: 7.4cqw; letter-spacing: -.02em; line-height: 1.05; }
+.head p { margin: 2.2cqw 0 0; font-size: 2.9cqw; color: #646A73; }
+.card { position: absolute; left: 17.7%; top: 29.6%; width: 64.6%; height: 44.2%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.6cqw; }
+.qr { width: 54%; aspect-ratio: 1; }
+.qr svg { width: 100%; height: 100%; display: block; }
+.code { font-weight: 500; font-size: 7.2cqw; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+.how { font-size: 2.5cqw; color: #646A73; text-align: center; line-height: 1.4; }
+.how b { color: #202427; font-weight: 500; }
+@media print {
+  html, body { background: none; }
+  .bar { display: none; }
+  .sheet { width: 210mm; height: 297mm; margin: 0; box-shadow: none; }
+}
+</style>
+</head>
+<body>
+<div class="bar"><button class="primary" onclick="print()">Print</button><a class="quiet" href="javascript:history.back()">Back</a></div>
+<div class="sheet">
+  <img src="../art/poster-a4-light.webp" alt="">
+  <div class="head"><h1 id="t">Join Algorithms</h1><p>Slides, board photos and notes from everyone in the course.</p></div>
+  <div class="card"><div class="qr" id="qr"></div><div class="code" id="c"></div>
+    <div class="how">Scan, or open <b>ymichelson.github.io/stash-releases/j</b> and type the code.<br>Opens in the browser — nothing to install.</div></div>
+</div>
+<script src="../vendor/qrcode-generator-1.4.4.js"></script>
+<script>
+(() => {
+  const p = new URLSearchParams(location.search);
+  const code = (p.get("code") || "K7Q4MZ").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+  const course = (p.get("course") || "Algorithms").slice(0, 60);
+  document.getElementById("t").textContent = `Join ${course}`;
+  document.title = `Poster — ${course} · Stash`;
+  document.getElementById("c").textContent = code.slice(0, 3) + "‑" + code.slice(3);
+  const q = qrcode(0, "M"); q.addData(`https://ymichelson.github.io/stash-releases/j/?c=${code}`); q.make(); const n = q.getModuleCount(); let d = "";
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
+  document.getElementById("qr").innerHTML = `<svg viewBox="-2 -2 ${n + 4} ${n + 4}" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QR code for the invite"><rect x="-2" y="-2" width="${n + 4}" height="${n + 4}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+})();
+</script>
+</body>
+</html>

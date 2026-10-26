@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex">
+<title>Join a course · Stash</title>
+<meta name="description" content="You've been invited to a course on Stash. It opens in your browser — nothing to install.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Stash">
+<meta property="og:title" content="You're invited to a course on Stash">
+<meta property="og:description" content="Slides, board photos and notes from everyone in the course — opens in your browser, nothing to install.">
+<style>
+  :root { color-scheme:light dark; }
+  body { margin:0; min-height:100dvh; display:grid; place-items:center; background:#F6F3EC; color:#202427;
+    font:400 15px/1.45 -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif; }
+  @media (prefers-color-scheme: dark) { body { background:#211E19; color:#EFEAE1; } }
+  a { color:inherit; }
+</style>
+</head>
+<body>
+<!-- Invite links: …/j/?c=K7Q4MZ (also …/j/#K7Q4MZ and …/j/K7Q4MZ via 404.html) → the hub, which asks "Join <course>?".
+     The same shapes as StashCore SharedLink.code(in:). -->
+<p id="msg">Opening Stash… <a href="../hub/">Continue</a></p>
+<script>
+(() => {
+  const q = new URLSearchParams(location.search);
+  const path = location.pathname.match(/\/j\/([A-Za-z0-9-]{6,8})\/?$/);
+  const raw = q.get("c") || q.get("code") || (path && path[1]) || location.hash.slice(1) || "";
+  const code = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const hub = new URL(path ? "../../hub/" : "../hub/", location.href);
+  if (/^[A-Z0-9]{6}$/.test(code)) hub.searchParams.set("code", code);
+  if (q.get("lang") === "he") hub.searchParams.set("lang", "he");
+  location.replace(hub.href);
+})();
+</script>
+</body>
+</html>

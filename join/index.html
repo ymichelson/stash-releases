@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F6F3EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#211E19" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="noindex">
+<title>Join a course · Stash</title>
+<meta name="description" content="You've been invited to a course on Stash. Open it in your browser — nothing to install.">
+<!-- Link preview in WhatsApp/iMessage. The real server renders these per invite (course name + its cover); see HUB-DESIGN.md §10. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Stash">
+<meta property="og:title" content="Join Algorithms on Stash">
+<meta property="og:description" content="CS 2041 · Northfield University · 41 people. Slides, board photos and notes from everyone in the course — opens in your browser.">
+<meta property="og:image" content="og/algorithms.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root {
+  --paper:#F6F3EC; --sheet:#FFFEFB; --sheet-hover:#FFFFFF; --well:#EDE9E1; --ink:#202427; --ink2:#646A73;
+  --hair:rgba(32,36,39,.09); --hair-strong:rgba(32,36,39,.16); --sky:#82AAF1; --sky-pale:#E4EDFC; --focus:#345EA0;
+  --primary:#202427; --on-primary:#FFFFFF; --red:#C74646; --shadow-sheet:0 1px 3px rgba(0,0,0,.06); --grain:.035;
+  --ease-out:cubic-bezier(.23,1,.32,1);
+  --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --display:-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif; color-scheme:light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper:#211E19; --sheet:#302B25; --sheet-hover:#36312A; --well:#2A2621; --ink:#EFEAE1; --ink2:#B5AC9E; --hair:rgba(239,234,225,.10);
+  --hair-strong:rgba(239,234,225,.18); --sky:#6584B8; --sky-pale:rgba(130,170,241,.14); --focus:#82AAF1; --primary:#EFEAE1; --on-primary:#211E19;
+  --red:#F58C8C; --shadow-sheet:0 1px 2px rgba(0,0,0,.3); --grain:.045; color-scheme:dark; } }
+:root[data-theme="dark"] { --paper:#211E19; --sheet:#302B25; --sheet-hover:#36312A; --well:#2A2621; --ink:#EFEAE1; --ink2:#B5AC9E; --hair:rgba(239,234,225,.10);
+  --hair-strong:rgba(239,234,225,.18); --sky:#6584B8; --sky-pale:rgba(130,170,241,.14); --focus:#82AAF1; --primary:#EFEAE1; --on-primary:#211E19;
+  --red:#F58C8C; --shadow-sheet:0 1px 2px rgba(0,0,0,.3); --grain:.045; color-scheme:dark; }
+@media (prefers-contrast: more) { :root { --ink2:#474C54; --hair:rgba(32,36,39,.32); --grain:0; } }
+* { box-sizing:border-box; }
+body { margin:0; min-height:100dvh; background:var(--paper); color:var(--ink); font:400 14px/1.45 var(--font); -webkit-font-smoothing:antialiased; display:flex; flex-direction:column; }
+body::before { content:""; position:fixed; inset:0; pointer-events:none; opacity:var(--grain); mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
+::selection { background:var(--sky-pale); }
+button, input, select { font:inherit; color:inherit; }
+button { cursor:pointer; }
+a { color:inherit; text-underline-offset:3px; text-decoration-thickness:1px; }
+:focus { outline:none; } :focus-visible { outline:2px solid var(--focus); outline-offset:2px; border-radius:6px; }
+img { display:block; }
+svg.i { width:16px; height:16px; flex:none; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+.top { position:relative; display:flex; align-items:center; justify-content:space-between; padding:18px 20px; }
+.brand { display:flex; align-items:center; gap:8px; font:500 17px/1 var(--display); text-decoration:none; }
+.brand svg { width:24px; height:17px; fill:currentColor; }
+.top small { color:var(--ink2); font-size:12px; }
+main { position:relative; flex:1; width:100%; max-width:520px; margin:0 auto; padding:8px 16px 40px; display:grid; align-content:center; }
+@media (min-width:700px) { main { padding-top:6vh; } }
+.card { border-radius:16px; background:var(--sheet); box-shadow:var(--shadow-sheet), 0 0 0 1px var(--hair); overflow:hidden; }
+.cover { position:relative; aspect-ratio:3.4/1; background:var(--paper); border-bottom:1px solid var(--hair); }
+.cover img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:100% 50%; }
+[dir="rtl"] .cover img { transform:scaleX(-1); }
+.inner { padding:22px 24px 24px; }
+@media (max-width:420px) { .inner { padding:20px 18px 20px; } }
+h1 { margin:0; font:500 24px/1.15 var(--display); letter-spacing:-.018em; text-wrap:balance; overflow-wrap:anywhere; }
+.meta { margin:6px 0 0; color:var(--ink2); font-size:13px; }
+.facts-line { margin:14px 0 0; font-size:14px; color:var(--ink2); }
+.facts-line b { color:var(--ink); font-weight:500; }
+.facts { display:flex; flex-wrap:wrap; gap:6px 16px; margin:16px 0 0; padding:0; list-style:none; font-size:14px; }
+.facts li { display:flex; align-items:center; gap:7px; }
+.facts b { font-weight:500; }
+.facts svg { color:var(--ink2); }
+.field { display:grid; gap:8px; margin-top:22px; }
+.hint { margin:0; color:var(--ink2); font-size:12px; }
+.input::placeholder { color:var(--ink2); opacity:.55; }
+.input.code:placeholder-shown { text-align:start; letter-spacing:.04em; }
+:root[data-theme="dark"] .input { background:#1C1915; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .input { background:#1C1915; } }
+label { font:500 12px/1.2 var(--font); color:var(--ink2); }
+.input { width:100%; height:44px; padding:0 14px; border:0; border-radius:10px; background:var(--well); box-shadow:inset 0 0 0 1px var(--hair); font-size:16px; }
+.input:focus-visible { outline:none; box-shadow:inset 0 0 0 1px var(--hair), 0 0 0 2px var(--focus); }
+.input.code { text-align:center; font-size:22px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; }
+select.input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23888' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-inline-end:36px; }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:46px; padding:0 18px; border:0; border-radius:12px; font:500 15px/1 var(--font);
+  background:var(--sheet); color:var(--ink); box-shadow:var(--shadow-sheet), 0 0 0 1px var(--hair); text-decoration:none; transition:transform .1s var(--ease-out), background-color .12s; white-space:nowrap; }
+.btn:active { transform:scale(.97); }
+.btn.primary { background:var(--primary); color:var(--on-primary); box-shadow:none; }
+.btn.wide { width:100%; margin-top:14px; }
+.btn[aria-busy="true"] { pointer-events:none; }
+.spin { width:16px; height:16px; border-radius:50%; border:2px solid currentColor; border-right-color:transparent; animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.note { display:flex; gap:8px; align-items:flex-start; margin:14px 0 0; color:var(--ink2); font-size:13px; }
+.note svg { margin-top:2px; }
+.alt { margin:18px 0 0; text-align:center; font-size:13px; color:var(--ink2); }
+.alt a, .alt button { color:var(--ink); }
+.alt a { display:inline-block; padding:4px 2px; } /* 24 px touch targets (WCAG 2.5.8) */
+.linkbtn { border:0; background:none; padding:0; text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--hair-strong); font:inherit; color:var(--ink); }
+.err { margin:10px 0 0; color:var(--red); font-size:13px; }
+.problem { text-align:center; padding:28px 24px 26px; }
+.problem img { width:150px; height:150px; margin:0 auto 6px; }
+.problem h1 { font-size:22px; }
+.problem p { margin:8px auto 0; max-width:36ch; color:var(--ink2); }
+.problem .btn { margin-top:18px; }
+.nearby { display:flex; align-items:center; gap:14px; margin:0 0 14px; padding:14px 16px; border-radius:14px; background:var(--sheet); box-shadow:var(--shadow-sheet), 0 0 0 1px var(--hair); }
+.nearby .dot { position:relative; width:30px; height:30px; flex:none; }
+.nearby .dot i { position:absolute; inset:10px; border-radius:50%; background:var(--ink); }
+.nearby .dot span { position:absolute; inset:0; border-radius:50%; box-shadow:inset 0 0 0 1.5px var(--sky); animation:ring 2.4s var(--ease-out) infinite; }
+@keyframes ring { from { transform:scale(.4); opacity:.9; } to { transform:scale(1); opacity:0; } }
+.nearby p { margin:0; flex:1; min-width:0; }
+.nearby p b { font-weight:500; }
+.nearby small { display:block; color:var(--ink2); font-size:13px; }
+.nearby .btn { height:36px; font-size:13px; border-radius:9px; }
+.found { display:grid; grid-template-columns:72px minmax(0,1fr) auto; gap:14px; align-items:center; margin-top:16px; padding:10px; border-radius:12px; background:var(--paper); box-shadow:0 0 0 1px var(--hair); }
+.found .th { width:72px; height:40px; border-radius:7px; overflow:hidden; position:relative; box-shadow:0 0 0 1px var(--hair); }
+.found .th img { position:absolute; width:240px; height:80px; max-width:none; }
+.found b { display:block; font-weight:500; }
+.found small { display:block; color:var(--ink2); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sk { background:var(--well); animation:pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity:.55; } }
+.enter { animation:enter .42s var(--ease-out) both; }
+@keyframes enter { from { opacity:0; transform:translateY(10px); } }
+/* the start screen is otherwise empty: the round-7 sky sweep sits low behind it (light paper only, never behind words) */
+.backdrop { position:fixed; left:0; right:0; bottom:0; height:min(38vh, 340px); background:url(../hub/art/gallery-01-coral-tab-light.webp) right bottom/cover no-repeat; pointer-events:none; opacity:0; transition:opacity .4s; }
+body.empty-screen .backdrop { opacity:1; }
+:root[data-theme="dark"] .backdrop { display:none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .backdrop { display:none; } }
+footer { position:relative; padding:24px 16px calc(24px + env(safe-area-inset-bottom)); text-align:center; color:var(--ink2); font-size:12px; }
+@media (prefers-reduced-motion: reduce) { .enter, .sk, .nearby .dot span { animation:none; } .enter { animation:fade .15s linear both; } @keyframes fade { from { opacity:0; } } }
+</style>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cstyle%3Epath%7Bfill:%23202427%7D@media(prefers-color-scheme:dark)%7Bpath%7Bfill:%23EFEAE1%7D%7D%3C/style%3E%3Cpath transform='translate(0 24)' d='M12 94 C7 92 7 87 11 82 C28 61 42 42 60 45 C76 47 76 69 87 70 C105 73 119 51 125 17 C126 9 134 5 140 8 C147 11 149 16 147 23 C139 62 122 95 98 96 C76 100 67 83 63 72 C60 64 57 62 51 64 C39 69 28 82 20 92 C17 96 14 96 12 94 Z'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="../" aria-label="Stash"><svg viewBox="0 0 160 112" aria-hidden="true"><path d="M12 94 C7 92 7 87 11 82 C28 61 42 42 60 45 C76 47 76 69 87 70 C105 73 119 51 125 17 C126 9 134 5 140 8 C147 11 149 16 147 23 C139 62 122 95 98 96 C76 100 67 83 63 72 C60 64 57 62 51 64 C39 69 28 82 20 92 C17 96 14 96 12 94 Z"/></svg>Stash</a>
+</header>
+<div class="backdrop" aria-hidden="true"></div>
+<main id="main" tabindex="-1"></main>
+<footer><a href="../">What's Stash?</a></footer>
+
+<script src="../hub/nearby/nearby.js"></script>
+<script>
+(() => {
+"use strict";
+const CONFIG = {
+  hub: "../hub/",                 // TODO domain: the web hub (stash.<domain>/c/<course>)
+  appJoin: code => `stash://join?code=${code}`,
+};
+const params = new URLSearchParams(location.search);
+const lang = params.get("lang") === "he" ? "he" : "en", LQ = lang === "he" ? "&lang=he" : "";
+if (lang === "he") { document.documentElement.lang = "he"; document.documentElement.dir = "rtl"; }
+if (["dark", "light"].includes(params.get("theme"))) document.documentElement.dataset.theme = params.get("theme");
+function readCode() { // /j/K7Q4MZ, ?code=k7q-4mz, ?c=…, #K7Q4MZ — 6 letters/digits, dashes and spaces ignored
+  const fromPath = location.pathname.match(/\/(?:j|join)\/([A-Za-z0-9-]{6,8})\/?$/);
+  const raw = params.get("code") || params.get("c") || (fromPath && fromPath[1]) || location.hash.slice(1) || "";
+  const code = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return /^[A-Z0-9]{6}$/.test(code) ? code : "";
+}
+const pretty = c => c.slice(0, 3) + "‑" + c.slice(3);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const theme = () => document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+const art = k => `../hub/art/${k}-${theme()}.webp`;
+const store = { get(k, d) { try { const v = localStorage.getItem("hub." + k); return v == null ? d : JSON.parse(v); } catch { return d; } },   // JSON, same as the hub (QA-13)
+                set(k, v) { try { localStorage.setItem("hub." + k, JSON.stringify(v)); } catch {} } };
+const I = { people:'<circle cx="7.5" cy="7" r="2.6"/><path d="M2.5 16c.5-2.6 2.6-4 5-4s4.5 1.4 5 4"/><circle cx="14" cy="7.6" r="2.1"/><path d="M13.6 12.1c2 .1 3.4 1.4 3.9 3.4"/>',
+  sheets:'<path d="M5 2.5h6.5L15.5 6.5v11H5z"/><path d="M11.5 2.5v4h4"/>', person:'<circle cx="10" cy="7" r="3"/><path d="M4 17c.7-3 3-4.5 6-4.5s5.3 1.5 6 4.5"/>',
+  lock:'<rect x="4.5" y="9" width="11" height="8" rx="2"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/>' };
+const ic = n => `<svg class="i" viewBox="0 0 20 20" aria-hidden="true">${I[n]}</svg>`;
+
+/* TODO backend: replace with the rate-limited Edge Function `preview(code)` (HUB-DESIGN.md §9.4). It returns only
+   { status, course, code, term, uni, cover, people (rounded), things (bucket), inviter } — never members or materials. */
+const DEMO = {
+  K7Q4MZ: { status:"open", id:"alg", course:"Algorithms", instructor:"Prof. Levin", code:"CS 2041", term:"Spring 2027", uni:"Northfield University", cover:"cover-05-bookmark", people:41, things:"40+", inviter:"Maya", shelf:"CS Year 2" },
+  C2M8PX: { status:"open", id:"calc", course:"Calculus 2", instructor:"Dr. Shapira", code:"MATH 1102", term:"Spring 2027", uni:"Northfield University", cover:"cover-10-stamp-circle", people:64, things:"20+", inviter:"Yael", shelf:"CS Year 2" },
+  P5Y1Q7: { status:"open", id:"psy", course:"Intro to Psychology", instructor:"Prof. Amir", code:"PSY 1001", term:"Spring 2027", uni:"Northfield University", cover:"cover-07-ink-loop", people:186, things:"10+", inviter:"Noa" },
+  EXPIRE: { status:"expired", course:"Algorithms", inviter:"Maya" }, CLOSED: { status:"closed", course:"Algorithms", inviter:"Maya" },
+  FULL00: { status:"full", course:"Algorithms" }, ASK000: { status:"approval", id:"alg", course:"Algorithms", code:"CS 2041", term:"Spring 2027", uni:"Northfield University", cover:"cover-05-bookmark", people:41, things:"40+", inviter:"Maya" },
+};
+/* TODO backend: find_courses(institution, query) — university + 3+ letters of the name or the exact course number,
+   at most 8 cards, 30 searches an hour. A card is only name, number, instructor, term and a size bucket. */
+const LISTED = [
+  { code:"K7Q4MZ", course:"Algorithms", number:"CS 2041", instructor:"Prof. Levin", term:"Spring 2027", size:"10+", cover:"cover-05-bookmark" },
+  { code:"A2LG77", course:"Algorithms 2", number:"CS 3042", instructor:"Dr. Cohen", term:"Spring 2027", size:"50+", cover:"cover-06-binder-edge" },
+  { code:"ALG9QT", course:"Algorithmic Game Theory", number:"CS 4410", instructor:"Prof. Nir", term:"Spring 2027", size:"under 10", cover:"cover-10-stamp-circle" },
+  { code:"C2M8PX", course:"Calculus 2", number:"MATH 1102", instructor:"Dr. Shapira", term:"Spring 2027", size:"50+", cover:"cover-10-stamp-circle" },
+  { code:"P5Y1Q7", course:"Intro to Psychology", number:"PSY 1001", instructor:"Prof. Amir", term:"Spring 2027", size:"200", cover:"cover-07-ink-loop" },
+];
+const norm = x => x.toUpperCase().replace(/[\s-]/g, "");
+/* Real shape (engineering, main 1b3ca94): GET <functions>/preview?code=… → { status, kind, course, code, term, uni, cover (0–9),
+   coverKey ("cover-01-ribbon"), people ("40+", a string), things, inviter, shelf }. The page reads coverKey and shows people as given. */
+async function preview(code) { await new Promise(r => setTimeout(r, 420)); const l = LISTED.find(x => x.code === code);
+  return DEMO[code] || (l ? { status:"open", id:"alg", course:l.course, instructor:l.instructor, code:l.number, term:l.term, uni:"Northfield University", cover:l.cover, people:l.size, things:"10+", inviter:"A classmate" } : { status: "unknown" }); }
+
+const main = document.getElementById("main");
+/* Hebrew wording (same approach as the hub: one table, applied to the chrome, never to course data) */
+const HE = {
+  "Join a course":"הצטרפות לקורס", "Type the code from your invite.":"להקליד את הקוד מההזמנה.", "Invite code":"קוד הזמנה", "Find course":"חיפוש קורס",
+  "No invite? ":"אין הזמנה? ", "Search by course name or number":"חיפוש לפי שם הקורס או המספר", "What's Stash?":"מה זה Stash?", "Your name":"השם שלך",
+  "First name is enough. People here see only this name.":"מספיק שם פרטי. האנשים כאן רואים רק את השם הזה.",
+  "Only what you add is shared — nothing else from your phone or computer.":"רק מה שמוסיפים משותף — שום דבר אחר מהטלפון או מהמחשב.",
+  "Open in the Stash app":"לפתוח באפליקציית Stash", "Use a different code":"קוד אחר", "Ask to join":"בקשת הצטרפות", "Joining…":"מצטרפים…", "Asking…":"שולחים בקשה…",
+  "Add a name so people know who put things down.":"צריך שם כדי שידעו מי הוסיף מה.", "Codes have 6 letters and numbers, like K7Q-4MZ.":"לקוד יש 6 אותיות ומספרים, למשל K7Q-4MZ.",
+  "That code doesn't match a course":"הקוד לא מתאים לאף קורס", "Check the letters with the person who invited you — codes look like K7Q-4MZ.":"כדאי לבדוק את האותיות עם מי שהזמין אותך — קוד נראה כך: K7Q-4MZ.",
+  "This invite has run out":"ההזמנה פגה", "This course isn't taking new people":"הקורס לא מקבל אנשים חדשים", "This course is full":"הקורס מלא",
+  "It has 200 people, the most a course can hold. Ask its owner about a second one.":"יש בו 200 אנשים, המקסימום לקורס. אפשר לבקש מהבעלים לפתוח עוד אחד.",
+  "Try another code":"קוד אחר", "Couldn't reach Stash":"אין חיבור ל-Stash", "Check the internet and try again.":"כדאי לבדוק את האינטרנט ולנסות שוב.",
+  "Too many tries":"יותר מדי ניסיונות", "Wait a few minutes, then try the code again.":"כדאי לחכות כמה דקות ולנסות שוב.",
+  "Find your course":"חיפוש הקורס שלך", "University":"מוסד לימודים", "Choose…":"בחירה…", "Course name or number":"שם הקורס או המספר", "Search":"חיפוש",
+  "Search by the course name or its number. Only courses open to search show up. You see what's inside after you join.":"חיפוש לפי שם הקורס או המספר שלו. מופיעים רק קורסים שהבעלים אפשרו למצוא, ושום דבר מבפנים לא נראה עד שמצטרפים.",
+  "I have an invite code":"יש לי קוד הזמנה", "Open":"פתיחה", "Not there? ":"לא מופיע? ", "Start it yourself":"לפתוח אותו בעצמך", "Searching…":"מחפשים…",
+  "Choose your university first.":"קודם לבחור מוסד לימודים.", "Type at least 3 letters of the name, or the course number.":"לפחות 3 אותיות מהשם, או מספר הקורס.",
+  "Start a course":"פתיחת קורס", "Course name":"שם הקורס", "Course number":"מספר הקורס", "Lecturer":"מרצה", "Term":"סמסטר", "Start the course":"לפתוח את הקורס",
+  "Back to search":"חזרה לחיפוש", "Starting…":"פותחים…", "Join it instead":"להצטרף אליו", "Join":"הצטרפות", " is nearby":" בסביבה",
+  "You're its first member. Others taking it can join with your invite — or find it, if you let them.":"את/ה הראשון/ה בקורס. אחרים יוכלו להצטרף עם ההזמנה שלך — או למצוא אותו, אם תאפשר/י.",
+};
+const HE_RE = [
+  [/^ invited you · (\S+) people · (\S+) files and notes$/, " הזמין/ה אותך · $1 אנשים · $2 קבצים וסיכומים"], [/^Join (.+)$/, "הצטרפות ל$1"],
+  [/^Ask (.+) for a new code\. Invites last two weeks\.$/, "אפשר לבקש מ$1 קוד חדש. הזמנות תקפות שבועיים."], [/^(.+) closed the door\. Ask them to open it again\.$/, "$1 סגר/ה את ההרשמה. אפשר לבקש לפתוח שוב."],
+  [/^(.+) is sharing it$/, "$1 משתף/ת אותו"], [/^(.+) is already here for (.+) — join it, so everyone taking it is in one place\.$/, "$1 כבר קיים ל$2 — כדאי להצטרף, כדי שכל מי שלומד אותו יהיה במקום אחד."],
+  [/^No findable course matches at (.+)\. Ask a classmate for an invite — or start it, and others taking it can find it\.$/, "אין קורס שאפשר למצוא ב$1. אפשר לבקש הזמנה ממישהו מהקורס — או לפתוח אותו, ואחרים ימצאו."],
+  [/^Let others at (.+) find it$/, "לאפשר לאחרים ב$1 למצוא אותו"], [/^(\S+) people$/, "$1 אנשים"],
+];
+const heJoin = v => v.replace(/(^|[\s(])([בלמש]|ה)([A-Za-z0-9])/g, "$1$2-$3");
+const heText = v => { if (HE[v] != null) return HE[v]; const tr = v.trim(); if (HE[tr] != null) return v.replace(tr, HE[tr]); for (const [re, to] of HE_RE) if (re.test(v)) return heJoin(v.replace(re, to)); return v; };
+function heLocalize(root) {
+  if (lang !== "he") return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n = w.nextNode(); n; n = w.nextNode()) { if (!/[A-Za-z]/.test(n.nodeValue) || n.parentElement?.closest("h1, .meta, .found b, script, style")) continue; const v = heText(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; }
+  for (const el of root.querySelectorAll("[aria-label], [placeholder]")) for (const a of ["aria-label", "placeholder"]) { const v = el.getAttribute(a); if (v && /^[A-Z]/.test(v) && HE[v]) el.setAttribute(a, HE[v]); }
+  const h = root.querySelector?.("h1"); if (h && /^Join /.test(h.textContent) && h.closest(".problem, .inner") && HE[h.textContent]) h.textContent = HE[h.textContent];
+}
+if (lang === "he") new MutationObserver(() => heLocalize(document.body)).observe(document.body, { childList: true, subtree: true });
+function show(html, empty) { document.body.classList.toggle("empty-screen", !!empty); main.innerHTML = html; main.firstElementChild?.classList.add("enter"); }
+
+let nearList = [];
+if (window.stashNearby) window.stashNearby.onSharing(l => { nearList = l || []; const el = document.getElementById("near"); if (el) el.innerHTML = nearCards(); });
+const nearCards = () => nearList.slice(0, 3).map(n => `<div class="nearby" role="status"><span class="dot" aria-hidden="true"><span></span><i></i></span>
+    <p><b>${esc(n.course)} is nearby</b><small>${esc(n.name)} is sharing it</small></p><a class="btn primary" href="?code=${encodeURIComponent(n.code)}">Join</a></div>`).join("");
+function nearbyCard() { // live cards from nearby.js (at most 3); ?nearby=1 shows a demo one
+  if (!params.get("nearby")) return `<div id="near">${nearCards()}</div>`;
+  return params.get("nearby") ? `<div class="nearby" role="status"><span class="dot" aria-hidden="true"><span></span><i></i></span>
+    <p><b>Algorithms is nearby</b><small>Dana is sharing it</small></p><a class="btn primary" href="?code=K7Q4MZ">Join</a></div>` : "";
+}
+function start(err) {
+  document.title = "Join a course · Stash";
+  show(`<div>${nearbyCard()}<div class="card"><div class="inner">
+    <h1>Join a course</h1><p class="meta" style="font-size:14px">Type the code from your invite.</p>
+    <form id="code-form" novalidate><div class="field"><label for="code">Invite code</label>
+      <input class="input code" id="code" name="code" placeholder="ABC-123" maxlength="60" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" aria-describedby="code-err"></div>
+      ${err ? `<p class="err" id="code-err">${esc(err)}</p>` : `<p id="code-err" hidden></p>`}
+      <button class="btn primary wide" type="submit">Find course</button></form>
+    <p class="alt">No invite? <a href="?find=1${LQ}">Search by course name or number</a></p></div></div></div>`, true);
+  const f = document.getElementById("code-form");
+  f.code.addEventListener("input", () => { // a pasted invite link works too; the dash comes by itself
+    const v = f.code.value, m = v.match(/\/(?:j|join)\/([A-Za-z0-9-]{6,8})|[?&]code=([A-Za-z0-9-]{6,8})/);
+    let c = (m ? (m[1] || m[2]) : v).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    const pretty = c.length > 3 ? c.slice(0, 3) + "-" + c.slice(3) : c; if (pretty !== v) f.code.value = pretty; });
+  f.addEventListener("submit", e => { e.preventDefault(); const c = f.code.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (c.length !== 6) return start("Codes have 6 letters and numbers, like K7Q-4MZ.");
+    history.pushState(null, "", `?code=${c}${LQ}`); load(c); });
+  if (!err && !matchMedia("(pointer: coarse)").matches) document.getElementById("code").focus();
+}
+function loading() {
+  show(`<div class="card" aria-busy="true" aria-label="Looking up the course"><div class="cover sk"></div><div class="inner">
+    <div class="sk" style="height:26px;width:55%;border-radius:8px"></div><div class="sk" style="height:12px;width:70%;border-radius:6px;margin-top:12px"></div>
+    <div class="sk" style="height:44px;border-radius:10px;margin-top:30px"></div><div class="sk" style="height:46px;border-radius:12px;margin-top:14px"></div></div></div>`);
+}
+async function load(code) {
+  loading(); const d = await preview(code);
+  if (d.status === "open" || d.status === "approval") return invite(code, d);
+  problem(d);
+}
+function invite(code, d) {
+  document.title = `Join ${d.course} · Stash`;
+  const name = store.get("name", "");
+  const ask = d.status === "approval";
+  show(`<div class="card"><div class="cover"><img src="${art(d.coverKey || d.cover)}" data-art="${d.coverKey || d.cover}" alt=""></div><div class="inner">
+    <h1>${esc(d.course)}</h1>
+    <p class="meta">${esc([d.code, d.term, d.instructor].filter(Boolean).join(" · "))}<br>${esc([d.uni, d.shelf].filter(Boolean).join(" · "))}</p>
+    <p class="facts-line"><b><bdi>${esc(d.inviter)}</bdi></b> invited you · ${esc(String(d.people))} people · ${esc(d.things)} files and notes</p>
+    <form id="join-form"><div class="field"><label for="name">Your name</label>
+      <input class="input" id="name" name="name" value="${esc(name)}" placeholder="Dana" maxlength="40" autocomplete="given-name" required aria-describedby="name-hint">
+      <p class="hint" id="name-hint">First name is enough. People here see only this name.</p></div>
+      <p class="err" id="name-err" hidden>Add a name so people know who put things down.</p>
+      <button class="btn primary wide" type="submit" id="join-btn">${ask ? "Ask to join" : `Join ${esc(d.course)}`}</button></form>
+    <p class="note">${ic("lock")}<span>${ask ? `${esc(d.inviter)} lets people in by hand — you'll see the course once they do. ` : ""}Only what you add is shared — nothing else from your phone or computer.</span></p>
+    <p class="alt"><a href="${CONFIG.appJoin(code)}">Open in the Stash app</a><br><a href="./${LQ ? "?lang=he" : ""}">Use a different code</a></p></div></div>`);
+  const f = document.getElementById("join-form"), b = document.getElementById("join-btn");
+  if (!name && !matchMedia("(pointer: coarse)").matches) f.name.focus(); // phones: no keyboard over the course
+  f.addEventListener("submit", e => { e.preventDefault(); const n = f.name.value.trim();
+    if (!n) { document.getElementById("name-err").hidden = false; f.name.focus(); return; }
+    if (b.disabled) return; b.disabled = true; // one tap = one join, even on a slow network
+    store.set("name", n); b.setAttribute("aria-busy", "true"); b.innerHTML = `<span class="spin" aria-hidden="true"></span><span>${ask ? "Asking…" : "Joining…"}</span>`;
+    setTimeout(() => { if (ask) { b.removeAttribute("aria-busy"); b.innerHTML = "Asked — you'll get in when Maya says yes"; b.disabled = true; return; }
+      location.href = `${CONFIG.hub}?c=${d.id}&joined=1${LQ}`; }, 650); });
+}
+function problem(d) {
+  const P = {
+    unknown: ["That code doesn't match a course", "Check the letters with the person who invited you — codes look like K7Q-4MZ."],
+    expired: ["This invite has run out", `Ask ${d.inviter || "the person who invited you"} for a new code. Invites last two weeks.`],
+    closed: ["This course isn't taking new people", `${d.inviter || "Its owner"} closed the door. Ask them to open it again.`],
+    full: ["This course is full", "It has 200 people, the most a course can hold. Ask its owner about a second one."],
+    rate: ["Too many tries", "Wait a few minutes, then try the code again."],
+  }[d.status] || ["Couldn't reach Stash", "Check the internet and try again."];
+  const pic = ["expired", "closed", "full"].includes(d.status) ? "c3-invite" : "c4-join";
+  document.title = P[0] + " · Stash";
+  show(`<div class="card problem" role="alert"><img src="${art(pic)}" data-art="${pic}" alt=""><h1>${P[0]}</h1><p>${P[1]}</p>
+    <a class="btn primary" href="./${LQ ? "?lang=he" : ""}">Try another code</a></div>`);
+}
+const UNIS = ["Northfield University", "Ashford College", "Lakeside Institute of Technology"];
+function cardRow(x) {
+  return `<div class="found"><span class="th"><img src="${art(x.cover)}" data-art="${x.cover}" alt="" style="left:-158px;top:-20px"></span>
+    <span><b>${esc(x.course)}</b><small>${esc(x.number)} · ${esc(x.instructor)}</small><small>${esc(x.term)} · ${esc(x.size)} people</small></span>
+    <a class="btn primary" style="height:36px;font-size:13px;border-radius:9px" href="?code=${x.code}">Open</a></div>`;
+}
+function find() {
+  document.title = "Find your course · Stash";
+  const uni = store.get("uni", "");
+  show(`<div class="card"><div class="inner"><h1>Find your course</h1>
+    <p class="meta">Search by the course name or its number. Only courses whose owner made them findable show up, and you see nothing inside until you join.</p>
+    <form id="find-form"><div class="field"><label for="uni">University</label><select class="input" id="uni" required>
+      <option value="">Choose…</option>${UNIS.map(u => `<option ${u === uni ? "selected" : ""}>${u}</option>`).join("")}</select></div>
+      <div class="field"><label for="cc">Course name or number</label><input class="input" id="cc" placeholder="Algorithms, or CS 2041" autocomplete="off" spellcheck="false" value="${esc(params.get("cc") || "")}"></div>
+      <button class="btn primary wide" type="submit">Search</button></form>
+    <div id="res" aria-live="polite"></div>
+    <p class="alt"><a href="./">I have an invite code</a></p></div></div>`);
+  const f = document.getElementById("find-form");
+  f.addEventListener("submit", async e => { e.preventDefault(); const u = f.uni.value, q = f.cc.value.trim(), r = document.getElementById("res");
+    if (!u) { r.innerHTML = `<p class="err">Choose your university first.</p>`; return; }
+    if (q.replace(/\s/g, "").length < 3) { r.innerHTML = `<p class="err">Type at least 3 letters of the name, or the course number.</p>`; return; }
+    store.set("uni", u); r.innerHTML = `<p class="note"><span class="spin" aria-hidden="true"></span> Searching…</p>`;
+    await new Promise(x => setTimeout(x, 450));
+    const hits = u !== UNIS[0] ? [] : LISTED.filter(x => norm(x.number) === norm(q) || x.course.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
+    r.innerHTML = hits.length ? `<div style="margin-top:6px">${hits.map(cardRow).join("")}</div><p class="note">Not there? <button class="linkbtn" data-start>Start it yourself</button></p>`
+      : `<p class="note">No findable course matches at ${esc(u)}. Ask a classmate for an invite — or start it, and others taking it can find it.</p>
+         <button class="btn wide" data-start>Start it yourself</button>`;
+    r.querySelectorAll("[data-start]").forEach(b => b.addEventListener("click", () => startCourse(u, q))); });
+}
+function startCourse(u, q) {
+  document.title = "Start a course · Stash";
+  const looksLikeNumber = /\d/.test(q);
+  show(`<div class="card"><div class="inner"><h1>Start a course</h1>
+    <p class="meta">You're its first member. Others taking it can join with your invite — or find it, if you let them.</p>
+    <form id="start-form">
+      <div class="field"><label for="s-name">Course name</label><input class="input" id="s-name" value="${looksLikeNumber ? "" : esc(q)}" placeholder="Algorithms" required maxlength="60"></div>
+      <div class="field"><label for="s-num">Course number</label><input class="input" id="s-num" value="${looksLikeNumber ? esc(q) : ""}" placeholder="CS 2041" maxlength="20"></div>
+      <div class="field"><label for="s-ins">Lecturer</label><input class="input" id="s-ins" placeholder="Prof. Levin" maxlength="60"></div>
+      <div class="field"><label for="s-term">Term</label><select class="input" id="s-term"><option>Spring 2027</option><option>Fall 2026</option></select></div>
+      <label style="display:flex;gap:10px;align-items:flex-start;margin-top:16px;font:400 14px/1.4 var(--font);color:var(--ink)"><input type="checkbox" id="s-find" checked style="margin-top:3px">
+        <span>Let others at ${esc(u)} find it<br><small style="color:var(--ink2);font-size:13px">They see its name, number, lecturer, term and roughly how many people — nothing inside.</small></span></label>
+      <div id="s-res" aria-live="polite"></div>
+      <button class="btn primary wide" type="submit">Start the course</button></form>
+    <p class="alt"><a href="?find=1${LQ}">Back to search</a></p></div></div>`);
+  const f = document.getElementById("start-form");
+  f.addEventListener("submit", async e => { e.preventDefault(); const num = f["s-num"].value, name = f["s-name"].value.trim(); if (!name) return f["s-name"].focus();
+    const dup = LISTED.find(x => num && norm(x.number) === norm(num) && f["s-term"].value === x.term);
+    if (dup) { document.getElementById("s-res").innerHTML = `<p class="note" style="color:var(--ink)">${esc(dup.course)} is already here for ${esc(dup.term)} — join it, so everyone taking it is in one place.</p>${cardRow(dup).replace(">Open<", ">Join it instead<")}`; return; }
+    const b = f.querySelector("[type=submit]"); b.setAttribute("aria-busy", "true"); b.innerHTML = `<span class="spin" aria-hidden="true"></span><span>Starting…</span>`;
+    setTimeout(() => { location.href = `${CONFIG.hub}?state=empty`; }, 600); });
+}
+const code = readCode();
+/* On the public address the hub joins for real (it looks the code up itself; this page's preview needs the `preview` Edge Function, not live yet). */
+if (location.hostname === "ymichelson.github.io") location.replace(`../hub/${code ? "?code=" + code + LQ : lang === "he" ? "?lang=he" : ""}`);
+else if (params.get("find")) find(); else if (code) load(code);
+else if ((params.get("code") || "").length) problem({ status: "unknown" }); else start();
+addEventListener("popstate", () => location.reload());
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => document.querySelectorAll("img[data-art]").forEach(i => i.src = art(i.dataset.art)));
+})();
+</script>
+</body>
+</html>

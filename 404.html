@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Stash</title>
+<style>body{margin:0;min-height:100dvh;display:grid;place-items:center;background:#F6F3EC;color:#202427;font:400 15px/1.45 -apple-system,system-ui,sans-serif}
+@media (prefers-color-scheme:dark){body{background:#211E19;color:#EFEAE1}}a{color:inherit}</style>
+</head>
+<body>
+<!-- GitHub Pages serves this for any address it doesn't have. An invite in the short shape …/j/K7Q4MZ goes to the hub. -->
+<p>That page isn't here. <a href="/stash-releases/hub/">Open Stash</a></p>
+<script>
+const m = location.pathname.match(/^\/stash-releases\/j\/([A-Za-z0-9-]{6,8})\/?$/);
+if (m) { const code = m[1].toUpperCase().replace(/[^A-Z0-9]/g, ""); if (/^[A-Z0-9]{6}$/.test(code)) location.replace("/stash-releases/hub/?code=" + code); }
+</script>
+</body>
+</html>
