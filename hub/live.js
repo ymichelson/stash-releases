@@ -91,19 +91,30 @@ export async function startLive(hub) {
     const old = new Map(S.courses.map(c => [c.id, c]));
     const next = mine.map(sp => {
       const c = old.get(sp.id) ?? { id: sp.id, items: [], files: [], weekTitles: {}, names: [], people: 1, invite: "", week: 1, lastVisit: "", uni: "", shelf: null };
-      return Object.assign(c, { name: sp.name, code: sp.course_code || "", term: sp.term || "", cover: (sp.cover ?? 0) % 10, purged: sp.purged_seq || 0 });
+      return Object.assign(c, { name: sp.name, code: sp.course_code || "", term: sp.term || "", termStarts: sp.term_starts || null, cover: (sp.cover ?? 0) % 10, purged: sp.purged_seq || 0 });
     });
     S.courses = next;
     await Promise.all(next.map(c => syncSpace(c, !old.has(c.id))));
   }
 
-  async function syncSpace(c, initial) {
+  // light = after a poke: only the changes (one request); names, week titles, the code and your own stickers wait for the
+  // 15 s check, unless someone new adds something (a busy class pokes every few seconds — docs/shared/STRESS-2026-10-26.md).
+  async function syncSpace(c, initial, light = false) {
     const before = sig(c);
     let st = spaces.get(c.id);
     if (!st) { st = { people: new Map(), lastSeen: null, mineStickers: new Map() }; spaces.set(c.id, st); }
     if (initial) { try { st.lastSeen = await backend.seen(c.id, true); } catch {} }
-    const [members, titles, stick] = await Promise.all([
-      backend.people(c.id).catch(() => []), backend.weekTitles(c.id).catch(() => new Map()), backend.myStickers(c.id).catch(() => new Map())]);
+    if (!light || !st.loaded) { await syncMeta(c, st); light = false; }
+    const res = await backend.catchUp(c.id, c.purged);
+    if (light && res.arrivals.some(r => !st.people.has(r.added_by))) await syncMeta(c, st);
+    return syncItems(c, st, res, initial, before, light);
+  }
+
+  async function syncMeta(c, st) {
+    const [members, titles, stick, events] = await Promise.all([
+      backend.people(c.id).catch(() => []), backend.weekTitles(c.id).catch(() => new Map()), backend.myStickers(c.id).catch(() => new Map()),
+      backend.calendar(c.id).catch(() => null)]);
+    if (events) c.events = events;   // the course calendar: Essentials and Coming up read it (dates-ui.js adds to it)
     st.people = new Map(members.map(p => [p.person_id, p.display_name]));
     st.myName = members.find(p => p.person_id === backend.me)?.display_name ?? null;
     st.mineStickers = stick;
@@ -111,6 +122,7 @@ export async function startLive(hub) {
     c.allNames = members.filter(p => p.person_id !== backend.me).map(p => ({ name: p.display_name, role: p.role }));
     c.names = c.allNames.map(p => p.name).slice(0, 2);
     c.myName = members.find(p => p.person_id === backend.me)?.display_name || "";
+    c.myRole = members.find(p => p.person_id === backend.me)?.role || "member";
     if (looksOn !== false) {   // colour or photo per person (migration 20261026_shared_profile); keyed by the name the page shows
       const lk = await backend.looks(c.id).catch(() => undefined);
       if (lk === null) looksOn = false;
@@ -120,8 +132,10 @@ export async function startLive(hub) {
     c.owner = owner ? (owner.person_id === backend.me ? ME : owner.display_name) : "";
     c.weekTitles = Object.fromEntries([...titles]);
     try { c.invite = (await backend.inviteCode(c.id))?.code || c.invite; } catch { /* a member who may not invite */ }
+    st.loaded = true;
+  }
 
-    const res = await backend.catchUp(c.id, c.purged);
+  async function syncItems(c, st, res, initial, before, light) {
     const rows = [...res.materials.values()].filter(r => r.ready && !r.hidden && !r.deleted_at)
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     const all = rows.map(r => itemFrom(r, { people: st.people, me: backend.me, lastSeen: st.lastSeen, mine: st.mineStickers.get(r.id) || [], ME })).filter(Boolean);
@@ -137,7 +151,7 @@ export async function startLive(hub) {
     const sending = c.items.filter(i => i.sending && i.live);
     for (const o of sending) { const m = all.find(x => x.cid === o.cid); if (m) { o.id = m.id; o.sending = false; } }   // the row got here before the upload call returned
     const stillSending = sending.filter(o => o.sending);
-    const keep = i => { const o = known.get(i.id); if (!o) return i; return Object.assign(o, { stickers: i.stickers, mine: i.mine, title: i.title, text: i.text, week: i.week, ago: i.ago, src: o.src || i.src, due: i.due, dueAt: i.dueAt, dueTitle: i.dueTitle, dueSort: i.dueSort, pinned: i.pinned }); };
+    const keep = i => { const o = known.get(i.id); if (!o) return i; return Object.assign(o, { stickers: i.stickers, mine: light ? o.mine : i.mine, title: i.title, text: i.text, week: i.week, ago: i.ago, src: o.src || i.src, due: i.due, dueAt: i.dueAt, dueTitle: i.dueTitle, dueSort: i.dueSort, pinned: i.pinned }); };
     const arrivals = initial ? [] : all.filter(i => !known.has(i.id) && !sending.some(o => o.cid === i.cid));
     c.items = [...stillSending, ...all.filter(i => !i.pinned).map(keep)];
     c.files = all.filter(i => i.pinned).map(keep);
@@ -160,13 +174,14 @@ export async function startLive(hub) {
   }
   document.addEventListener("visibilitychange", () => { if (!document.hidden && S.courses.length) poll(); });
 
-  async function poll() {
-    if (busy || hub.$(".panel")) return;   // never redraw under an open sheet
+  async function poll({ only = null, light = false } = {}) {
+    if (busy || hub.$(".panel")) { if (light) pokeMissed = true; return; }   // never redraw under an open sheet
     busy = true;
     try {
       const cur = course();
       for (const c of [...S.courses]) {
-        const { arrivals, removed, changed } = await syncSpace(c, false);
+        if (only && c.id !== only) continue;
+        const { arrivals, removed, changed } = await syncSpace(c, false, light);
         if (c !== cur || S.view !== "course") { if (changed) hub.renderSide(); continue; }
         const grid = hub.$("#grid-now");
         const fly = c.items.filter(i => arrivals.some(a => a.id === i.id));
@@ -178,6 +193,23 @@ export async function startLive(hub) {
       }
     } catch { /* offline: the next check tries again */ }
     busy = false;
+    if (pokeMissed) { pokeMissed = false; poke(); }
+  }
+
+  // ——— instant: the server pokes the course on screen when something in it changes (shared.sql space_broadcast) ———
+  // A burst of pokes (five people adding at once; a photo pokes twice) becomes one light check, at most one every
+  // 1.5 s; the 15 s check above stays as the safety net (no socket, other courses' badges).
+  let pokeTimer = null, pokeLast = 0, pokeMissed = false, pokeStop = null, pokeFor = null;
+  function poke() {
+    if (pokeTimer || !pokeFor) return;
+    pokeTimer = setTimeout(async () => { pokeTimer = null; pokeLast = Date.now(); await poll({ only: pokeFor, light: true }); },
+                           Math.max(250, 1500 - (Date.now() - pokeLast)));
+  }
+  function followPokes(c) {
+    const want = c && !document.hidden ? c.id : null;
+    if (want === pokeFor) return;
+    pokeStop?.then(stop => stop?.()); pokeStop = null; pokeFor = want;
+    if (want) pokeStop = backend.pokes(want, poke).catch(() => null);   // no Realtime: the 15 s check still runs
   }
 
   // ——— who's here now (Realtime Presence on the course channel; docs/shared/PRESENCE-REMINDERS.md) ———
@@ -211,9 +243,9 @@ export async function startLive(hub) {
       } catch { /* no Realtime: no circles; everything else works */ }
     });
   }
-  hub.hooks.course = c => followHere(c);
+  hub.hooks.course = c => { followHere(c); followPokes(c); };
   hub.hooks.showHere = () => followHere(S.view === "class" ? null : course());
-  document.addEventListener("visibilitychange", () => followHere(S.view === "class" ? null : course()));
+  document.addEventListener("visibilitychange", () => { const c = S.view === "class" ? null : course(); followHere(c); followPokes(c); });
   addEventListener("pagehide", () => { here?.set(null); });
   if (SERVER.vapidPublicKey) hub.pwa?.(P => P.configure({ vapidPublicKey: SERVER.vapidPublicKey, pushSave: r => backend.savePush(r), pushDelete: e => backend.deletePush(e) }));
   hub.hooks.reminders = (c, on) => { backend.setReminders(c.id, on).catch(() => { /* the server switch isn't there yet: kept on this device */ }); };
@@ -244,6 +276,8 @@ export async function startLive(hub) {
   const live = {
     send,
     setDue: (it, at, title) => backend.setDue(it.id, new Date(at).toISOString(), title),   // "Add to Essentials?" (essentials-ui.js)
+    /** "Found 6 dates — add them?" → Add (dates-ui.js): the ticked rows, already in import_events' shape. */
+    async importDates(c, events) { await backend.importEvents(c.id, events); c.events = await backend.calendar(c.id).catch(() => c.events); },
     async sticker(it, sid, on) { try { await backend.sticker(it.id, sid, on); } catch (e) { say(`<span>${esc(failText(e))}</span>`, 4000); } },
     async remove(it) {
       if (it.sending) { it.cancelled = true; return; }

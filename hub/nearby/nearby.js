@@ -28,7 +28,8 @@
 
   async function connect() {
     let server = false;
-    if (location.protocol.startsWith("http")) { try { server = (await fetch("/nearby-api/ping", { cache: "no-store" })).ok } catch {} }
+    // The public site (GitHub Pages) has no stub server: asking there only logs a 404 on every page load.
+    if (location.protocol.startsWith("http") && !location.hostname.endsWith("github.io")) { try { server = (await fetch("/nearby-api/ping", { cache: "no-store" })).ok } catch {} }
     if (server) {
       const es = new EventSource(`/nearby-api/events?id=${me}&room=auto`);
       es.onmessage = e => { try { const { from, msg } = JSON.parse(e.data); onSignal(from, msg) } catch {} };

@@ -993,10 +993,13 @@ export const EssentialsNotice = Object.freeze({
   examTitle(p, title) {
     if (rxHas(String.raw`(?<![a-z])midterms?(?![a-z])`, p)) return "Midterm";
     if (rxHas(String.raw`(?<![a-z])(final exam|finals)(?![a-z])`, p)) return "Final exam";
-    const q = rxFirst(String.raw`(?<![a-z])quiz\s*#?\s*0*(\d{1,2})(?!\d)`, p);
+    const q = rxFirst(String.raw`(?<![a-z])quiz\s*#?\s*0*(\d{1,2})(?!\d|[/.:]\d)`, p);
     if (q) return `Quiz ${q.groups[1]}`;
     if (rxHas(String.raw`(?<![a-z])quiz(?![a-z])`, p)) return "Quiz";
-    if (p.includes("בוחן")) return "בוחן";
+    const moed = rxFirst(String.raw`(?<![a-z])moed\s+([ab])(?![a-z])|(?<![א-ת])מועד\s+([אב])(?![א-ת])`, p);
+    if (moed) return moed.groups[1] ? `Moed ${moed.groups[1].toUpperCase()}` : `מועד ${moed.groups[2]}׳`;
+    const he = rxFirst(String.raw`(?<![א-ת])[והבלמשכ]{0,2}(מבחן|בוחן)(?:\s+(אמצע|סופי)|\s*(?:מס['׳]?\s*)?0*(\d{1,2})(?!\d|[/.:]\d))?(?![א-ת])`, p);
+    if (he) return [he.groups[1], he.groups[2] ?? he.groups[3]].filter(Boolean).join(" ");
     if (/[א-ת]/.test(p)) return "מבחן";
     if (!rxHas(N.exam, p) && title != null) return SmartNames.tidy(title);
     return "Exam";
@@ -1011,9 +1014,8 @@ export const EssentialsNotice = Object.freeze({
     if (titleKind === "homework" && title != null) return SmartNames.tidy(title);
     return /[א-ת]/.test(p) ? "הגשה" : "Due";
   },
-  /** A written or numeric date first (12/11 = 12 Nov unless that can't be), then a weekday, then today/tomorrow. A date
-   *  already past (up to 60 days back) means nothing to add; further back is next year's. */
-  date(p, now, tz) {
+  /** Every written or numeric date in a sentence, in reading order (not checked yet). */
+  explicit(p) {
     const explicit = [], year = s => (s == null ? null : +s < 100 ? 2000 + +s : +s);
     for (const g of rxAll(String.raw`(?<!\d)(\d{1,2})(?:st|nd|rd|th)?(?:\s+of)?\s+` + N.month + String.raw`\.?(?:,?\s+(\d{4}))?(?![a-z])`, p))
       explicit.push({ at: g.at, y: year(g.groups[3]), m: MONTH_KEYS.indexOf(g.groups[2].slice(0, 3)) + 1, d: +g.groups[1] });
@@ -1023,15 +1025,21 @@ export const EssentialsNotice = Object.freeze({
       explicit.push({ at: g.at, y: year(g.groups[3]), m: HE_MONTHS[g.groups[2]], d: +g.groups[1] });
     for (const pattern of [String.raw`(?<![\d/.:])(\d{1,2})/(\d{1,2})(?:/(\d{4}|\d{2}))?(?!/?\d)`,
                            String.raw`(?<![\d.:])(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})(?!\d)`,
-                           String.raw`(?:^|:\s*|(?<![a-z])(?:on|by|until|due|date|before|sun|mon|tue|wed|thu|fri|sat)[a-z]*\.?,?\s+|(?<![א-ת])(?:ב|עד|ל|ה|בתאריך)\s?-?\s?|['׳]\s+)(\d{1,2})\.(\d{1,2})(?!\.?\d)`]) {
+                           String.raw`(?:^|:\s*|(?<![a-z])(?:on|by|until|due|date|before|sun|mon|tue|wed|thu|fri|sat)[a-z]*\.?,?\s+|(?<![א-ת])(?:ב|עד|ל|ה|בתאריך)\s?-?\s?|['׳]\s+|[–—-]\s+)(\d{1,2})\.(\d{1,2})(?!\.?\d)`]) {
       for (const g of rxAll(pattern, p)) {
         const a = +g.groups[1], b = +g.groups[2], [d, m] = b > 12 && a <= 12 ? [b, a] : [a, b];
         explicit.push({ at: g.at, y: g.groups.length > 3 ? year(g.groups[3]) : null, m, d });
       }
     }
+    return explicit.sort((a, b) => a.at - b.at);
+  },
+  /** A written or numeric date first (12/11 = 12 Nov unless that can't be), then a weekday, then today/tomorrow. A date
+   *  already past (up to 60 days back) means nothing to add; further back is next year's. */
+  date(p, now, tz) {
+    const explicit = this.explicit(p);
     const today = tzParts(now, tz);
     const valid = (y, m, d) => m >= 1 && m <= 12 && d >= 1 && d <= new Date(Date.UTC(y, m, 0)).getUTCDate();
-    const e = explicit.sort((a, b) => a.at - b.at).find(x => valid(x.y ?? today.y, x.m, x.d));
+    const e = explicit.find(x => valid(x.y ?? today.y, x.m, x.d));
     if (e) {
       if (e.y != null) return { y: e.y, m: e.m, d: e.d };
       const ahead = dayNo(today.y, e.m, e.d) - dayNo(today.y, today.m, today.d);
@@ -1049,6 +1057,18 @@ export const EssentialsNotice = Object.freeze({
     if (rel.length) return shifted({ today: 0, tonight: 0, tomorrow: 1, היום: 0, מחר: 1, מחרתיים: 2 }[rel[0].groups[1]]);
     return null;
   },
+  /** The first written or numeric date, past or not: a missing year is the one that puts it nearest to now (a syllabus's
+   *  "Week 1 (25/10)", "the semester ends 22/1"). */
+  explicitDate(p, now, tz) {
+    const today = tzParts(now, tz), valid = (y, m, d) => m >= 1 && m <= 12 && d >= 1 && d <= new Date(Date.UTC(y, m, 0)).getUTCDate();
+    for (const e of this.explicit(p)) {
+      if (e.y != null) { if (valid(e.y, e.m, e.d)) return { y: e.y, m: e.m, d: e.d }; continue; }
+      const t = dayNo(today.y, today.m, today.d), y = [today.y - 1, today.y, today.y + 1].filter(y => valid(y, e.m, e.d))
+        .sort((a, b) => Math.abs(dayNo(a, e.m, e.d) - t) - Math.abs(dayNo(b, e.m, e.d) - t))[0];
+      if (y != null) return { y, m: e.m, d: e.d };
+    }
+    return null;
+  },
   /** "9:00", "2pm", "at 9", "בשעה 10", "noon"; the first one wins. A bare "at 2" / "בשעה 2" is the afternoon. */
   clock(p) {
     const found = [];
@@ -1056,7 +1076,7 @@ export const EssentialsNotice = Object.freeze({
     const afternoon = h => (h >= 1 && h <= 6 ? h + 12 : h >= 7 && h <= 23 ? h : null);
     for (const g of rxAll(String.raw`(?<![\d:./])([01]?\d|2[0-3]):([0-5]\d)(?!\d)(?:\s*(am|pm|a\.m\.|p\.m\.))?`, p)) found.push({ at: g.at, h: ampm(+g.groups[1], g.groups[3]), m: +g.groups[2] });
     for (const g of rxAll(String.raw`(?<![\d:./])(1[0-2]|0?[1-9])\s*(am|pm|a\.m\.|p\.m\.)(?![a-z])`, p)) found.push({ at: g.at, h: ampm(+g.groups[1], g.groups[2]), m: 0 });
-    for (const g of rxAll(String.raw`(?<![a-z])at\s+(\d{1,2})(?![\d:./])`, p)) { const h = afternoon(+g.groups[1]); if (h != null) found.push({ at: g.at, h, m: 0 }); }
+    for (const g of rxAll(String.raw`(?<![a-z])at\s+(\d{1,2})(?![\d:./]|\s*(?:am|pm|a\.m\.|p\.m\.))`, p)) { const h = afternoon(+g.groups[1]); if (h != null) found.push({ at: g.at, h, m: 0 }); }
     for (const g of rxAll(String.raw`בשעה\s*(\d{1,2})(?::([0-5]\d))?(?!\d)`, p)) { const h = afternoon(+g.groups[1]); if (h != null) found.push({ at: g.at, h, m: g.groups[2] != null ? +g.groups[2] : 0 }); }
     for (const g of rxAll(String.raw`(?<![a-z])noon(?![a-z])`, p)) found.push({ at: g.at, h: 12, m: 0 });
     found.sort((a, b) => a.at - b.at);
@@ -1077,6 +1097,155 @@ export const EssentialsNotice = Object.freeze({
     if (rxHas(String.raw`(?<![a-z])moodle(?![a-z])|(?<![א-ת])[בל]?מודל(?![א-ת])`, p)) return "Moodle";
     if (rxHas(String.raw`(?<![a-z])online(?![a-z])|אונליין|מקוון`, p)) return "Online";
     return null;
+  },
+});
+
+// ——— Dates from a syllabus, a calendar or a pasted list (SharedDateImport.swift; cases in test/dates-cases.json) ———
+// The whole text is read on the device: exams, quizzes, what's due (English + Hebrew, 12/11 = 12 Nov, "Week 5", "Thursday
+// of week 4") and the weekly class times ("Lectures: Sunday 10:00–12:00, Room 204"). It only ever *suggests*: the page
+// shows "Found 6 dates — add them?" with a tick per row, and nothing is saved until Add (import_events, with a made-up
+// UID per date so the same syllabus again updates instead of doubling).
+const DI = {
+  week: String.raw`(?<![a-z])(?:week|wk)\.?\s*#?\s*(\d{1,2})(?!\d)|(?<![א-ת])[בלש]?שבוע\s*(?:מס['׳]?\s*)?(\d{1,2})(?!\d)`,
+  every: String.raw`(?<![a-z])(every|each|weekly)(?![a-z])|(?<![א-ת])(כל|מדי)(?![א-ת])`,
+  cls: String.raw`(?<![a-z])(lectures?|class(?:es)?|tutorials?|recitations?|labs?|sections?|seminars?|meets|meetings?)(?![a-z])|(?<![א-ת])[ובה]?(הרצאות|הרצאה|תרגולים|תרגול|שיעורים|שיעור|מעבדות|מעבדה|סמינר|סדנה)(?![א-ת])`,
+  office: String.raw`(?<![a-z])office hours?(?![a-z])|שעות קבלה|שעת קבלה`,
+  range: String.raw`(?<![\d:./])([01]?\d|2[0-3])(?::([0-5]\d))?\s*(?:[-–—]|to|עד)\s*([01]?\d|2[0-3])(?::([0-5]\d))?(?![\d/.]|:\d)`,
+  term: String.raw`(?<![a-z])(semester|term|classes|course)(?![a-z])|סמסטר|הלימודים|הקורס`,
+  start: String.raw`(?<![a-z])(starts?|begins?|start date|first day)(?![a-z])|(?<![א-ת])(תחילת|פתיחת|מתחיל|מתחילים)(?![א-ת])`,
+  end: String.raw`(?<![a-z])(ends?|end date|last day|finish(?:es)?)(?![a-z])|(?<![א-ת])(סיום|סוף|מסתיים|נגמר)(?![א-ת])`,
+  weekday: String.raw`(?<![a-z])(sunday|monday|tuesday|wednesday|thursday|friday|saturday|sun|mon|tues|tue|wed|thurs|thur|thu|fri)(?![a-z])|(?<![א-ת])[בל]?יום\s+(ראשון|שני|שלישי|רביעי|חמישי|שישי|א|ב|ג|ד|ה|ו)(?![א-ת])`,
+};
+const DI_CLASS = { lecture: "Lecture", lectures: "Lecture", class: "Class", classes: "Class", tutorial: "Tutorial", tutorials: "Tutorial",
+  recitation: "Recitation", recitations: "Recitation", lab: "Lab", labs: "Lab", section: "Section", sections: "Section", seminar: "Seminar",
+  seminars: "Seminar", meets: "Class", meeting: "Class", meetings: "Class", הרצאה: "הרצאה", הרצאות: "הרצאה", תרגול: "תרגול", תרגולים: "תרגול",
+  שיעור: "שיעור", שיעורים: "שיעור", מעבדה: "מעבדה", מעבדות: "מעבדה", סמינר: "סמינר", סדנה: "סדנה" };
+const DI_TUTORIAL = new Set(["Tutorial", "Recitation", "Lab", "Section", "תרגול", "מעבדה"]);
+const ymd = ({ y, m, d }) => `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+const plusDays = ({ y, m, d }, n) => { const x = new Date(Date.UTC(y, m - 1, d + n)); return { y: x.getUTCFullYear(), m: x.getUTCMonth() + 1, d: x.getUTCDate() }; };
+const weekdayOf = ({ y, m, d }) => new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+const hm = (h, m) => `${h}:${String(m).padStart(2, "0")}`;
+
+export const DateImport = Object.freeze({
+  maxText: 60_000, maxFound: 60,
+  /** [{kind, title, at, endsAt, allDay, place, repeatUntil, uid, checked}] from a syllabus's or a pasted list's text: weekly
+   *  classes first, then the dated things, soonest first. `termStarts` ("2026-10-25") counts the weeks when the text doesn't. */
+  fromText(text, { now = new Date(), timeZone, termStarts = null } = {}) {
+    now = new Date(now);
+    let raw = [...String(text ?? "")].slice(0, this.maxText).join("");
+    // Month first (11/17, 12/01) when a date can only be read that way and none only the Israeli way.
+    const pairs = rxAll(String.raw`(?<![\d/.:])(\d{1,2})/(\d{1,2})(?!\d)`, raw).map(g => [+g.groups[1], +g.groups[2]]);
+    if (pairs.some(([a, b]) => b > 12 && a <= 12) && !pairs.some(([a, b]) => a > 12 && b <= 12))
+      raw = raw.replace(/(?<![\d/.:])(\d{1,2})\/(\d{1,2})(?!\d)/g, "$2/$1");
+    const lines = raw.split(/\r?\n/).map(l => l.replace(/\s+/g, " ").trim()).filter(Boolean);
+    const low = lines.map(l => l.toLowerCase());
+    const examish = p => rxHas(N.exam, p) || rxHas(N.due, p) || rxHas(N.homework, p);
+    const weekOf = p => { const g = rxFirst(DI.week, p); return g ? +(g.groups[1] ?? g.groups[2]) : null; };
+    const after = (p, pattern) => { const g = rxFirst(pattern, p); return g ? EssentialsNotice.explicitDate(p.slice(g.at + g.groups[0].length), now, timeZone) : null; };
+    // The term and the week count.
+    let starts = null, ends = null, anchor = null, maxWeek = 0;
+    for (const p of low) {
+      if (rxHas(DI.term, p) && !examish(p)) { starts ??= after(p, DI.start); ends ??= after(p, DI.end); }
+      const w = weekOf(p);
+      if (w != null) { maxWeek = Math.max(maxWeek, w); const d = EssentialsNotice.explicitDate(p, now, timeZone); if (d && !anchor) anchor = { n: w, day: d }; }
+    }
+    const given = termStarts ? (([y, m, d]) => ({ y, m, d }))(String(termStarts).slice(0, 10).split("-").map(Number)) : null;
+    anchor ??= starts ? { n: 1, day: starts } : given ? { n: 1, day: given } : null;
+    const weekDay = (n, wd) => { // week n's day: that weekday of the week, else the anchor's own weekday
+      const base = plusDays(anchor.day, 7 * (n - anchor.n));
+      return wd == null ? base : plusDays(base, wd - weekdayOf(base));
+    };
+    if (!ends && anchor && maxWeek >= 6) ends = weekDay(maxWeek, 6);
+    const found = [];
+    for (let i = 0; i < lines.length; i++) {
+      const p = low[i], w = weekOf(p);
+      if (this.isClassLine(p, now, timeZone)) { found.push(...this.weekly(p, { now, timeZone, starts: starts ?? given, ends })); continue; }
+      for (const piece of lines[i].split(/[;!?]\s+|\.\s+(?=[A-Zא-ת])/).filter(Boolean).map(x => x.toLowerCase())) {
+        if (rxHas(DI.every, piece)) continue;
+        let q = piece;
+        if (!EssentialsNotice.explicitDate(q, now, timeZone) && w != null) {
+          if (!anchor) continue;
+          const wd = rxFirst(DI.weekday, q), day = weekDay(w, wd ? this.weekdayIndex(wd) : null);
+          q += ` on ${day.d}/${day.m}/${day.y}`;
+        }
+        const s = EssentialsNotice.suggestion(q, null, null, now, timeZone);
+        if (!s) continue;
+        const kind = s.slot === "exam" ? "exam" : "deadline";
+        const at = s.allDay ? startOfDayIn(s.at, timeZone) : s.at;
+        found.push({ kind, title: s.title, at, endsAt: null, allDay: s.allDay, place: s.place, repeatUntil: null,
+                     uid: `stash-dates:${kind}:${ymd(tzParts(at, timeZone))}${s.allDay ? "" : "T" + hm(tzParts(at, timeZone).h, tzParts(at, timeZone).mi)}:${s.title.toLowerCase()}`, checked: true });
+      }
+    }
+    const seen = new Set();
+    return this.order(found.filter(f => !seen.has(f.uid) && seen.add(f.uid)), timeZone).slice(0, this.maxFound);
+  },
+  weekdayIndex(g) { return g.groups[1] ? ["sun", "mon", "tue", "wed", "thu", "fri", "sat"].indexOf(g.groups[1].slice(0, 3)) : HE_WEEKDAYS[g.groups[2]]; },
+  /** "Lectures: Sunday 10:00–12:00, Room 204": a class word, a weekday and a time, no date, not office hours. */
+  isClassLine(p, now, tz) {
+    return rxHas(DI.cls, p) && rxHas(DI.weekday, p) && !rxHas(DI.office, p) && !rxHas(N.exam, p) && !rxHas(N.due, p) && !rxHas(N.homework, p)
+      && !EssentialsNotice.explicitDate(p, now, tz) && (rxHas(DI.range, p) || EssentialsNotice.clock(p) != null);
+  },
+  /** One weekly event per weekday named, from the next one (or the term's first week) until the term ends (else 13 weeks). */
+  weekly(p, { now, timeZone, starts, ends }) {
+    const name = DI_CLASS[rxFirst(DI.cls, p).groups.slice(1).find(Boolean)] ?? "Class";
+    const r = rxFirst(DI.range, p);
+    let from = r ? { h: +r.groups[1], m: +(r.groups[2] ?? 0) } : EssentialsNotice.clock(p), to = r ? { h: +r.groups[3], m: +(r.groups[4] ?? 0) } : null;
+    if (r && !r.groups[2] && !r.groups[4] && from.h < 8 && to.h < 10) { from.h += 12; to.h += 12; } // "2-4" is the afternoon
+    if (!from || from.h < 7 || from.h > 22 || (to && (to.h * 60 + to.m) <= (from.h * 60 + from.m))) return [];
+    const today = tzParts(now, timeZone), base = starts && dayNo(starts.y, starts.m, starts.d) > dayNo(today.y, today.m, today.d) ? starts : today;
+    const place = EssentialsNotice.place(p), out = [], seen = new Set();
+    for (const g of rxAll(DI.weekday, p)) {
+      const wd = this.weekdayIndex(g); if (seen.has(wd)) continue; seen.add(wd);
+      let day = plusDays(base, (wd - weekdayOf(base) + 7) % 7);
+      let at = zonedToUTC(day.y, day.m, day.d, from.h, from.m, 0, timeZone);
+      const length = to ? (to.h * 60 + to.m - from.h * 60 - from.m) * 60_000 : this.classLength;
+      if (at.getTime() + length <= now.getTime()) { day = plusDays(day, 7); at = zonedToUTC(day.y, day.m, day.d, from.h, from.m, 0, timeZone); }
+      const until = ends ?? plusDays(day, 7 * 13 - 1);
+      if (dayNo(until.y, until.m, until.d) < dayNo(day.y, day.m, day.d)) continue;
+      const kind = DI_TUTORIAL.has(name) ? "tutorial" : "lecture";
+      out.push({ kind, title: name, at, endsAt: to ? zonedToUTC(day.y, day.m, day.d, to.h, to.m, 0, timeZone) : null, allDay: false, place,
+                 repeatUntil: ymd(until), uid: `stash-dates:${kind}:w${wd}T${hm(from.h, from.m)}:${name.toLowerCase()}`, checked: true });
+    }
+    return out;
+  },
+  classLength: 3_600_000,
+  /** The same rows from a calendar file (ICSImport.parse's events): what's over is left out; anything that isn't a class,
+   *  an exam or a deadline starts unticked. */
+  fromEvents(events = [], { now = new Date(), timeZone } = {}) {
+    now = new Date(now);
+    const out = [];
+    for (const e of events) {
+      const start = new Date(e.starts_at), length = e.ends_at ? new Date(e.ends_at) - start : 0;
+      if (!Essentials.next(start, length, !!e.all_day, e.repeat_until, now, timeZone)) continue;
+      const title = String(e.title).replace(/\s+(?:is\s+)?due\.?$/i, "").trim() || e.title;
+      out.push({ kind: e.kind, title, at: start, endsAt: e.ends_at ? new Date(e.ends_at) : null, allDay: !!e.all_day, place: blank(e.location),
+                 repeatUntil: e.repeat_until ?? null, uid: e.uid ?? null, checked: e.kind !== "other" });
+    }
+    return this.order(out, timeZone).slice(0, CourseEvents.maxPerCourse);
+  },
+  /** Classes first, in week order (Sun → Sat, then by time); then the dated things, soonest first. */
+  order(list, tz) {
+    const week = f => { const p = tzParts(f.at, tz); return p.wd * 1440 + p.h * 60 + p.mi; };
+    return [...list].sort((a, b) => (!!b.repeatUntil - !!a.repeatUntil) || (a.repeatUntil && b.repeatUntil ? week(a) - week(b) : 0) || (a.at - b.at));
+  },
+  /** "Found 6 dates — add them?" */
+  headline(n, lang = "en") {
+    if (lang === "he") return n === 0 ? "לא נמצאו תאריכים" : n === 1 ? "נמצא תאריך אחד — להוסיף?" : `נמצאו ${n} תאריכים — להוסיף?`;
+    return n === 0 ? "No dates found" : n === 1 ? "Found 1 date — add it?" : `Found ${n} dates — add them?`;
+  },
+  /** A review row: "Every Sun · 10:00–12:00 · Room 204" · "Tue 8 Dec · 18:00 · Hall 2" · "Mon 1 Feb 2027" (a year only when it isn't this one). */
+  line(f, now = new Date(), timeZone, lang = "en") {
+    const he = lang === "he", p = tzParts(f.at, timeZone), e = f.endsAt ? tzParts(f.endsAt, timeZone) : null;
+    const time = f.allDay ? null : hm(p.h, p.mi) + (e && (e.h !== p.h || e.mi !== p.mi) ? `–${hm(e.h, e.mi)}` : "");
+    if (f.repeatUntil) return [he ? `כל ${HE_DAYS[p.wd]}` : `Every ${EN_DAYS[p.wd]}`, time, f.place].map(blank).filter(Boolean).join(" · ");
+    const year = p.y !== tzParts(now, timeZone).y;
+    const day = he ? `${HE_DAYS[p.wd]} ${p.d}/${p.m}${year ? `/${p.y}` : ""}` : `${EN_DAYS[p.wd]} ${p.d} ${EN_MONTHS[p.m - 1]}${year ? ` ${p.y}` : ""}`;
+    return [day, time, f.place].map(blank).filter(Boolean).join(" · ");
+  },
+  /** What import_events takes. */
+  toEvent(f) {
+    return { kind: f.kind, title: [...f.title].slice(0, 120).join(""), starts_at: new Date(f.at).toISOString(), ends_at: f.endsAt ? new Date(f.endsAt).toISOString() : null,
+             all_day: !!f.allDay, location: f.place ? [...f.place].slice(0, 120).join("") : null, repeat_until: f.repeatUntil ?? null, uid: f.uid };
   },
 });
 
@@ -1176,6 +1345,7 @@ export const Reminders = Object.freeze({
   /** "Exam" → "exam", "Homework 4" → "homework 4"; names stay as typed ("CS Midterm", "Quiz B"). */
   lower(title) { return /^[A-Z][a-z]+( \d+)?$/.test(title) ? title[0].toLowerCase() + title.slice(1) : title; },
 });
+
 // ——— Profile (optional): your name everywhere, a colour or a photo for your initial circle, your other devices ———
 // Twin: Sources/StashCore/SharedProfile.swift; same cases: test/profile-cases.json. Server: set_my_name (per course),
 // set_my_look / space_looks (migration 20261026_shared_profile), make_pair_code / claim_pair_code.

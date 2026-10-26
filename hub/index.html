@@ -1554,8 +1554,8 @@ function essRows(c) { // what Essentials.pick reads, in the server's row shapes
     due_at: i.dueAt ?? wallClock(i.due)?.toISOString(), due_title: i.dueTitle, pinned: files.has(i.id) || !!i.pinned })).filter(r => r.due_at);
   const events = (c.events || []).filter(e => !e.due).map((e, n) => { // the prototype's due:true rows mirror its dated sheets
     const [time, ...where] = String(e.k || "").split(" · "), at = e.starts_at ? new Date(e.starts_at) : wallClock(`${e.wd} ${time}`);
-    return at && { id: e.id ?? `demo-${n}`, kind: e.kind ?? CORE.CourseEvents.guessKind(e.t), title: e.t, starts_at: at.toISOString(),
-      ends_at: e.ends_at ?? null, location: e.location ?? where[0] ?? null, repeat_until: e.repeat_until ?? null }; }).filter(Boolean);
+    return at && { id: e.id ?? `demo-${n}`, kind: e.kind ?? CORE.CourseEvents.guessKind(e.title ?? e.t), title: e.title ?? e.t, starts_at: at.toISOString(),
+      ends_at: e.ends_at ?? null, all_day: !!e.all_day, location: e.location ?? where[0] ?? null, repeat_until: e.repeat_until ?? null }; }).filter(Boolean);
   return { materials, events, lessons: c.lessons || [] };
 }
 function essentialsOf(c, now = new Date()) { if (!CORE?.Essentials) return []; try { return CORE.Essentials.pick(essRows(c), now, tzHere()); } catch { return []; } }
@@ -1624,7 +1624,7 @@ function renderFolio(c, isEmpty) {
       <div class="fsubline">${sub ? `<span class="sub">${esc(sub)}</span>` : ""}<span class="here-slot" id="here-slot">${presenceInner(c)}</span></div>
       <h1 id="course-name"><button class="fname" data-act="switcher" aria-haspopup="dialog">${esc(c.name)}${ic("down","s")}</button></h1>
       ${moment ? `<p class="moment">${moment}</p>` : ""}</header>
-    ${essHTML}${ask}${profHint()}
+    ${essHTML}${ask}${hooks.datesCard?.(c, ess) ?? ""}${profHint()}
     <div class="status" id="status" role="status" aria-live="polite"></div>
     ${isEmpty ? emptyCourse(c) : `
     ${board.length ? `<section class="fsec board" aria-labelledby="h-board"><h2 class="fh" id="h-board">${lang === "he" ? "הלוח של היום" : "Today’s board"}<span>${board.length} ${board.length === 1 ? "photo" : "photos"}</span></h2>
@@ -1685,10 +1685,19 @@ function didIt(btn, label) { // the button itself says it worked, for a moment
 function maybeNudge() {
   if (S.saves >= 2 && !S.nudge && desktopOS() && (store.get("nudgeNo", 0) < 2) && store.get("nudgeDay", "") !== new Date().toDateString()) { S.nudge = true; store.set("nudgeDay", new Date().toDateString()); const n = $("#nudge-slot"); if (n) n.innerHTML = nudgeCard(); }
 }
+function evShown(events, now = new Date()) { // calendar rows (starts_at …) as Coming up lines; the made-up courses' rows are already words
+  if (!CORE) return events.filter(e => e.d != null);
+  return events.map(e => { if (e.d != null) return e;
+    const start = new Date(e.starts_at), len = e.ends_at ? new Date(e.ends_at) - start : 0, at = CORE.Essentials.next(start, len, !!e.all_day, e.repeat_until, now, tzHere());
+    if (!at) return null; const loc = lang === "he" ? "he" : "en-GB";
+    return { at, d: String(at.getDate()), wd: at.toLocaleDateString(loc, { weekday: "short" }), t: e.title, due: false, hot: e.kind === "exam" || e.kind === "deadline",
+      k: [e.all_day ? "" : at.toLocaleTimeString(loc, { hour: "numeric", minute: "2-digit" }), e.location].filter(Boolean).join(" · ") }; })
+    .filter(Boolean).sort((a, b) => (a.at ?? 0) - (b.at ?? 0));
+}
 function railCards(c, coming) {
-  const ev = c.events || coming.map(i => ({ d: "", wd: i.due, t: i.dueTitle, k: "", due: true, id: i.id }));
+  const ev = c.events?.length ? evShown(c.events) : coming.map(i => ({ d: "", wd: i.due, t: i.dueTitle, k: "", due: true, id: i.id }));
   const cal = ev.length ? `<section class="rcard" aria-labelledby="r-cal"><h3 id="r-cal"><span>Coming up</span><button class="linkbtn" data-act="ics">Import .ics</button></h3>
-    ${ev.slice(0, 5).map(e => `<div class="ev ${e.due ? "due" : ""}"><span class="d"><b>${esc(e.d)}</b>${esc(e.wd)}</span><span><span class="t"><span>${esc(e.t)}</span></span><span class="k" style="display:block">${esc(e.k)}</span></span></div>`).join("")}</section>` : "";
+    ${ev.slice(0, 5).map(e => `<div class="ev ${e.due || e.hot ? "due" : ""}"><span class="d"><b>${esc(e.d)}</b>${esc(e.wd)}</span><span><span class="t"><span>${esc(e.t)}</span></span><span class="k" style="display:block">${esc(e.k)}</span></span></div>`).join("")}</section>` : "";
   const files = c.files.length ? `<section class="rcard" aria-labelledby="r-files"><h3 id="r-files"><span>${t("courseFiles")}</span></h3><div class="files">${c.files.map(slip).join("")}</div></section>` : "";
   const staff = c.staff ? `<section class="rcard" aria-labelledby="r-people"><h3 id="r-people"><span>Lecturer and TA</span><button class="linkbtn" data-act="info-edit">Edit</button></h3>
     <div class="staff">${c.staff.map(p => `<div class="p"><span class="ini" aria-hidden="true">${esc(p.i)}</span><div><b>${esc(p.name)}</b><small>${esc(p.role)} · <a href="mailto:${esc(p.mail)}">${esc(p.mail)}</a></small><small>${esc(p.hours)}</small></div></div>`).join("")}</div>
@@ -2100,7 +2109,7 @@ function openMenu(btn) {
   closeMenu();
   const c = course(); const mu = document.createElement("div"); mu.className = "menu"; mu.setAttribute("role", "menu");
   mu.innerHTML = c ? `${phone() ? `<button role="menuitem" data-act="invite">${ic("plus","s")}${t("invitePeople")}</button>
-    <button role="menuitem" data-act="course-info">${ic("note","s")}${t("info")}</button>` : ""}<button role="menuitem" data-act="people">${ic("people","s")}People in this course</button>
+    <button role="menuitem" data-act="course-info">${ic("note","s")}${t("info")}</button>` : ""}${hub.dates ? `<button role="menuitem" data-act="dates">${ic("cal","s")}${lang === "he" ? "הוספת תאריכים…" : "Add dates…"}</button>` : ""}<button role="menuitem" data-act="people">${ic("people","s")}People in this course</button>
     ${phone() ? "" : `<button role="menuitem" data-act="covers">${ic("cover","s")}Change the cover</button>`}
     <button role="menuitemcheckbox" data-act="reminders" aria-checked="${remindersOn(c)}">${ic("bell","s")}${t("reminders")}<span class="chk" aria-hidden="true">${remindersOn(c) ? (lang === "he" ? "פועל" : "On") : (lang === "he" ? "כבוי" : "Off")}</span></button>
     <button role="menuitemcheckbox" data-act="show-here" aria-checked="${showHere()}">${ic("people","s")}${t("showHere")}<span class="chk" aria-hidden="true">${showHere() ? (lang === "he" ? "פועל" : "On") : (lang === "he" ? "כבוי" : "Off")}</span></button>
@@ -2209,6 +2218,7 @@ function commit() {
     const sg = CORE.EssentialsNotice.find([it.text, it.ocr].filter(Boolean).join("\n"), it.kind === "note" ? null : it.title, new Date(), tzHere());
     if (sg) { S.essAsk = { it, s: sg, c: course()?.id }; setTimeout(() => { if (phone()) render(); }, 450); }
   }
+  hub.dates?.afterAdd(it); // a syllabus or a list of dates: "Found 6 dates — add them?" (dates-ui.js)
   if (LIVE) { it.cid = crypto.randomUUID(); it.live = true; it.section = null; }
   draft = null; closeAll();
   if (LIVE) hub.live.send(it, c, wk, due);
@@ -2367,7 +2377,7 @@ document.addEventListener("click", async e => {
       if (open) { box.innerHTML = `<div class="tray-h" style="margin:12px 0 6px">Pass to someone at the desk</div><div style="display:flex;flex-wrap:wrap;gap:6px">${(course().here || []).map(n => `<button class="seat" data-act="pass-to" data-id="${id}" data-who="${esc(n)}">${face(n, lookOf(course(), n))}<bdi>${esc(n)}</bdi></button>`).join("")}</div>`; $("button", box)?.focus(); } break; }
     case "pass-to": { const it = findItem(id); didIt(a); say(`<span>${ic("check","s")}</span><span>Passed <b>${esc(it?.title || "the note")}</b> to <b><bdi>${esc(a.dataset.who)}</bdi></b> — it waits for them with Keep · No thanks.</span>`, 4500); break; }
     case "quick": { const k = a.dataset.q; S.addSection = a.dataset.section || null; openAdd(); if (k === "photo") $("#pick-photo").click(); else if (k === "file") $("#pick-file").click(); else drawAdd(k); break; }
-    case "ics": say(`<span>In the real hub, the course rep pastes the course's calendar link (.ics) here — lectures, tutorials and deadlines appear in Coming up.</span>`, 5000); break;
+    case "ics": if (hub.dates) { hub.dates.open(a); break; } say(`<span>In the real hub, the course rep pastes the course's calendar link (.ics) here — lectures, tutorials and deadlines appear in Coming up.</span>`, 5000); break;
     case "info-edit": say(`<span>Members add the lecturer, TA, office hours and links themselves. Nothing is copied from Moodle.</span>`, 4500); break;
     case "welcome-ok": { const w = $(".welcome"); S.welcome = false; if (!w) break; if (reduced()) { w.remove(); break; }
       w.animate([{ opacity: 1 }, { opacity: 0, transform: "translateY(-6px)" }], { duration: 160, easing: "ease-in" }).onfinish = () => w.remove(); break; }
@@ -2565,6 +2575,7 @@ const hooks = {};
 const hub = { S, m, ME, store, course, render, renderSide, renderPresence, remindersOn, showHere, pwa, addItem, say, esc, ic, reduced, phone, shareSave, openItem, drawAdd, findItem, closeAll, hooks, openPanel, head, sheet, $, $$,
   get draft() { return draft; }, set draft(v) { draft = v; }, live: null };
 Object.assign(hub, { LIVE, lang, face, thumb, myNameHere }); import("./profile-ui.js").then(mod => mod.startProfile(hub)).catch(() => {});
+import("./dates-ui.js").then(mod => mod.startDates(hub)).catch(() => {});
 try { const q = params.get("crisp"); if (q === "1") localStorage.setItem("stash.crisp", "1"); if (q === "0") localStorage.removeItem("stash.crisp"); } catch {}
 if ((() => { try { return localStorage.getItem("stash.crisp") === "1"; } catch { return params.get("crisp") === "1"; } })()) {
   window.stashHub = hub;

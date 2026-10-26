@@ -202,6 +202,14 @@ export class SupabaseBackend {
     };
   }
 
+  /** Just the pokes ("something in this course changed", shared.sql space_broadcast), for a page that has its own
+   *  timer. Returns stop(). */
+  async pokes(space, onPoke) {
+    const ch = await this.channel(space);
+    ch.stash.on.changed.add(onPoke);
+    return () => { ch.stash.on.changed.delete(onPoke); this.release(space); };
+  }
+
   /** Who's here now: this device says it's here with `payload` ({p, n, c} from core.js Presence.payload, or null to
    *  stay unseen) and hears who else is (onState gets supabase-js presenceState()). Returns {set(payload), stop()}. */
   async here(space, payload, onState) {
@@ -317,6 +325,9 @@ export class SupabaseBackend {
     const saved = await this.rpc("import_events", space, events.filter(e => e.uid));
     return { saved, skipped: skipped + events.filter(e => !e.uid).length };
   }
+  /** Rows found in a syllabus, a calendar or a list and ticked in the review (core.js DateImport.toEvent): each has a UID,
+   *  so adding the same syllabus again updates instead of doubling. */
+  importEvents(space, events) { return this.rpc("import_events", space, events.filter(e => e.uid).slice(0, 500)); }
   async pulse(space) { return (await this.rpc("space_pulse", space))?.[0] ?? null; }
   /** "Coming up": the adder (or a teacher) sets or clears a date. */
   setDue(material, dueAt, title = null) { return this.rpc("set_due", material, dueAt, title); }
