@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#F6F3EC" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#211E19" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#FAF9F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16191E" media="(prefers-color-scheme: dark)">
 <meta name="robots" content="noindex">
 <title>Join a course · Stash</title>
 <meta name="description" content="You've been invited to a course on Stash. Open it in your browser — nothing to install.">
@@ -19,7 +19,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>
 :root {
-  --paper:#F6F3EC; --sheet:#FFFEFB; --sheet-hover:#FFFFFF; --well:#EDE9E1; --ink:#202427; --ink2:#646A73;
+  --paper:#FAF9F6; --sheet:#FFFFFF; --sheet-hover:#FFFFFF; --well:#F0EEE9; --ink:#202427; --ink2:#646A73;
   --hair:rgba(32,36,39,.09); --hair-strong:rgba(32,36,39,.16); --sky:#82AAF1; --sky-pale:#E4EDFC; --focus:#345EA0;
   --primary:#202427; --on-primary:#FFFFFF; --red:#C74646; --shadow-sheet:0 1px 3px rgba(0,0,0,.06); --grain:.035;
   --ease-out:cubic-bezier(.23,1,.32,1);
@@ -27,11 +27,11 @@
   --display:-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif; color-scheme:light;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --paper:#211E19; --sheet:#302B25; --sheet-hover:#36312A; --well:#2A2621; --ink:#EFEAE1; --ink2:#B5AC9E; --hair:rgba(239,234,225,.10);
-  --hair-strong:rgba(239,234,225,.18); --sky:#6584B8; --sky-pale:rgba(130,170,241,.14); --focus:#82AAF1; --primary:#EFEAE1; --on-primary:#211E19;
+  --paper:#16191E; --sheet:#22272E; --sheet-hover:#272D35; --well:#1D2127; --ink:#ECEEF2; --ink2:#AEB5C0; --hair:rgba(236,238,242,.11);
+  --hair-strong:rgba(236,238,242,.2); --sky:#6584B8; --sky-pale:rgba(130,170,241,.14); --focus:#82AAF1; --primary:#ECEEF2; --on-primary:#16191E;
   --red:#F58C8C; --shadow-sheet:0 1px 2px rgba(0,0,0,.3); --grain:.045; color-scheme:dark; } }
-:root[data-theme="dark"] { --paper:#211E19; --sheet:#302B25; --sheet-hover:#36312A; --well:#2A2621; --ink:#EFEAE1; --ink2:#B5AC9E; --hair:rgba(239,234,225,.10);
-  --hair-strong:rgba(239,234,225,.18); --sky:#6584B8; --sky-pale:rgba(130,170,241,.14); --focus:#82AAF1; --primary:#EFEAE1; --on-primary:#211E19;
+:root[data-theme="dark"] { --paper:#16191E; --sheet:#22272E; --sheet-hover:#272D35; --well:#1D2127; --ink:#ECEEF2; --ink2:#AEB5C0; --hair:rgba(236,238,242,.11);
+  --hair-strong:rgba(236,238,242,.2); --sky:#6584B8; --sky-pale:rgba(130,170,241,.14); --focus:#82AAF1; --primary:#ECEEF2; --on-primary:#16191E;
   --red:#F58C8C; --shadow-sheet:0 1px 2px rgba(0,0,0,.3); --grain:.045; color-scheme:dark; }
 @media (prefers-contrast: more) { :root { --ink2:#474C54; --hair:rgba(32,36,39,.32); --grain:0; } }
 * { box-sizing:border-box; }
@@ -69,8 +69,8 @@ h1 { margin:0; font:500 24px/1.15 var(--display); letter-spacing:-.018em; text-w
 .hint { margin:0; color:var(--ink2); font-size:12px; }
 .input::placeholder { color:var(--ink2); opacity:.55; }
 .input.code:placeholder-shown { text-align:start; letter-spacing:.04em; }
-:root[data-theme="dark"] .input { background:#1C1915; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .input { background:#1C1915; } }
+:root[data-theme="dark"] .input { background:var(--sheet); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .input { background:var(--sheet); } }
 label { font:500 12px/1.2 var(--font); color:var(--ink2); }
 .input { width:100%; height:44px; padding:0 14px; border:0; border-radius:10px; background:var(--well); box-shadow:inset 0 0 0 1px var(--hair); font-size:16px; }
 .input:focus-visible { outline:none; box-shadow:inset 0 0 0 1px var(--hair), 0 0 0 2px var(--focus); }
@@ -139,6 +139,38 @@ footer { position:relative; padding:24px 16px calc(24px + env(safe-area-inset-bo
   .card.invite .input { height:56px; border-radius:16px; font-size:17px; padding:0 18px; }
   .card.invite .btn.wide { height:54px; border-radius:16px; font:600 17px/1 var(--font); margin-top:12px; }
   .card.invite .note { justify-content:center; margin-top:14px; }
+}
+/* ===== D · Stash pro (26 Oct 2026, same as the hub): paper + ink, hairlines, 4 px corners (6 px buttons), no drawings behind words ===== */
+:root { --r:4px; --rc:6px; --line:#E5E3DE; --grain:0; }
+:root[data-theme="dark"] { --line:#2E343C; --grain:0; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --line:#2E343C; --grain:0; } }
+@media (prefers-contrast: more) { :root { --line:rgba(32,36,39,.4); } }
+body::before, .backdrop { display:none; }
+:focus-visible { border-radius:var(--r); }
+.card { border-radius:var(--r); box-shadow:inset 0 0 0 1px var(--line); }
+.cover { border-bottom-color:var(--line); }
+h1 { font:500 28px/34px var(--display); letter-spacing:-.012em; }
+.meta, .facts-line { font-size:14px; }
+.facts-line, .facts { font-variant-numeric:tabular-nums; }
+.input { height:46px; border-radius:var(--rc); background:var(--sheet); box-shadow:inset 0 0 0 1px var(--line); }
+.input:focus-visible { box-shadow:inset 0 0 0 1px var(--line), 0 0 0 2px var(--focus); }
+.btn { height:46px; border-radius:var(--rc); box-shadow:inset 0 0 0 1px var(--line); }
+.btn.primary { box-shadow:none; }
+.nearby, .found { border-radius:var(--r); background:none; box-shadow:inset 0 0 0 1px var(--line); }
+.found .th { border-radius:2px; }
+.nearby .btn { border-radius:var(--rc); }
+.problem h1 { font-size:18px; line-height:24px; }
+@media (max-width:699px) {
+  main { padding:8px 20px 40px; align-content:start; padding-top:18vh; }
+  .card:not(.problem) { background:none; box-shadow:none; overflow:visible; }
+  .card:not(.problem) .inner { padding:0; }
+  .card.problem { box-shadow:none; background:none; }
+  body.invite-screen main { padding:env(safe-area-inset-top) 20px 0; }
+  .card.invite h1 { font:500 28px/34px var(--display); letter-spacing:-.012em; }
+  .card.invite .facts-line { margin-top:6px; font-size:14px; }
+  .card.invite .input { height:46px; border-radius:var(--rc); font-size:17px; padding:0 14px; }
+  .card.invite .btn.wide { height:46px; border-radius:var(--rc); font:500 15px/1 var(--font); margin-top:10px; }
+  .card.invite .jmark { width:36px; height:25px; margin-bottom:22px; }
 }
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cstyle%3Epath%7Bfill:%23202427%7D@media(prefers-color-scheme:dark)%7Bpath%7Bfill:%23EFEAE1%7D%7D%3C/style%3E%3Cpath transform='translate(0 24)' d='M12 94 C7 92 7 87 11 82 C28 61 42 42 60 45 C76 47 76 69 87 70 C105 73 119 51 125 17 C126 9 134 5 140 8 C147 11 149 16 147 23 C139 62 122 95 98 96 C76 100 67 83 63 72 C60 64 57 62 51 64 C39 69 28 82 20 92 C17 96 14 96 12 94 Z'/%3E%3C/svg%3E">

@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#F6F3EC" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#211E19" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#FAF9F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16191E" media="(prefers-color-scheme: dark)">
 <title>Algorithms · Stash</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cstyle%3Epath%7Bfill:%23202427%7D@media(prefers-color-scheme:dark)%7Bpath%7Bfill:%23EFEAE1%7D%7D%3C/style%3E%3Cpath transform='translate(0 24)' d='M12 94 C7 92 7 87 11 82 C28 61 42 42 60 45 C76 47 76 69 87 70 C105 73 119 51 125 17 C126 9 134 5 140 8 C147 11 149 16 147 23 C139 62 122 95 98 96 C76 100 67 83 63 72 C60 64 57 62 51 64 C39 69 28 82 20 92 C17 96 14 96 12 94 Z'/%3E%3C/svg%3E">
 <!-- The hub as an app on your phone (docs/shared/PWA.md): pwa.js adds the manifest + icon and loads the rest after the first paint. -->
@@ -17,7 +17,7 @@
 <meta name="description" content="A course's shared table: everyone taking it puts down what they have. Prototype with made-up data.">
 <style>
 :root {
-  --paper:#F6F3EC; --sheet:#FFFEFB; --sheet-hover:#FFFFFF; --well:#EDE9E1; --ink:#202427; --ink2:#646A73;
+  --paper:#FAF9F6; --sheet:#FFFFFF; --sheet-hover:#FFFFFF; --well:#F0EEE9; --ink:#202427; --ink2:#646A73;
   --hair:rgba(32,36,39,.09); --hair-strong:rgba(32,36,39,.16); --coral:#F1A08F; --butter:#F2CF88; --sky:#82AAF1;
   --sky-pale:#E4EDFC; --sky-ink:#345EA0; --focus:#345EA0; --primary:#202427; --on-primary:#FFFFFF; --red:#C74646;
   --shadow-sheet:0 1px 3px rgba(0,0,0,.06); --shadow-hover:0 3px 8px rgba(0,0,0,.09);
@@ -28,15 +28,15 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --img-dim:.86;
-  --paper:#211E19; --sheet:#302B25; --sheet-hover:#36312A; --well:#2A2621; --ink:#EFEAE1; --ink2:#B5AC9E;
-  --hair:rgba(239,234,225,.10); --hair-strong:rgba(239,234,225,.18); --butter:#B89A5E; --sky:#6584B8;
+  --paper:#16191E; --sheet:#22272E; --sheet-hover:#272D35; --well:#1D2127; --ink:#ECEEF2; --ink2:#AEB5C0;
+  --hair:rgba(236,238,242,.11); --hair-strong:rgba(236,238,242,.2); --butter:#B89A5E; --sky:#6584B8;
   --sky-pale:rgba(130,170,241,.14); --sky-ink:#82AAF1; --focus:#82AAF1; --primary:#EFEAE1; --on-primary:#211E19; --red:#F58C8C;
   --shadow-sheet:0 1px 2px rgba(0,0,0,.30); --shadow-hover:0 3px 8px rgba(0,0,0,.36);
   --shadow-float:0 12px 32px rgba(0,0,0,.40), 0 1px 3px rgba(0,0,0,.3); --scrim:rgba(0,0,0,.45); --grain:.045; color-scheme: dark;
 }}
 :root[data-theme="dark"] { --img-dim:.86;
-  --paper:#211E19; --sheet:#302B25; --sheet-hover:#36312A; --well:#2A2621; --ink:#EFEAE1; --ink2:#B5AC9E;
-  --hair:rgba(239,234,225,.10); --hair-strong:rgba(239,234,225,.18); --butter:#B89A5E; --sky:#6584B8;
+  --paper:#16191E; --sheet:#22272E; --sheet-hover:#272D35; --well:#1D2127; --ink:#ECEEF2; --ink2:#AEB5C0;
+  --hair:rgba(236,238,242,.11); --hair-strong:rgba(236,238,242,.2); --butter:#B89A5E; --sky:#6584B8;
   --sky-pale:rgba(130,170,241,.14); --sky-ink:#82AAF1; --focus:#82AAF1; --primary:#EFEAE1; --on-primary:#211E19; --red:#F58C8C;
   --shadow-sheet:0 1px 2px rgba(0,0,0,.30); --shadow-hover:0 3px 8px rgba(0,0,0,.36);
   --shadow-float:0 12px 32px rgba(0,0,0,.40), 0 1px 3px rgba(0,0,0,.3); --scrim:rgba(0,0,0,.45); --grain:.045; color-scheme: dark;
@@ -1051,6 +1051,150 @@ a, button, [data-act] { -webkit-tap-highlight-color:transparent; }
   .preview-wrap .who-sees svg { display:none; }
 }
 
+/* ===== D · Stash pro (26 Oct 2026, docs/shared/hub-design/pro-look-2026-10-26/d-stash-pro-phone.png; the Mac hub uses the same):
+   paper + ink, one type scale (28 / 18 / 14 / 12), hairlines instead of shadows and trays, 4 px corners (6 px buttons), no pills,
+   no cards around words; the pictures are the cards; colour only in tiny touches — butter "3 new", coral countdown, sky "new" dot ===== */
+:root { --r:4px; --rc:6px; --line:#E5E3DE; --edge:rgba(32,36,39,.08); --soon:#8A4536; --new-dot:#82AAF1; --hl:#FAEBCB; --hl-ink:#202427; }
+:root[data-theme="dark"] { --line:#2E343C; --edge:rgba(236,238,242,.09); --soon:#F6C2B6; --hl:#4A3F2A; --hl-ink:#F2D9A4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --line:#2E343C; --edge:rgba(236,238,242,.09); --soon:#F6C2B6; --hl:#4A3F2A; --hl-ink:#F2D9A4; } }
+@media (prefers-contrast: more) { :root { --line:rgba(32,36,39,.4); --edge:rgba(32,36,39,.4); } }
+.hl { background:var(--hl); color:var(--hl-ink); border-radius:2px; padding:0 3px; margin:0 -1px; font-weight:500; -webkit-box-decoration-break:clone; box-decoration-break:clone; }
+.tnum, .icard .v, .icard .s, .sheet .label, .fh span { font-variant-numeric:tabular-nums; }
+@media (max-width:699px) {
+  body::before { display:none; } /* flat paper */
+  .col { padding:0 20px; }
+  .btn { border-radius:var(--rc); box-shadow:inset 0 0 0 1px var(--line); }
+  .btn.primary, .btn.quiet { box-shadow:none; }
+  .input, select.input, textarea.input { border-radius:var(--rc); background:var(--sheet); box-shadow:inset 0 0 0 1px var(--line); }
+  .input:focus-visible { box-shadow:inset 0 0 0 1px var(--line), 0 0 0 2px var(--focus); }
+  :focus-visible { border-radius:var(--r); }
+  /* top bar: back · (name once scrolled) · ⋯ ; a hairline appears when the header has scrolled under it */
+  .topbar { background:color-mix(in srgb, var(--paper) 96%, transparent); -webkit-backdrop-filter:saturate(1.4) blur(12px); backdrop-filter:saturate(1.4) blur(12px); }
+  .topbar.scrolled { border-bottom-color:var(--line); }
+  .tb-btn { font:400 16px/1 var(--font); border-radius:var(--rc); }
+  .topbar .ttl .thumb { display:none !important; }
+  .topbar .ttl b { font:500 15px/1.2 var(--display); }
+  .topbar .ttl small { font:400 12px/16px var(--font); }
+  .topbar .ttl small .hl { padding:0 2px; }
+  /* header: eyebrow, the name, one line — no cover card, no drawing */
+  .fcover { min-height:0; margin:0; padding:6px 0 0; border-radius:0; background:none; box-shadow:none; overflow:visible; }
+  .folio.during .fcover { padding-bottom:0; }
+  .fsubline { min-height:22px; }
+  .fsubline:not(:has(.sub)) .here-slot { position:static; margin-inline-start:auto; }
+  .fcover .sub { font:400 14px/20px var(--font); color:var(--ink2); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fcover h1 { margin:2px 0 0; }
+  .fname { gap:6px; font:500 28px/34px var(--display); letter-spacing:-.012em; }
+  .fname svg { width:14px; height:14px; stroke-width:2; margin-top:4px; }
+  .moment { margin:6px 0 0; font:400 14px/20px var(--font); color:var(--ink2); }
+  .moment b { font-weight:500; }
+  .moment .ink, :root[data-theme="dark"] .moment .ink { background:none; padding:0; }
+  .moment .soon, .topbar .ttl small .soon { color:var(--soon); }
+  .now-dot { width:7px; height:7px; }
+  .pc { width:22px; height:22px; font-size:9.5px; box-shadow:0 0 0 2px var(--paper); }
+  /* the dates: a hairline strip, not a card */
+  .ess, .ess-strip { margin:20px 0 0; padding:0; border-radius:0; background:none; box-shadow:none; border-block:1px solid var(--line); }
+  .icard { min-height:0; padding:12px 10px 13px; border-inline-start:1px solid var(--line); }
+  .icard:first-child { padding-inline-start:0; }
+  .icard.hot::after { display:none; }
+  .icard .l { font:400 12px/16px var(--font); color:var(--ink2); }
+  .icard.hot .l { color:var(--soon); }
+  .icard .v { margin-top:4px; font:500 15px/20px var(--display); letter-spacing:0; }
+  .icard .s { margin-top:1px; font:400 12px/16px var(--font); }
+  .ess-strip { margin-top:16px; }
+  .ess-strip > div { padding:10px 10px 11px; border-inline-start:1px solid var(--line); }
+  .ess-strip > div:first-child { padding-inline-start:0; }
+  .ess-strip b { font:500 14px/20px var(--font); }
+  .ess-ask { margin:0; padding:12px 0; border-radius:0; background:none; color:var(--ink); border-bottom:1px solid var(--line); }
+  .ess-ask .btn { height:32px; border-radius:var(--rc); }
+  .prof-hint { margin-top:14px; }
+  .folio > .status { margin:14px 0 0; }
+  /* sections */
+  .fsec { margin-top:28px; }
+  .fh { justify-content:flex-start; gap:8px; margin:0 0 12px; font:500 17px/22px var(--display); letter-spacing:-.005em; }
+  .fh span { font:400 13px/1 var(--font); }
+  .ftabs { gap:18px; margin:0 0 12px; }
+  .ftabs button { padding:0 0 5px; font:500 17px/22px var(--display); letter-spacing:-.005em; color:var(--ink2); }
+  .ftabs button[aria-selected="true"] { font-weight:500; box-shadow:inset 0 -1.5px 0 var(--ink); }
+  /* a tile: the picture is the card (4:3, 4 px, one faint edge); title and who · when sit under it on the paper */
+  #grid-now, .board-grid { gap:20px 12px; }
+  .newrow { gap:12px; margin:0 -20px; padding:2px 20px 4px; scroll-padding-inline:20px; }
+  .newrow .sheet { width:148px; }
+  .board-grid .sheet:first-child { aspect-ratio:auto; }
+  .sheet, .sheet.file, [dir="rtl"] .sheet.file, .sheet:has(.k-note), .sheet:has(.k-link) { aspect-ratio:auto; overflow:visible; border-radius:var(--r); background:none; box-shadow:none; }
+  .sheet:hover, .sheet:focus-within { background:none; box-shadow:none; }
+  .sheet:active { transform:scale(.98); }
+  .sheet .press, .sheet .press:focus-visible { border-radius:var(--r); }
+  .sheet > .newtab { display:none; }
+  .sheet .body { flex:none; aspect-ratio:4/3; overflow:hidden; border-radius:var(--r); background:var(--well); }
+  .sheet .body::after { content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 1px var(--edge); pointer-events:none; }
+  .k-photo .ph { background:var(--well); }
+  .k-file { display:block; padding:0 !important; background:var(--well); }
+  .k-file .page { position:absolute; top:14%; left:20%; width:60%; border-radius:1px; box-shadow:0 0 0 1px var(--edge); }
+  .sheet .k-note { padding:12px !important; background:var(--sheet); }
+  .k-note::before { content:""; display:block; width:16px; height:2px; margin-bottom:10px; background:var(--butter); }
+  .k-note p { font:400 13px/19px var(--font); color:var(--ink); -webkit-line-clamp:4; }
+  .k-link, .k-link.has-pic { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; align-content:start; column-gap:6px; padding:12px !important; }
+  .sheet .k-link { background:var(--sheet); }
+  .sheet .mono { width:16px; height:16px; border-radius:3px; font:600 9px/1 var(--font); background:var(--ink) !important; color:var(--paper) !important; }
+  .k-link .dom { min-width:0; font:400 12px/16px var(--font); color:var(--ink2); }
+  .k-link h3 { grid-column:1/-1; display:-webkit-box; margin:8px 0 0; font:500 15px/20px var(--display); -webkit-line-clamp:3; }
+  .k-link.has-pic h3 { -webkit-line-clamp:1; }
+  .k-link.has-pic .pic { height:46%; }
+  .sheet .cap { display:flex; align-items:center; gap:7px; padding:8px 0 0; font:500 13px/18px var(--font); white-space:nowrap; }
+  .sheet .cap > span { min-width:0; overflow:hidden; text-overflow:ellipsis; unicode-bidi:plaintext; }
+  .sheet .cap .newtab { position:static; display:block; width:6px; height:6px; border-radius:50%; background:var(--new-dot); box-shadow:none; flex:none; }
+  .sheet .cap:has(> span:empty):not(:has(.newtab)) { display:none; }
+  .sheet .label { gap:5px; padding:2px 0 0; font:400 12px/16px var(--font); color:var(--ink2); }
+  .sheet .label .due { padding:0; border-radius:0; background:none; color:var(--soon); font-weight:500; }
+  .sheet .bar { margin:6px 0 0; }
+  .sheet.uploading .body { display:flex; flex-direction:column; justify-content:flex-end; }
+  .sheet .ghost-photo { margin:0; border-radius:0; }
+  /* the dock: one hairline, the main action wide, never a floating pill */
+  .bottombar, .bottombar.during { justify-content:stretch; gap:10px; padding:12px max(20px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    background:color-mix(in srgb, var(--paper) 96%, transparent); -webkit-backdrop-filter:saturate(1.4) blur(12px); backdrop-filter:saturate(1.4) blur(12px); border-top:1px solid var(--line); pointer-events:auto; }
+  .bottombar .btn.wide, .bottombar.during .btn.cam { flex:1; height:46px; padding:0 18px; border-radius:var(--rc); font:500 15px/1 var(--font); gap:8px; box-shadow:none; }
+  .bottombar.during .btn.plus { flex:0 0 46px; height:46px; border-radius:var(--rc); background:var(--sheet); box-shadow:inset 0 0 0 1px var(--line); }
+  .bottombar .btn svg.i { width:18px; height:18px; }
+  /* sheets that slide up */
+  .panel { border-radius:12px 12px 0 0; box-shadow:0 -1px 0 var(--line), 0 -8px 30px rgba(0,0,0,.08); }
+  .p-head h2 { font:500 18px/24px var(--display); letter-spacing:0; }
+  .p-foot { border-top-color:var(--line); }
+  .p-foot .btn { height:44px; border-radius:var(--rc); }
+  .close, .lift-bar .close, .panel.pv .lift-bar .close { width:32px; height:32px; border-radius:var(--rc); background:var(--sheet); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line); }
+  .close:active { background:var(--well); }
+  .way { border-radius:var(--r); background:var(--sheet); box-shadow:inset 0 0 0 1px var(--line); }
+  .way[aria-pressed="true"] { background:var(--sky-pale); box-shadow:inset 0 0 0 1px var(--sky); }
+  .codebox .cb { border-radius:var(--rc); background:var(--sheet); box-shadow:inset 0 0 0 1px var(--line); }
+  .codebox:focus-within .cb.on { box-shadow:inset 0 0 0 1px var(--line), 0 0 0 2px var(--focus); }
+  .menu { border-radius:var(--rc); box-shadow:0 8px 24px rgba(0,0,0,.10), 0 0 0 1px var(--line); }
+  .menu button, .menu a { border-radius:var(--r); }
+  .seat { border-radius:var(--rc); box-shadow:inset 0 0 0 1px var(--line); }
+  .notice, .near-card, .welcome { border-radius:var(--r); background:none; box-shadow:inset 0 0 0 1px var(--line); }
+  .welcome { padding:16px 0; box-shadow:none; border-block:1px solid var(--line); border-radius:0; }
+  #float-note { border-radius:var(--rc); box-shadow:0 6px 20px rgba(0,0,0,.08), 0 0 0 1px var(--line); }
+  .sk, .sk-sheet { border-radius:var(--r); }
+  /* Add: plain rows with hairlines, one wide button */
+  .arow { min-height:52px; border-radius:var(--r); font:400 16px/1.2 var(--font); }
+  .addlist .arow + .arow { border-top:1px solid var(--line); border-radius:0; }
+  .arow .ai { width:28px; height:28px; border-radius:0; background:none; color:var(--ink2); }
+  .panel.add .p-foot .btn.primary { height:46px; border-radius:var(--rc); font:500 15px/1 var(--font); }
+  /* an opened thing: the thing, who and when, Thanks, one or two buttons */
+  .panel.pv .lift-bar { padding:8px 16px 0; }
+  .pv-stage { padding:8px 20px !important; }
+  .pv-photo { position:relative; border-radius:var(--r); background:var(--well); box-shadow:none; }
+  .pv-photo::after { content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 1px var(--edge); pointer-events:none; }
+  .pv-page { border-radius:1px; box-shadow:0 0 0 1px var(--edge); }
+  .pv-note { padding:16px; border-radius:var(--r); background:var(--sheet); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line); font:400 17px/1.5 var(--font); }
+  .pv-note::before { content:""; display:block; width:16px; height:2px; margin-bottom:12px; background:var(--butter); }
+  .pv-meta h3 { font:500 18px/24px var(--display); letter-spacing:0; }
+  .pv-meta p { font-size:14px; font-variant-numeric:tabular-nums; }
+  .thanks { height:36px; padding:0 12px; border-radius:var(--rc); background:var(--sheet); box-shadow:inset 0 0 0 1px var(--line); font:500 14px/1 var(--font); }
+  .thanks[aria-pressed="true"] { box-shadow:inset 0 0 0 1px var(--sky); }
+  .pv-acts { border-top:1px solid var(--line); padding:12px 20px calc(12px + env(safe-area-inset-bottom)); }
+  .pv-acts .btn { height:46px; border-radius:var(--rc); font:500 15px/1 var(--font); }
+  .pv-acts .btn:not(.primary) { background:var(--sheet); box-shadow:inset 0 0 0 1px var(--line); }
+}
+
 /* installed (PWA standalone, nearby-share's pwa.js sets the class): no "get the app" nudge; clear the status bar and home indicator */
 html.pwa-standalone .nudge { display:none !important; }
 html.pwa-standalone .hd { padding-top:max(14px, env(safe-area-inset-top)); }
@@ -1596,14 +1740,15 @@ function presenceInner(c) {
 const remindersOn = c => store.get(`remind.${c?.id}`, true);  // one switch per course (Mac: its own; phone: + set_reminders)
 const showHere = () => store.get("showHere", true);           // this device: "Show me as here"
 function renderPresence() { const el = $("#here-slot"); if (el) el.innerHTML = presenceInner(course()); }
+const newWord = n => lang === "he" ? (n === 1 ? "חדש אחד" : `${n} חדשים`) : `${n} new`;
 function renderFolio(c, isEmpty) {
   const ess = essentialsOf(c), live = duringClass(c, ess), nNew = c.items.filter(i => i.isNew);
   const exam = ess.find(e => e.slot === "exam"), soon = ess.filter(e => e.slot !== "class").sort((a, b) => a.at - b.at)[0];
   const examDays = exam ? (new Date(exam.at) - Date.now()) / 864e5 : 99;
   const moment = live ? `<span class="now-dot" aria-hidden="true"></span><b>${esc(live.what)} ${lang === "he" ? "עכשיו" : "now"}</b>${live.where ? ` <span class="k">· <bdi>${esc(live.where)}</bdi>${live.until ? ` · ${lang === "he" ? "עד" : "until"} ${esc(live.until)}` : ""}</span>` : ""}`
-    : exam && examDays <= 13 ? `<b class="ink">${esc(soonWords(exam))}</b>${nNew.length ? ` <span class="k">· ${nNew.length} new</span>` : ""}`
-    : soon && (new Date(soon.at) - Date.now()) / 864e5 <= 2 ? `<b class="ink">${esc(soonWords(soon))}</b>`
-    : nNew.length ? `<b>${nNew.length} ${t("newSince")} ${esc(lang === "he" ? heWhen(c.lastVisit) : c.lastVisit)}</b>` : "";
+    : exam && examDays <= 13 ? `<b class="ink soon">${esc(soonWords(exam))}</b>${nNew.length ? ` <span class="k">· <b class="hl">${newWord(nNew.length)}</b></span>` : ""}`
+    : soon && (new Date(soon.at) - Date.now()) / 864e5 <= 2 ? `<b class="ink soon">${esc(soonWords(soon))}</b>`
+    : nNew.length ? `<b class="hl">${newWord(nNew.length)}</b> ${lang === "he" ? "מאז" : "since"} ${esc(lang === "he" ? heWhen(c.lastVisit) : c.lastVisit)}` : "";
   const sub = [c.code, c.instructor].filter(Boolean).join(" · ");
   const essHTML = !ess.length ? "" : live
     ? `<div class="ess-strip" role="list" aria-label="Essentials">${ess.map(e => { const k = essCard(e); return `<div role="listitem"><b dir="auto">${esc(e.slot === "class" ? t("next") : e.slot === "exam" ? e.title : k.v)}</b><span>${esc(e.slot === "exam" ? k.v : e.slot === "due" ? k.s.replace(/ · .*/, "") : k.when || k.v)}</span></div>`; }).join("")}</div>`
@@ -1620,7 +1765,7 @@ function renderFolio(c, isEmpty) {
   document.title = `${c.name} · Stash`; $("#tb-title").innerHTML = `${thumb(c.cover)}<span class="tt"><b>${esc(c.name)}</b>${moment ? `<small>${moment.replace(/<span class="now-dot"[^>]*><\/span>/, "")}</small>` : ""}</span>`;
   $("#tb-back").textContent = c.shelf || t("courses");
   $("#course").innerHTML = `<div class="folio ${live ? "during" : ""}">
-    <header class="fcover"><img class="fart" data-art="${COVERS[c.cover]}" src="${art(COVERS[c.cover])}" alt="" decoding="async">
+    <header class="fcover">
       <div class="fsubline">${sub ? `<span class="sub">${esc(sub)}</span>` : ""}<span class="here-slot" id="here-slot">${presenceInner(c)}</span></div>
       <h1 id="course-name"><button class="fname" data-act="switcher" aria-haspopup="dialog">${esc(c.name)}${ic("down","s")}</button></h1>
       ${moment ? `<p class="moment">${moment}</p>` : ""}</header>
@@ -1640,7 +1785,7 @@ function renderFolio(c, isEmpty) {
   const bar = $("#bottombar");
   bar.innerHTML = isEmpty ? "" : live
     ? `<button class="btn primary cam" data-act="quick" data-q="photo" data-section="${esc(c.liveNow?.section || "")}">${ic("photo")}<span>${lang === "he" ? "צילום הלוח" : "Photo of the board"}</span></button><button class="btn plus" data-act="add" aria-label="${esc(t("addOne"))}">${ic("plus")}</button>`
-    : `<button class="btn primary pill" data-act="add">${ic("plus","s")}<span>${t("addOne")}</span></button>`;
+    : `<button class="btn primary wide" data-act="add">${ic("plus","s")}<span>${t("addOne")}</span></button>`;
   bar.className = "bottombar" + (live ? " during" : ""); bar.style.display = isEmpty ? "none" : "";
   renderStatus(); observeTitle();
   shelfMore(list);
@@ -1786,7 +1931,7 @@ function sheet(it) {
     <button class="press" data-open="${it.id}" aria-label="${esc(accName(it))}"></button>
     ${it.isNew ? `<span class="newtab" aria-hidden="true"></span>` : ""}
     ${body(it)}
-    <b class="cap" dir="auto" aria-hidden="true">${esc(capOf(it))}</b>
+    <b class="cap" aria-hidden="true">${it.isNew ? `<i class="newtab"></i>` : ""}<span dir="auto">${esc(tileCap(it))}</span></b>
     ${it.sending && S.online ? `<span class="bar"><i></i></span>` : ""}
     <div class="label">${!it.sending && dueSoon(it) ? `<span class="due">Due ${esc(it.due.split(" · ")[0])}</span>` : ""}<span class="who">${it.sending ? (S.online ? "Sending…" : "Waiting to send") : `<bdi>${esc(it.by)}</bdi>${it.also?.length ? ` + <bdi>${esc(it.also[0])}</bdi>` : ""}${dueSoon(it) ? "" : ` · ${esc(it.ago)}`}`}</span><span class="grow"></span>${stickerStack(it)}</div>
     ${it.sending ? "" : `<div class="quick">${it.kind === "note" || it.kind === "link"
@@ -1794,6 +1939,7 @@ function sheet(it) {
       : `<button class="qbtn" data-act="qsave" data-id="${it.id}" aria-label="Save" title="Save">${ic("save","s")}</button>`}<button class="react-btn" data-act="tray" data-id="${it.id}" aria-label="Add a sticker" title="Sticker" aria-haspopup="true" aria-expanded="false">${ic("sticker","s")}</button></div>`}
   </div>`;
 }
+const tileCap = it => it.kind === "link" ? String(it.dom || "").replace(/^www\./, "") : it.kind === "note" ? String(it.text || "").split("\n")[0].slice(0, 80) : capOf(it);
 const capOf = it => it.kind === "note" ? "" : String(it.title || it.dom || "").replace(/\.(pdf|docx?|pptx?|key)$/i, "");
 // A site's icon without fetching anything (link previews never call out): its first letter on one of the brand's pale fills
 const MONO = [["#E4EDFC", "#345EA0"], ["#FBE4DD", "#8A4536"], ["#FAEBCB", "#70510D"], ["#E7EFE9", "#2F5B45"]];
@@ -2041,7 +2187,7 @@ function openItem(id, from, dir = 0) {
       $$(".stuck .st", p).forEach((x, i) => x.animate([{ opacity: 0, transform: "translateY(10px) scale(.8)" }, { opacity: x.classList.contains("ghost") ? .34 : 1, transform: "none" }], { duration: 360, delay: 300 + i * 50, easing: "cubic-bezier(.2,.9,.25,1.2)", fill: "backwards" })); });
   }
   p.setAttribute("aria-labelledby", "lift-h");
-  const el = $(`.sheet[data-id="${id}"] .newtab`); el?.remove(); renderStatus();
+  $$(`.sheet[data-id="${id}"] .newtab`).forEach(x => x.remove()); renderStatus();
   hooks.openItem?.(it, p);
 }
 function openItemPhone(it, title, share, waText) { // the phone: the thing itself, who and when, Thanks, one or two buttons
@@ -2063,7 +2209,7 @@ function openItemPhone(it, title, share, waText) { // the phone: the thing itsel
         <div class="pv-row">${thanksBtn(it)}<span class="grow"></span>${isOwn(it) ? `<button class="linkbtn quiet-link" data-act="delete" data-id="${it.id}">Delete</button>` : `<button class="linkbtn quiet-link" data-act="report" data-id="${it.id}">Report</button>`}</div></div></div>
     <div class="pv-acts ${acts.split("</").length > 2 ? "two" : ""}">${acts}</div>`, { w: 560, label: title, cls: "lift pv" });
   p.dataset.item = it.id; p.setAttribute("aria-labelledby", "lift-h");
-  $(`.sheet[data-id="${it.id}"] .newtab`)?.remove(); renderStatus();
+  $$(`.sheet[data-id="${it.id}"] .newtab`).forEach(x => x.remove()); renderStatus();
   hooks.openItem?.(it, p);
 }
 function thanksBtn(it) { // the phone keeps one sticker: Thanks
