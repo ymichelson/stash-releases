@@ -7,10 +7,10 @@
 // - The backend (Supabase), the nearby/push test servers and anything outside the scope: never touched here.
 // Routes mirror pwa-core.js `routeFor` (tested there): keep the two in step.
 
-const VERSION = "hub-pwa-4-854abd9";
+const VERSION = "hub-pwa-11-5d151c3e";  // 27 Oct: Hebrew pass (Heebo font, Hebrew manifest); hub-pwa-9: course-ui.js + schools.js (join or start a course); hub-pwa-8: syllabus.js (the syllabus reader); hub-pwa-7: Profile → Your data (download / delete); hub-pwa-6: launch QA (offline posts, PDF first pages)
 const SHELL = `stash-hub-shell-${VERSION}`, RUNTIME = "stash-hub-runtime-1", FILES = "stash-hub-files-1";
-const SHELL_FILES = ["./", "./index.html", "./core.js", "./backend.js", "./live.js", "./profile-ui.js", "./dates-ui.js", "./pdftext.js", "./pwa.js", "./pwa-main.js", "./pwa-core.js", "./nearby/nearby.js",
-  "./vendor/qrcode-generator-1.4.4.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/apple-touch-icon.png"];
+const SHELL_FILES = ["./", "./index.html", "./hub.js", "./vendor/supabase-js-2.45.4.min.js", "./core.js", "./backend.js", "./live.js", "./profile-ui.js", "./dates-ui.js", "./syllabus.js", "./course-ui.js", "./schools.js", "./coursematch.js", "./pdftext.js", "./pdfthumb.js", "./pwa.js", "./pwa-main.js", "./pwa-core.js", "./nearby/nearby.js",
+  "./vendor/qrcode-generator-1.4.4.js", "./manifest.webmanifest", "./manifest.he.webmanifest", "./vendor/fonts/heebo-hebrew-wght-5.3.0.woff2", "./icons/icon-192.png", "./icons/apple-touch-icon.png"];
 const RUNTIME_MAX = 150;
 
 self.addEventListener("install", event => {
@@ -60,11 +60,15 @@ async function page(request) {
   const cache = await caches.open(SHELL);
   try {
     const response = await Promise.race([fetch(request), new Promise((_, no) => setTimeout(() => no(new Error("slow")), 3000))]);
-    if (response.ok) cache.put("./index.html", response.clone()).catch(() => {});
+    // only the hub itself becomes the offline page (not nearby/ or poster/ under the same scope: 27 Oct review)
+    const path = new URL(request.url).pathname, scope = new URL(self.registration.scope).pathname;
+    if (response.ok && (path === scope || path === scope + "index.html")) cache.put("./index.html", response.clone()).catch(() => {});
     return response;
   } catch {
     return (await cache.match("./index.html")) || (await cache.match("./")) ||
-      new Response("<!doctype html><meta name=viewport content='width=device-width'><p style='font:16px system-ui;padding:24px'>You're offline, and this page hasn't been saved yet. Open it once while online.</p>",
+      new Response(await pushLang() === "he"
+        ? "<!doctype html><html lang=he dir=rtl><meta name=viewport content='width=device-width'><p style='font:16px/1.6 system-ui;padding:24px'>אין חיבור, והעמוד עוד לא נשמר במכשיר. צריך לפתוח אותו פעם אחת עם חיבור.</p>"
+        : "<!doctype html><meta name=viewport content='width=device-width'><p style='font:16px system-ui;padding:24px'>You're offline, and this page hasn't been saved yet. Open it once while online.</p>",
         { headers: { "content-type": "text/html; charset=utf-8" } });
   }
 }
@@ -133,14 +137,29 @@ self.addEventListener("push", event => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data?.text() }; }
   const title = String(data.title || "Stash").slice(0, 80);
-  const body = String(data.body || "Something new in your course").slice(0, 160);
-  event.waitUntil(self.registration.showNotification(title, {
+  event.waitUntil(pushLang().then(l => {
+  const body = (l === "he" ? pushHebrew(String(data.body || "Something new in your course")) : String(data.body || "Something new in your course")).slice(0, 160);
+  return self.registration.showNotification(title, {
     body, tag: String(data.tag || safeURL(data.url)), renotify: false,
     icon: new URL("icons/icon-192.png", self.registration.scope).href,
     badge: new URL("icons/icon-192.png", self.registration.scope).href,
     data: { url: safeURL(data.url) },
-  }));
+  }); }));
 });
+
+/** The page's language (More → Language, else the phone's): the page keeps it in Cache Storage for this worker. */
+async function pushLang() {
+  try { const r = await (await caches.open("stash-prefs")).match("lang"); if (r) return (await r.text()) === "he" ? "he" : "en"; } catch {}
+  return /^(he|iw)\b/i.test(self.navigator?.language || "") ? "he" : "en";
+}
+/** The server writes new-thing pushes in English ("Dana added a file in Algorithms"); on a Hebrew phone they read
+ *  "Algorithms: קובץ חדש מ־Dana". Gender-neutral on purpose. Date reminders already come in Hebrew from the server. */
+const PUSH_HE_KIND = { "a file": "קובץ חדש", "a picture": "תמונה חדשה", "a link": "קישור חדש", "a request": "בקשה חדשה", "a note": "פתק חדש" };
+function pushHebrew(body) {
+  const m = /^(.+) added (a file|a picture|a link|a request|a note) in (.+)$/s.exec(body);
+  if (m) return `${m[3]}: ${PUSH_HE_KIND[m[2]]}${m[1] === "Someone" ? "" : (/^[A-Za-z0-9]/.test(m[1]) ? " מ־" : " מ") + m[1]}`;
+  return body === "Something new in your course" ? "יש משהו חדש בקורס" : body;
+}
 
 self.addEventListener("notificationclick", event => {
   event.notification.close();

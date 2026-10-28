@@ -10,9 +10,11 @@
 </head>
 <body>
 <!-- GitHub Pages serves this for any address it doesn't have. An invite in the short shape …/j/K7Q4MZ goes to the hub. -->
-<p>That page isn't here. <a href="/stash-releases/hub/">Open Stash</a></p>
+<p id="msg">That page isn't here. <a href="/stash-releases/hub/">Open Stash</a></p>
 <script>
 const m = location.pathname.match(/^\/stash-releases\/j\/([A-Za-z0-9-]{6,8})\/?$/);
+let saved = null; try { saved = localStorage.getItem("stash.lang"); } catch {}
+if ((saved || (/^(he|iw)\b/i.test(navigator.language || "") ? "he" : "en")) === "he") { document.documentElement.lang = "he"; document.documentElement.dir = "rtl"; document.getElementById("msg").innerHTML = 'העמוד הזה לא קיים. <a href="/stash-releases/hub/">לפתוח את Stash</a>'; }
 if (m) { const code = m[1].toUpperCase().replace(/[^A-Z0-9]/g, ""); if (/^[A-Z0-9]{6}$/.test(code)) location.replace("/stash-releases/hub/?code=" + code); }
 </script>
 </body>

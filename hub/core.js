@@ -244,6 +244,46 @@ export const CourseSearch = Object.freeze({
   canSearch(university, query) { return university != null && university !== "" && String(query ?? "").trim().length >= 3; },
 });
 
+/** Courses listed by name alone (no number) — migration 20261027_shared_find_by_name.sql, live since 27 Oct 2026 (StashCore
+ *  CourseSearch.findByNameLive). Off = a new course isn't findable and the "can find it" line stays hidden. */
+export const findByNameLive = true;
+
+/** The school picker's type-ahead (StashCore SharedSchools; cases: test/schools-cases.json). The list is schools.js. */
+export const Schools = Object.freeze({
+  norm(s) {
+    return String(s ?? "").normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[״׳"'`.]/g, "")
+      .replace(/[–-]/g, " ").split(/\s+/).filter(Boolean).join(" ");
+  },
+  /** Whole-name matches first, then any word; universities before colleges; then the list's order. */
+  search(list, query) {
+    const q = this.norm(query);
+    if (!q) return list.slice();
+    const strength = s => {
+      const names = [s.en, s.he, s.short, s.heShort, ...(s.aka || [])].map(n => this.norm(n));
+      if (names.some(n => n.startsWith(q))) return 0;
+      if (names.some(n => n.split(" ").some(w => w.startsWith(q)))) return 1;
+      if (q.includes(" ") && names.some(n => n.includes(q))) return 2;
+      return null;
+    };
+    return list.map((s, i) => [s, strength(s), i]).filter(x => x[1] != null)
+      .sort((a, b) => a[1] - b[1] || (a[0].kind === "university" ? 0 : 1) - (b[0].kind === "university" ? 0 : 1) || a[2] - b[2])
+      .map(x => x[0]);
+  },
+  /** What the server gets: only schools it knows. */
+  serverID(choice) { return choice?.school?.listed ? choice.school.id : null; },
+  /** A typed school name: one space between words, 2–80 letters; else null. */
+  clean(typed) { const t = String(typed ?? "").split(/\s+/).filter(Boolean).join(" "); return t.length >= 2 && t.length <= 80 ? t : null; },
+  /** Remembered as "id:3" or "name:Shalem College" (the same as the Mac). */
+  stored(choice) { return choice?.school ? `id:${choice.school.id}` : choice?.name ? `name:${choice.name}` : null; },
+  restore(list, stored) {
+    const v = String(stored ?? "");
+    if (v.startsWith("id:")) { const s = list.find(x => x.id === Number(v.slice(3))); return s ? { school: s } : null; }
+    if (v.startsWith("name:")) { const n = this.clean(v.slice(5)); return n ? { name: n } : null; }
+    return null;
+  },
+  shortName(choice, he) { return choice?.school ? (he ? choice.school.heShort : choice.school.short) : choice?.name ?? ""; },
+});
+
 export const CourseCover = Object.freeze({
   names: ["cover-01-ribbon", "cover-02-torn-edge", "cover-03-sheet-stack", "cover-04-folded-corner", "cover-05-bookmark",
           "cover-06-binder-edge", "cover-07-ink-loop", "cover-08-grid-corner", "cover-09-ruled-strip", "cover-10-stamp-circle"],
@@ -445,7 +485,8 @@ export const ICSImport = Object.freeze({
     for (const line of lines) {
       if (line === "BEGIN:VEVENT") { cur = {}; continue; }
       if (line === "END:VEVENT") {
-        const e = cur && this.event(cur, defaultZone);
+        let e = null;
+        try { e = cur && this.event(cur, defaultZone); } catch { e = null; }   // a made-up TZID or year: skip that one event
         if (e && events.length < CourseEvents.maxPerCourse) events.push(e); else if (cur) skipped++;
         cur = null; continue;
       }
@@ -483,13 +524,13 @@ export const ICSImport = Object.freeze({
   duration(s) {
     const m = /^\+?P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/.exec(String(s).trim()); if (!m) return null;
     const total = (+m[1] || 0) * 604800 + (+m[2] || 0) * 86400 + (+m[3] || 0) * 3600 + (+m[4] || 0) * 60 + (+m[5] || 0);
-    return total || null;
+    return total > 0 && total <= 366 * 86400 ? total : null;   // no event lasts a year (StashCore: the same)
   },
   weeklyUntil(rule, start, zone) {
     const p = Object.fromEntries(rule.split(";").map(x => x.split("=")).filter(x => x.length === 2).map(([k, v]) => [k.toUpperCase(), v]));
     if ((p.FREQ || "").toUpperCase() !== "WEEKLY" || (p.INTERVAL || "1") !== "1") return null;
     if (p.UNTIL) { const d = this.date(p.UNTIL, {}, zone); return d ? d.at.toISOString().slice(0, 10) : null; }
-    if (+p.COUNT > 1) return new Date(start.getTime() + 7 * (p.COUNT - 1) * 86_400_000).toISOString().slice(0, 10);
+    if (+p.COUNT > 1 && +p.COUNT <= 520) return new Date(start.getTime() + 7 * (p.COUNT - 1) * 86_400_000).toISOString().slice(0, 10);
     return null;
   },
   unescape(s) { return s.replace(/\\[nN]/g, " ").replace(/\\,/g, ",").replace(/\;/g, ";").replace(/\\\\/g, "\\"); },
@@ -1107,20 +1148,10 @@ export const EssentialsNotice = Object.freeze({
 // UID per date so the same syllabus again updates instead of doubling).
 const DI = {
   week: String.raw`(?<![a-z])(?:week|wk)\.?\s*#?\s*(\d{1,2})(?!\d)|(?<![א-ת])[בלש]?שבוע\s*(?:מס['׳]?\s*)?(\d{1,2})(?!\d)`,
-  every: String.raw`(?<![a-z])(every|each|weekly)(?![a-z])|(?<![א-ת])(כל|מדי)(?![א-ת])`,
-  cls: String.raw`(?<![a-z])(lectures?|class(?:es)?|tutorials?|recitations?|labs?|sections?|seminars?|meets|meetings?)(?![a-z])|(?<![א-ת])[ובה]?(הרצאות|הרצאה|תרגולים|תרגול|שיעורים|שיעור|מעבדות|מעבדה|סמינר|סדנה)(?![א-ת])`,
-  office: String.raw`(?<![a-z])office hours?(?![a-z])|שעות קבלה|שעת קבלה`,
-  range: String.raw`(?<![\d:./])([01]?\d|2[0-3])(?::([0-5]\d))?\s*(?:[-–—]|to|עד)\s*([01]?\d|2[0-3])(?::([0-5]\d))?(?![\d/.]|:\d)`,
   term: String.raw`(?<![a-z])(semester|term|classes|course)(?![a-z])|סמסטר|הלימודים|הקורס`,
   start: String.raw`(?<![a-z])(starts?|begins?|start date|first day)(?![a-z])|(?<![א-ת])(תחילת|פתיחת|מתחיל|מתחילים)(?![א-ת])`,
   end: String.raw`(?<![a-z])(ends?|end date|last day|finish(?:es)?)(?![a-z])|(?<![א-ת])(סיום|סוף|מסתיים|נגמר)(?![א-ת])`,
-  weekday: String.raw`(?<![a-z])(sunday|monday|tuesday|wednesday|thursday|friday|saturday|sun|mon|tues|tue|wed|thurs|thur|thu|fri)(?![a-z])|(?<![א-ת])[בל]?יום\s+(ראשון|שני|שלישי|רביעי|חמישי|שישי|א|ב|ג|ד|ה|ו)(?![א-ת])`,
 };
-const DI_CLASS = { lecture: "Lecture", lectures: "Lecture", class: "Class", classes: "Class", tutorial: "Tutorial", tutorials: "Tutorial",
-  recitation: "Recitation", recitations: "Recitation", lab: "Lab", labs: "Lab", section: "Section", sections: "Section", seminar: "Seminar",
-  seminars: "Seminar", meets: "Class", meeting: "Class", meetings: "Class", הרצאה: "הרצאה", הרצאות: "הרצאה", תרגול: "תרגול", תרגולים: "תרגול",
-  שיעור: "שיעור", שיעורים: "שיעור", מעבדה: "מעבדה", מעבדות: "מעבדה", סמינר: "סמינר", סדנה: "סדנה" };
-const DI_TUTORIAL = new Set(["Tutorial", "Recitation", "Lab", "Section", "תרגול", "מעבדה"]);
 const ymd = ({ y, m, d }) => `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 const plusDays = ({ y, m, d }, n) => { const x = new Date(Date.UTC(y, m - 1, d + n)); return { y: x.getUTCFullYear(), m: x.getUTCMonth() + 1, d: x.getUTCDate() }; };
 const weekdayOf = ({ y, m, d }) => new Date(Date.UTC(y, m - 1, d)).getUTCDay();
@@ -1130,85 +1161,7 @@ export const DateImport = Object.freeze({
   maxText: 60_000, maxFound: 60,
   /** [{kind, title, at, endsAt, allDay, place, repeatUntil, uid, checked}] from a syllabus's or a pasted list's text: weekly
    *  classes first, then the dated things, soonest first. `termStarts` ("2026-10-25") counts the weeks when the text doesn't. */
-  fromText(text, { now = new Date(), timeZone, termStarts = null } = {}) {
-    now = new Date(now);
-    let raw = [...String(text ?? "")].slice(0, this.maxText).join("");
-    // Month first (11/17, 12/01) when a date can only be read that way and none only the Israeli way.
-    const pairs = rxAll(String.raw`(?<![\d/.:])(\d{1,2})/(\d{1,2})(?!\d)`, raw).map(g => [+g.groups[1], +g.groups[2]]);
-    if (pairs.some(([a, b]) => b > 12 && a <= 12) && !pairs.some(([a, b]) => a > 12 && b <= 12))
-      raw = raw.replace(/(?<![\d/.:])(\d{1,2})\/(\d{1,2})(?!\d)/g, "$2/$1");
-    const lines = raw.split(/\r?\n/).map(l => l.replace(/\s+/g, " ").trim()).filter(Boolean);
-    const low = lines.map(l => l.toLowerCase());
-    const examish = p => rxHas(N.exam, p) || rxHas(N.due, p) || rxHas(N.homework, p);
-    const weekOf = p => { const g = rxFirst(DI.week, p); return g ? +(g.groups[1] ?? g.groups[2]) : null; };
-    const after = (p, pattern) => { const g = rxFirst(pattern, p); return g ? EssentialsNotice.explicitDate(p.slice(g.at + g.groups[0].length), now, timeZone) : null; };
-    // The term and the week count.
-    let starts = null, ends = null, anchor = null, maxWeek = 0;
-    for (const p of low) {
-      if (rxHas(DI.term, p) && !examish(p)) { starts ??= after(p, DI.start); ends ??= after(p, DI.end); }
-      const w = weekOf(p);
-      if (w != null) { maxWeek = Math.max(maxWeek, w); const d = EssentialsNotice.explicitDate(p, now, timeZone); if (d && !anchor) anchor = { n: w, day: d }; }
-    }
-    const given = termStarts ? (([y, m, d]) => ({ y, m, d }))(String(termStarts).slice(0, 10).split("-").map(Number)) : null;
-    anchor ??= starts ? { n: 1, day: starts } : given ? { n: 1, day: given } : null;
-    const weekDay = (n, wd) => { // week n's day: that weekday of the week, else the anchor's own weekday
-      const base = plusDays(anchor.day, 7 * (n - anchor.n));
-      return wd == null ? base : plusDays(base, wd - weekdayOf(base));
-    };
-    if (!ends && anchor && maxWeek >= 6) ends = weekDay(maxWeek, 6);
-    const found = [];
-    for (let i = 0; i < lines.length; i++) {
-      const p = low[i], w = weekOf(p);
-      if (this.isClassLine(p, now, timeZone)) { found.push(...this.weekly(p, { now, timeZone, starts: starts ?? given, ends })); continue; }
-      for (const piece of lines[i].split(/[;!?]\s+|\.\s+(?=[A-Zא-ת])/).filter(Boolean).map(x => x.toLowerCase())) {
-        if (rxHas(DI.every, piece)) continue;
-        let q = piece;
-        if (!EssentialsNotice.explicitDate(q, now, timeZone) && w != null) {
-          if (!anchor) continue;
-          const wd = rxFirst(DI.weekday, q), day = weekDay(w, wd ? this.weekdayIndex(wd) : null);
-          q += ` on ${day.d}/${day.m}/${day.y}`;
-        }
-        const s = EssentialsNotice.suggestion(q, null, null, now, timeZone);
-        if (!s) continue;
-        const kind = s.slot === "exam" ? "exam" : "deadline";
-        const at = s.allDay ? startOfDayIn(s.at, timeZone) : s.at;
-        found.push({ kind, title: s.title, at, endsAt: null, allDay: s.allDay, place: s.place, repeatUntil: null,
-                     uid: `stash-dates:${kind}:${ymd(tzParts(at, timeZone))}${s.allDay ? "" : "T" + hm(tzParts(at, timeZone).h, tzParts(at, timeZone).mi)}:${s.title.toLowerCase()}`, checked: true });
-      }
-    }
-    const seen = new Set();
-    return this.order(found.filter(f => !seen.has(f.uid) && seen.add(f.uid)), timeZone).slice(0, this.maxFound);
-  },
-  weekdayIndex(g) { return g.groups[1] ? ["sun", "mon", "tue", "wed", "thu", "fri", "sat"].indexOf(g.groups[1].slice(0, 3)) : HE_WEEKDAYS[g.groups[2]]; },
-  /** "Lectures: Sunday 10:00–12:00, Room 204": a class word, a weekday and a time, no date, not office hours. */
-  isClassLine(p, now, tz) {
-    return rxHas(DI.cls, p) && rxHas(DI.weekday, p) && !rxHas(DI.office, p) && !rxHas(N.exam, p) && !rxHas(N.due, p) && !rxHas(N.homework, p)
-      && !EssentialsNotice.explicitDate(p, now, tz) && (rxHas(DI.range, p) || EssentialsNotice.clock(p) != null);
-  },
-  /** One weekly event per weekday named, from the next one (or the term's first week) until the term ends (else 13 weeks). */
-  weekly(p, { now, timeZone, starts, ends }) {
-    const name = DI_CLASS[rxFirst(DI.cls, p).groups.slice(1).find(Boolean)] ?? "Class";
-    const r = rxFirst(DI.range, p);
-    let from = r ? { h: +r.groups[1], m: +(r.groups[2] ?? 0) } : EssentialsNotice.clock(p), to = r ? { h: +r.groups[3], m: +(r.groups[4] ?? 0) } : null;
-    if (r && !r.groups[2] && !r.groups[4] && from.h < 8 && to.h < 10) { from.h += 12; to.h += 12; } // "2-4" is the afternoon
-    if (!from || from.h < 7 || from.h > 22 || (to && (to.h * 60 + to.m) <= (from.h * 60 + from.m))) return [];
-    const today = tzParts(now, timeZone), base = starts && dayNo(starts.y, starts.m, starts.d) > dayNo(today.y, today.m, today.d) ? starts : today;
-    const place = EssentialsNotice.place(p), out = [], seen = new Set();
-    for (const g of rxAll(DI.weekday, p)) {
-      const wd = this.weekdayIndex(g); if (seen.has(wd)) continue; seen.add(wd);
-      let day = plusDays(base, (wd - weekdayOf(base) + 7) % 7);
-      let at = zonedToUTC(day.y, day.m, day.d, from.h, from.m, 0, timeZone);
-      const length = to ? (to.h * 60 + to.m - from.h * 60 - from.m) * 60_000 : this.classLength;
-      if (at.getTime() + length <= now.getTime()) { day = plusDays(day, 7); at = zonedToUTC(day.y, day.m, day.d, from.h, from.m, 0, timeZone); }
-      const until = ends ?? plusDays(day, 7 * 13 - 1);
-      if (dayNo(until.y, until.m, until.d) < dayNo(day.y, day.m, day.d)) continue;
-      const kind = DI_TUTORIAL.has(name) ? "tutorial" : "lecture";
-      out.push({ kind, title: name, at, endsAt: to ? zonedToUTC(day.y, day.m, day.d, to.h, to.m, 0, timeZone) : null, allDay: false, place,
-                 repeatUntil: ymd(until), uid: `stash-dates:${kind}:w${wd}T${hm(from.h, from.m)}:${name.toLowerCase()}`, checked: true });
-    }
-    return out;
-  },
-  classLength: 3_600_000,
+
   /** The same rows from a calendar file (ICSImport.parse's events): what's over is left out; anything that isn't a class,
    *  an exam or a deadline starts unticked. */
   fromEvents(events = [], { now = new Date(), timeZone } = {}) {
@@ -1256,18 +1209,20 @@ export const DateImport = Object.freeze({
 const PRESENCE_TONES = ["coral", "butter", "sky"];
 export const Presence = Object.freeze({
   max: 4,
-  /** What this device sends; null when "Show me as here" is off (then it doesn't send anything). */
-  payload(me, name, colour, showMe = true) {
-    if (!showMe || !me) return null;
+  /** What this device sends; null when "Show me as here" is off (then it doesn't send anything), or when you hid
+   *  someone in this course: hiding works both ways — they never see your circle, you never see theirs (27 Oct 2026). */
+  payload(me, name, colour, showMe = true, hidesSomeone = false) {
+    if (!showMe || hidesSomeone || !me) return null;
     return { p: String(me), n: [...String(name ?? "").trim()].slice(0, 40).join(""), c: this.colour(colour, name) };
   },
   /** supabase-js presenceState() ({key: [{p, n, c, presence_ref}, …]}) → [{id, name, initials, colour}] in arrival order. */
   people(state, { me = null, members = new Map(), hidden = new Set() } = {}) {
     const out = new Map();
-    for (const metas of Object.values(state ?? {})) {
+    for (const [key, metas] of Object.entries(state ?? {})) {
       for (const m of Array.isArray(metas) ? metas : []) {
         const id = typeof m?.p === "string" ? m.p : null;
-        if (!id || id === String(me) || out.has(id) || hidden.has(id) || !members.has(id)) continue;
+        // a device joins with its own person id as the key: one that claims someone else is ignored (27 Oct review)
+        if (!id || id.toLowerCase() !== String(key).toLowerCase() || id === String(me) || out.has(id) || hidden.has(id) || !members.has(id)) continue;
         const name = String(members.get(id) ?? "").trim() || "Someone";
         out.set(id, { id, name, initials: this.initials(name), colour: this.colour(m.c, name) });
       }
@@ -1404,3 +1359,38 @@ export const Profile = Object.freeze({
     return state === "show" || !!justJoined;
   },
 });
+
+/** Download my data / Delete my data (Profile → Your data): the words and the file. Server: shared.sql export_me /
+ *  delete_me (Mac twin: StashCore MyData). */
+export const MyData = Object.freeze({
+  /** "stash-class-hub-data-2026-10-27.json" (local date). */
+  fileName(date = new Date()) {
+    const p = n => String(n).padStart(2, "0");
+    return `stash-class-hub-data-${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}.json`;
+  },
+  /** The download: what export_me returned, with a plain note on top and the file list spelled out. */
+  document(exported, now = new Date()) {
+    const files = [...new Set((exported?.materials ?? []).map(m => m?.file_path).filter(Boolean))];
+    return {
+      about: "Everything Stash's class hub server keeps about you, as it has it today. Never other people's names or contents. "
+        + "Your files are listed under materials (file_path); open them in the course, or ask Stash for them. "
+        + "To delete it all: Profile → Delete my data.",
+      downloaded_at: now.toISOString(),
+      file_count: files.length,
+      ...(exported ?? { person: null }),
+    };
+  },
+  /** delete_me's answer → one plain line. */
+  deletedLine(r, he = false) {
+    if (!r?.deleted) return he ? "לשרת לא היה שום דבר ממך." : "The server had nothing from you.";
+    const n = r.items ?? 0, s = r.spaces_erased ?? 0;
+    if (he) return `הנתונים שלך נמחקו${n ? ` (${n === 1 ? "פריט אחד" : `${n} פריטים`} שהוספת)` : ""}.${s ? ` ${s === 1 ? "קורס אחד שרק את/ה היית בו נמחק." : `${s} קורסים שרק את/ה היית בהם נמחקו.`}` : ""}`;
+    return `Your data is deleted${n ? ` (${n === 1 ? "1 thing" : `${n} things`} you added)` : ""}.${s ? ` ${s === 1 ? "1 course only you were in was erased." : `${s} courses only you were in were erased.`}` : ""}`;
+  },
+  /** Server too old for this button (function missing): say so instead of failing. */
+  missingFunction(e) { return e?.code === "PGRST202" || e?.code === "42883" || /Could not find the function/i.test(String(e?.message)); },
+});
+
+/** For syllabus.js (the syllabus reader, loaded only when a syllabus is read): the date and text helpers it shares. */
+export const _dates = Object.freeze({ rxAll, rxFirst, rxHas, N, DI, MONTH_KEYS, HE_MONTHS, HE_WEEKDAYS, EN_DAYS, HE_DAYS, tzParts, dayNo, zonedToUTC,
+  addDaysIn, plusDays, weekdayOf, ymd, hm });

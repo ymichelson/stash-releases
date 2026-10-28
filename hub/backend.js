@@ -50,6 +50,7 @@ export const RPC = Object.freeze({
   set_my_look: ["p_color", "p_photo"],     // migration 20261026_shared_profile (until it's applied: "not available")
   space_looks: ["s"],
   delete_me: ["p_confirm"],
+  export_me: [],
 });
 
 /** Tables the web reads directly (row-level security decides what comes back). */
@@ -74,8 +75,8 @@ export class SupabaseBackend {
 
   async client() {
     if (this._sb) return this._sb;
-    // Pinned ESM build from jsDelivr (the only script the page loads from outside).
-    const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm");
+    // Self-hosted, pinned build (vendor/README.md): no script from another site; index.html's import map pins its SHA-384.
+    const { createClient } = await import("./vendor/supabase-js-2.45.4.min.js");
     this._sb = createClient(this.url, this.key, { auth: { persistSession: true, storageKey: "stash.web.session" } });
     return this._sb;
   }
@@ -99,12 +100,17 @@ export class SupabaseBackend {
     return this.me;
   }
 
-  /** A new course (the web hub's test setup and the round-trip script; people normally join one made on a Mac). */
-  async createCourse(name, myName, { term = null, code = null } = {}) {
-    return (await this.rpc("create_course", name, myName, code, term, undefined, undefined, false, undefined, undefined, "web"))?.[0] ?? null;
+  /** A new course (New course on the page, the test setup, the round-trip scripts). `university` + `findable`: classmates
+   *  there find it by its name — before migration 20261027_shared_find_by_name that needs a number, so it's made unlisted. */
+  async createCourse(name, myName, { term = null, code = null, university = undefined, findable = false } = {}) {
+    const make = f => this.rpc("create_course", name, myName, code, term, undefined, university ?? undefined, f, undefined, undefined, "web");
+    if (findable && university != null) { try { return (await make(true))?.[0] ?? null; } catch { /* not live yet: unlisted */ } }
+    return (await make(false))?.[0] ?? null;
   }
   /** Removes this device's person and everything it made (the throwaway test devices clean up with this). */
   deleteMe() { return this.rpc("delete_me", "DELETE"); }
+  /** Everything the server keeps about this person (Profile → Download my data). */
+  exportMe() { return this.rpc("export_me"); }
 
   async preview(code) { return (await this.rpc("preview_space", code, "web"))?.[0] ?? null; }
   async join(code, name) { return (await this.rpc("join_space", code, name, "web", "link"))?.[0] ?? null; }
@@ -252,21 +258,25 @@ export class SupabaseBackend {
 
   /** Share a file: the row first (everyone sees "Name is adding …" at once), then the upload with progress
    *  (Presence says who's adding, Broadcast carries progress at most once a second), then material_ready. */
-  async shareFile(space, file, course = null, clientId = crypto.randomUUID(), onLocalProgress = () => {}, title = null) {
+  async shareFile(space, file, course = null, clientId = crypto.randomUUID(), onLocalProgress = () => {}, title = null, thumb = null) {
     file = await withoutPhotoDetails(file);   // no GPS / camera / dates in a photo (SharedImages on the Mac)
     const sha = await sha256(file);
     const kind = file.type.startsWith("image/") ? "image" : "file";
     const row = (await this.rpc("add_material", space, clientId, kind, title || file.name, null, null, course, file.name, file.size,
-                                file.type || null, sha, false, null, "web"))?.[0];
+                                file.type || null, sha, !!thumb, null, "web"))?.[0];
     if (!row || row.duplicate_of || row.existed) return row;
     const channel = this.channels?.get(space);
-    channel?.track({ ...(channel.stash?.here ?? {}), activity: "adding", material: row.id, title: file.name });
+    // Never the file's name (a removed member's open socket hears Presence for up to an hour: THREAT-MODEL T6), and
+    // nothing at all while "Show me as here" is off (the Presence key is the person id).
+    if (channel?.stash?.here) channel.track({ ...channel.stash.here, activity: "adding", material: row.id });
     const throttle = new ProgressThrottle();
     await this.upload(row.file_path, file, (sent, total) => {
       onLocalProgress(sent / total);
       if (throttle.shouldSend(sent / total, Date.now()))
         channel?.send({ type: "broadcast", event: "progress", payload: { material: row.id, sent, total } });
     });
+    // the first page as a picture (pdfthumb.js): a thumbnail that doesn't upload just leaves the drawn page
+    if (thumb && row.thumb_path) await this.upload(row.thumb_path, thumb, () => {}).catch(() => {});
     await this.rpc("material_ready", row.id);
     if (channel?.stash?.here) channel.track(channel.stash.here); else channel?.untrack();
     return row;

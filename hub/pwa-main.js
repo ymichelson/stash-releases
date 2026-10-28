@@ -292,7 +292,8 @@ function hide(k) { const el = shown[k]; if (!el) return; delete shown[k]; el.cla
 /** A sheet. `role`: "dialog" (named by its first <b> heading, QA-44) or "status" (the install hint, a toast: not
  *  modal, named by `label`). */
 let sheetIds = 0;
-function sheet(k, html, wire, { role = "dialog", label = null } = {}) {
+function sheet(k, html, wire, { role = "dialog", label = null, inPlace = false } = {}) {
+  if (inPlace && shown[k]) { shown[k].innerHTML = html; wire?.(shown[k]); return shown[k]; }   // new content, no second slide-in
   ensureStyle(); hide(k);
   const el = document.createElement("div"); el.className = "spwa";
   el.setAttribute("role", role);
@@ -336,7 +337,9 @@ function showQueue(sum) {
   chip.querySelector("[data-retry]")?.addEventListener("click", () => queue.retry());
 }
 
-function showShared(payload) {
+let sharedPayload = null;   // the share waiting for "which course?" — redrawn when the course list arrives (live courses load after)
+function showShared(payload, inPlace = false) {
+  sharedPayload = payload;
   const files = payload.files || [], n = payload.ok.length;
   if (!n) { toast(payload.refused.length ? "That’s too big to add (50 MB at most)" : "Nothing to add"); return; }
   const what = n === 1 ? esc(payload.ok[0].name || payload.ok[0].title || "this") : `${n} things`;
@@ -345,16 +348,16 @@ function showShared(payload) {
   sheet("shared", `<b>Add ${what} to which course?</b>${payload.refused.length ? `<p>${payload.refused.length} too big to add (50 MB at most).</p>` : ""}
     <div class="spwa-list">${courses.length ? courses.map(c => `<button data-course="${esc(c.id)}">${esc(c.name)}</button>`).join("") : `<p>Join a course first, then share again.</p>`}</div>
     <div class="acts"><button class="quiet" data-no>Cancel</button></div>`, el => {
-    el.querySelector("[data-no]").onclick = () => hide("shared");
+    el.querySelector("[data-no]").onclick = () => { sharedPayload = null; hide("shared"); };
     el.querySelectorAll("[data-course]").forEach(b => b.onclick = () => {
-      hide("shared");
+      sharedPayload = null; hide("shared");
       const course = b.dataset.course, space = courses.find(c => c.id === course)?.space ?? null;
       for (const o of payload.ok) {
         const blob = o.kind === "file" ? files.find(f => f.name === o.name)?.blob : null;
         queue.add({ space, course, kind: o.kind, title: o.name || o.title || o.text?.slice(0, 60), blob, url: o.url, text: o.text });
       }
     });
-  });
+  }, { inPlace });
 }
 
 function showPushOffer(courseName) {
@@ -383,7 +386,10 @@ if (standalone && devServer) setTimeout(() => { if (config.ui.push) showPushOffe
 export const api = Object.freeze({
   platform, standalone,
   configure(c = {}) { Object.assign(config, c, { ui: { ...config.ui, ...(c.ui || {}) } }); },
-  setCourses(list) { config.courses = Array.isArray(list) ? list : []; },
+  setCourses(list) {
+    config.courses = Array.isArray(list) ? list : [];
+    if (sharedPayload && shown.shared) showShared(sharedPayload, true);   // the sheet was asked before the courses were known
+  },
   /** The course to preselect for things shared in: an id, or a function returning one ("on now", else last opened). */
   suggestCourse(c) { config.suggestedCourse = c; },
   /** Remember the course last opened (the fallback suggestion). */

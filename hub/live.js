@@ -5,6 +5,7 @@
 // Publishable key only — row-level security guards; never a secret key (SupabaseBackend refuses one).
 import { SupabaseBackend } from "./backend.js";
 import { Presence } from "./core.js";
+import { PDFThumb } from "./pdfthumb.js";
 
 export const SERVER = Object.freeze({
   url: "https://gvxouyoucqojpghqzuks.supabase.co",
@@ -27,6 +28,22 @@ export function agoOf(iso, now = Date.now()) {
   return d.toLocaleDateString("en", { day: "numeric", month: "short" });
 }
 
+// space_info rows → the page's "Lecturer and TA" card: people first (lecturer, TA, other), then links.
+const ROLE = { lecturer: "Lecturer", ta: "Teaching assistant", other: "Staff" };
+const ROLE_HE = { lecturer: "מרצה", ta: "מתרגל", other: "צוות" };
+export function infoCard(rows, lang = "en") {
+  const people = rows.filter(r => r.kind === "person" && r.name), order = { lecturer: 0, ta: 1, other: 2 };
+  people.sort((a, b) => (order[a.role] ?? 3) - (order[b.role] ?? 3) || (a.sort ?? 0) - (b.sort ?? 0));
+  const he = lang === "he";
+  return {
+    staff: people.map(r => ({ i: String(r.name).trim().replace(/^(prof|dr|mr|ms|mrs)\.?\s+/i, "").charAt(0).toUpperCase(), name: r.name,
+      role: (he ? ROLE_HE : ROLE)[r.role] || (he ? ROLE_HE : ROLE).other, mail: r.email || "", hours: r.hours || "" })),
+    links: rows.filter(r => r.kind === "link" && /^https?:\/\//i.test(r.url || "")).map(r => [r.name || hostOf(r.url), /zoom|meet\.google|teams/i.test(r.url) ? "video" : "link", r.url]),
+    infoBy: "",
+  };
+}
+const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; } };
+
 const sizeOf = b => b > 1048576 ? (b / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1024)) + " KB";
 
 /** A server row → the shape the page draws. Pure; `people` maps person id → name, `me` is this person's id. */
@@ -36,13 +53,16 @@ export function itemFrom(row, { people, me, lastSeen, mine = [], ME = "You" }) {
   const it = {
     id: row.id, cid: row.client_id, live: true, kind, week: row.week ?? null,
     title: row.title || (kind === "note" ? "" : row.file_path?.split("/").pop() || ""),
-    by: row.added_by === me ? ME : (people.get(row.added_by) || "Someone"),
+    // "mine" is decided by id, never by the name shown: an old classmate named "You" must not look like you (27 Oct review)
+    own: row.added_by === me,
+    by: row.added_by === me ? ME : ((n => n === ME ? `${n} (classmate)` : n)(people.get(row.added_by) || "Someone")),
     ago: agoOf(row.created_at), createdAt: row.created_at, at: row.added_by === me ? 0 : Date.parse(row.created_at) || 0,
     isNew: !!lastSeen && row.added_by !== me && new Date(row.created_at) > new Date(lastSeen),
     stickers: Object.fromEntries((row.stickers || []).map((n, i) => [i + 1, n]).filter(([, n]) => n > 0)),
-    mine, filePath: row.file_path, fileType: row.file_type, pinned: !!row.pinned,
+    mine, filePath: row.file_path, fileType: row.file_type, pinned: !!row.pinned, thumbPath: row.thumb_path || null,
   };
   if (kind === "note") it.text = row.body || row.title || "";
+  if (kind === "link" && !/^https?:\/\//i.test(row.url || "")) return null;   // the server allows only http(s); check again
   if (kind === "link") { it.url = row.url; try { it.dom = new URL(row.url).hostname.replace(/^www\./, ""); } catch { it.dom = row.url; } it.title ||= it.dom; }
   if (kind === "pdf") it.meta = `${((row.title || "").split(".").pop() || "FILE").slice(0, 5).toUpperCase()} · ${sizeOf(row.file_size || 0)}`;
   if (kind === "photo") it.meta = sizeOf(row.file_size || 0);
@@ -65,7 +85,7 @@ export async function startLive(hub) {
     const m = String(e?.message || e);
     if (e?.code === "unreadable_picture") return m;
     if (/Failed to fetch|NetworkError|offline|Load failed/i.test(m)) return "No connection. Try again when you’re back online.";
-    if (/slow down/i.test(m)) return "Slow down a little — try again in a minute.";
+    if (/slow down/i.test(m)) return "You’ve shared a lot in the last hour. Try again a bit later.";   // the limits are per hour, not per minute
     return m;
   };
   const sig = c => [...c.items, ...c.files].map(i => `${i.id}|${JSON.stringify(i.stickers)}|${i.week}|${i.title}|${i.sending ? 1 : 0}`).join(",") + `#${c.people}`;
@@ -79,7 +99,11 @@ export async function startLive(hub) {
     catch (e) { return block(`<div class="empty" style="padding-top:12vh"><h2>Can’t reach Stash right now</h2><p>${esc(failText(e))}</p><div class="acts"><button class="btn primary" data-act="live-retry">Try again</button></div></div>`); }
     S.liveBlock = null;
     S.current = S.courses.some(c => c.id === S.current) ? S.current : S.courses[0]?.id;
+    restoreWaiting();
     render();
+    sendWaiting();
+    // the app layer's "Add this to which course?" (Share Target) needs the real courses, which arrive only now
+    window.StashPWA?.setCourses?.(S.courses.map(c => ({ id: c.id, name: c.name, space: c.id })));
     const want = new URLSearchParams(location.search).get("code");
     if (want) lookup(want);
     schedule();
@@ -111,10 +135,11 @@ export async function startLive(hub) {
   }
 
   async function syncMeta(c, st) {
-    const [members, titles, stick, events] = await Promise.all([
+    const [members, titles, stick, events, info] = await Promise.all([
       backend.people(c.id).catch(() => []), backend.weekTitles(c.id).catch(() => new Map()), backend.myStickers(c.id).catch(() => new Map()),
-      backend.calendar(c.id).catch(() => null)]);
+      backend.calendar(c.id).catch(() => null), backend.courseInfo(c.id).catch(() => null)]);
     if (events) c.events = events;   // the course calendar: Essentials and Coming up read it (dates-ui.js adds to it)
+    if (info) Object.assign(c, infoCard(info, hub.lang));   // lecturer, TA, office hours, links (the Mac's Class card; launch QA B4)
     st.people = new Map(members.map(p => [p.person_id, p.display_name]));
     st.myName = members.find(p => p.person_id === backend.me)?.display_name ?? null;
     st.mineStickers = stick;
@@ -126,7 +151,7 @@ export async function startLive(hub) {
     if (looksOn !== false) {   // colour or photo per person (migration 20261026_shared_profile); keyed by the name the page shows
       const lk = await backend.looks(c.id).catch(() => undefined);
       if (lk === null) looksOn = false;
-      else if (lk) { looksOn = true; c.looks = new Map(members.filter(p => lk.has(p.person_id)).map(p => [p.person_id === backend.me ? ME : p.display_name, lk.get(p.person_id)])); }
+      else if (lk) { looksOn = true; c.looks = new Map(members.filter(p => lk.has(p.person_id) && (p.person_id === backend.me || p.display_name !== ME)).map(p => [p.person_id === backend.me ? ME : p.display_name, lk.get(p.person_id)])); }
     }
     const owner = members.find(p => p.role === "owner");
     c.owner = owner ? (owner.person_id === backend.me ? ME : owner.display_name) : "";
@@ -151,7 +176,7 @@ export async function startLive(hub) {
     const sending = c.items.filter(i => i.sending && i.live);
     for (const o of sending) { const m = all.find(x => x.cid === o.cid); if (m) { o.id = m.id; o.sending = false; } }   // the row got here before the upload call returned
     const stillSending = sending.filter(o => o.sending);
-    const keep = i => { const o = known.get(i.id); if (!o) return i; return Object.assign(o, { stickers: i.stickers, mine: light ? o.mine : i.mine, title: i.title, text: i.text, week: i.week, ago: i.ago, src: o.src || i.src, due: i.due, dueAt: i.dueAt, dueTitle: i.dueTitle, dueSort: i.dueSort, pinned: i.pinned }); };
+    const keep = i => { const o = known.get(i.id); if (!o) return i; return Object.assign(o, { stickers: i.stickers, mine: light ? o.mine : i.mine, title: i.title, text: i.text, week: i.week, ago: i.ago, src: o.src || i.src, thumb: o.thumb || i.thumb, due: i.due, dueAt: i.dueAt, dueTitle: i.dueTitle, dueSort: i.dueSort, pinned: i.pinned }); };
     const arrivals = initial ? [] : all.filter(i => !known.has(i.id) && !sending.some(o => o.cid === i.cid));
     c.items = [...stillSending, ...all.filter(i => !i.pinned).map(keep)];
     c.files = all.filter(i => i.pinned).map(keep);
@@ -159,18 +184,22 @@ export async function startLive(hub) {
   }
 
   async function signImages(items) {
-    const need = items.filter(i => i.kind === "photo" && i.filePath && !i.src);
+    // photos: the picture; PDFs: their first-page thumbnail when the adder made one (Mac or this page)
+    const need = items.filter(i => (i.kind === "photo" && i.filePath && !i.src) || (i.kind === "pdf" && i.thumbPath && !i.thumb));
     if (!need.length) return;
     try {
-      const { data } = await (await backend.client()).storage.from("spaces").createSignedUrls(need.map(i => i.filePath), 3600);
-      for (const d of data || []) { const i = need.find(x => x.filePath === d.path); if (i && d.signedUrl) i.src = d.signedUrl; }
+      const { data } = await (await backend.client()).storage.from("spaces").createSignedUrls(need.map(i => i.kind === "pdf" ? i.thumbPath : i.filePath), 3600);
+      for (const d of data || []) {
+        const i = need.find(x => (x.kind === "pdf" ? x.thumbPath : x.filePath) === d.path);
+        if (i && d.signedUrl) { if (i.kind === "pdf") i.thumb = d.signedUrl; else i.src = d.signedUrl; }
+      }
     } catch { /* the sheet shows without its picture; the next check tries again */ }
   }
 
   // ——— staying up to date (every 15 s while the page is open; a refresh when you come back to it) ———
   function schedule() {
     clearTimeout(timer);
-    timer = setTimeout(async () => { if (!document.hidden) await poll(); schedule(); }, document.hidden ? 120_000 : 15_000);
+    timer = setTimeout(async () => { if (!document.hidden) { await sendWaiting(); await poll(); } schedule(); }, document.hidden ? 120_000 : 15_000);
   }
   document.addEventListener("visibilitychange", () => { if (!document.hidden && S.courses.length) poll(); });
 
@@ -216,7 +245,8 @@ export async function startLive(hub) {
   // Only in the course on screen, only while the page is in front: hidden or closed = gone at once. "Show me as here"
   // off = this device sends nothing (it still sees who's here). People you hid are never shown.
   let here = null, hereFor = null, hereBusy = Promise.resolve();
-  const myPayload = id => Presence.payload(backend.me, spaces.get(id)?.myName, null, hub.showHere());
+  const hides = new Map();   // course → people you hid there (both ways: then this device sends nothing in that course)
+  const myPayload = id => Presence.payload(backend.me, spaces.get(id)?.myName, null, hub.showHere(), (hides.get(id)?.size ?? 0) > 0);
   let sent = "";
   function followHere(c) {
     const want = c && !document.hidden ? c.id : null;
@@ -233,6 +263,7 @@ export async function startLive(hub) {
       if (!want || hereFor !== want) return;
       try {
         const hidden = await backend.myHides(want).catch(() => new Set());
+        hides.set(want, hidden);
         const h = await backend.here(want, myPayload(want), state => {
           const cc = S.courses.find(x => x.id === want); if (!cc) return;
           cc.present = Presence.people(state, { me: backend.me, members: spaces.get(want)?.people ?? new Map(), hidden });
@@ -255,7 +286,11 @@ export async function startLive(hub) {
     const tmp = it.id;
     try {
       let row;
-      if (it.kind === "photo" || it.kind === "pdf") row = await backend.shareFile(c.id, it.file, null, it.cid, undefined, it.title);
+      if (it.kind === "pdf" && it.file && it.thumbBlob === undefined) {   // the real first page (launch QA S4), shown at once on your sheet
+        it.thumbBlob = await PDFThumb.make(it.file).catch(() => null);
+        if (it.thumbBlob) { it.thumb = URL.createObjectURL(it.thumbBlob); const el = hub.$(`.sheet[data-id="${CSS.escape(it.id)}"]`); if (el) el.outerHTML = hub.sheet(it); }
+      }
+      if (it.kind === "photo" || it.kind === "pdf") row = await backend.shareFile(c.id, it.file, null, it.cid, undefined, it.title, it.thumbBlob || null);
       else if (it.kind === "link") row = await backend.share(c.id, { kind: "link", title: it.title, url: it.url }, null, it.cid);
       else row = await backend.share(c.id, { kind: "text", body: it.text }, null, it.cid);
       if (!row?.id) throw new Error("The server didn’t answer.");
@@ -268,18 +303,86 @@ export async function startLive(hub) {
       const el = hub.$(`.sheet[data-id="${CSS.escape(tmp)}"]`);
       if (el) el.outerHTML = hub.sheet(it); else render();
     } catch (e) {
+      if (!it.cancelled && noConnection(e)) { wait(it, c, wk, due); return; }   // offline: keep it, send it when the connection is back
       c.items = c.items.filter(x => x !== it); render();
       say(`<span>${ic("warn", "s")}</span><span>Couldn’t send “${esc(it.title || "your note")}”. ${esc(failText(e))}</span>`, 7000);
+    } finally { if (!waiting.some(w => w.it === it)) saveWaiting(); }
+  }
+
+  // ——— waiting to send (27 Oct launch QA, B1): something added without a connection stays on the page as "Waiting to
+  // send" and goes by itself when the connection is back (same client id, so a retry never makes a second copy). Notes
+  // and links are also kept in this browser, so closing the page doesn't lose them; a file waits while the page is open.
+  const noConnection = e => !navigator.onLine || /Failed to fetch|NetworkError|Load failed|network ?error|ERR_INTERNET/i.test(String(e?.message || e));
+  const waiting = [];   // { it, c, wk, due }
+  function saveWaiting() {
+    const keep = waiting.filter(w => w.it.kind === "note" || w.it.kind === "link")
+      .map(w => ({ course: w.c.id, wk: w.wk ?? null, due: w.due ?? null, it: { id: w.it.id, cid: w.it.cid, kind: w.it.kind, title: w.it.title, text: w.it.text, url: w.it.url, dom: w.it.dom, week: w.it.week } }));
+    store.set("outbox", keep);
+  }
+  function wait(it, c, wk, due) {
+    it.sending = true; it.live = true;   // the page has put (or is about to put) its sheet up: it only changes to "Waiting to send"
+    if (!waiting.some(w => w.it === it)) waiting.push({ it, c, wk, due });
+    saveWaiting();
+    const el = hub.$(`.sheet[data-id="${CSS.escape(it.id)}"]`); if (el) el.outerHTML = hub.sheet(it);
+  }
+  let flushing = false;
+  async function sendWaiting() {
+    if (flushing || !waiting.length || !navigator.onLine) return;
+    flushing = true;
+    let sent = 0;
+    try {
+      for (const w of [...waiting]) {
+        waiting.splice(waiting.indexOf(w), 1);
+        const c = S.courses.find(x => x.id === w.c.id) || w.c;
+        if (!S.courses.includes(c)) continue;             // you left that course meanwhile
+        await send(w.it, c, w.wk, w.due);
+        if (waiting.some(x => x.it === w.it)) break;      // still no connection: try again later
+        if (!w.it.sending) sent++;
+      }
+    } finally { flushing = false; saveWaiting(); }
+    if (sent) say(`<span>${ic("check", "s")}</span><span>${sent === 1 ? "Sent what you added while offline." : `Sent the ${sent} things you added while offline.`}</span>`, 3500);
+  }
+  function restoreWaiting() {   // from an earlier visit that ended offline
+    for (const w of store.get("outbox", []) || []) {
+      const c = S.courses.find(x => x.id === w.course);
+      if (!c || !w.it?.cid || c.items.some(x => x.cid === w.it.cid)) continue;
+      const it = { ...w.it, by: ME, ago: "now", stickers: {}, mine: [], live: true, sending: true };
+      c.items.unshift(it); waiting.push({ it, c, wk: w.wk, due: w.due });
     }
+  }
+  addEventListener("online", () => { S.online = true; sendWaiting(); });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) sendWaiting(); });
+
+  /** This browser keeps nothing: sign-in, saved state, unsent drafts, things shared in from other apps, kept files
+   *  (a shared phone; 27 Oct review). After Forget and Delete my data. */
+  async function wipeBrowser() {
+    try { await (await backend.client()).auth.signOut(); } catch { /* quiet */ }
+    for (const k of Object.keys(localStorage)) if (k.startsWith("stash.web") || k.startsWith("sb-") || k === "hub.outbox") localStorage.removeItem(k);
+    waiting.length = 0;
+    try { indexedDB.deleteDatabase("stash-pwa"); } catch { /* quiet */ }
+    try { await caches?.delete("stash-hub-files-1"); } catch { /* quiet */ }
+    S.courses = []; closeAll(true); render();
   }
 
   const live = {
-    send,
+    send, sendWaiting,
     setDue: (it, at, title) => backend.setDue(it.id, new Date(at).toISOString(), title),   // "Add to Essentials?" (essentials-ui.js)
     /** "Found 6 dates — add them?" → Add (dates-ui.js): the ticked rows, already in import_events' shape. */
     async importDates(c, events) { await backend.importEvents(c.id, events); c.events = await backend.calendar(c.id).catch(() => c.events); },
+    /** "Here's what I found" → Add: a person or a link for Course info (set_info), unless it's already there. */
+    async saveInfo(c, entries) {
+      const have = await backend.courseInfo(c.id).catch(() => []);
+      let sort = Math.max(0, ...have.map(e => e.sort ?? 0)), n = 0;
+      for (const e of entries) {
+        if (have.some(h => (e.kind === "person" ? h.name?.toLowerCase() === e.name.toLowerCase() : h.url === e.url))) continue;
+        await backend.saveInfo(c.id, { ...e, sort: ++sort }); n++;
+      }
+      return n;
+    },
     async sticker(it, sid, on) { try { await backend.sticker(it.id, sid, on); } catch (e) { say(`<span>${esc(failText(e))}</span>`, 4000); } },
     async remove(it) {
+      const w = waiting.findIndex(x => x.it === it);
+      if (w >= 0) { waiting.splice(w, 1); saveWaiting(); return; }   // never sent: nothing to delete on the server
       if (it.sending) { it.cancelled = true; return; }
       try { await backend.remove(it.id); } catch (e) { say(`<span>${esc(failText(e))}</span>`, 4000); }
     },
@@ -291,9 +394,17 @@ export async function startLive(hub) {
     },
     async forget() {
       for (const c of [...S.courses]) { try { await backend.leave(c.id); } catch { /* already out */ } }
-      try { await (await backend.client()).auth.signOut(); } catch { /* quiet */ }
-      for (const k of Object.keys(localStorage)) if (k.startsWith("stash.web") || k.startsWith("sb-")) localStorage.removeItem(k);
-      S.courses = []; closeAll(true); render();
+      await wipeBrowser();
+    },
+    // ——— Your data (Profile → Download my data / Delete my data; shared.sql export_me / delete_me) ———
+    myData: {
+      exportMe: () => backend.exportMe(),
+      /** Erases this person on the server, then this browser forgets everything, like Forget. Returns delete_me's answer. */
+      async erase() {
+        const r = await backend.deleteMe();
+        await wipeBrowser();
+        return r;
+      },
     },
     /** Open (or save) a file or photo: a signed link that works for 10 minutes, never a public one.
      *  iPhone: Save hands the file to the share sheet ("Save to Files", "Save Image"); a download link there only opens it. */
@@ -301,6 +412,7 @@ export async function startLive(hub) {
       if (!it?.filePath) return;
       if (download && share && hub.shareSave()) return shareFile(it);
       const tab = download ? null : window.open("about:blank", "_blank");   // opened inside the tap, or iPhone blocks it
+      if (tab) tab.opener = null;   // the file's page can't navigate this one
       try {
         const url = await backend.fileURL(it.filePath);
         if (!download) { if (tab) tab.location.href = url; else location.href = url; return; }
@@ -414,12 +526,25 @@ export async function startLive(hub) {
         if (r.status === "requested") { closeAll(); say(`<span>${ic("check", "s")}</span><span>Asked to join. You’ll be in once the owner says yes.</span>`, 6000); return; }
         await refreshSpaces(false);
         S.current = r.space_id; store.set("course", S.current); S.welcome = true;
-        closeAll(true); history.replaceState(null, "", `?c=${S.current}`); render(); return;
+        const keepLang = new URLSearchParams(location.search).get("lang");   // a ?lang=he invite stays Hebrew after joining
+        closeAll(true); history.replaceState(null, "", `?c=${S.current}${keepLang ? "&lang=" + encodeURIComponent(keepLang) : ""}`); render(); return;
       }
       err.textContent = msg[r?.status] || "Something went wrong. Try again."; btn.disabled = false;
     } catch (ex) { err.textContent = failText(ex); btn.disabled = false; }
   });
   document.addEventListener("click", e => { if (e.target.closest('[data-act="live-retry"]')) load(); });
+
+  // ——— Join or start a course (course-ui.js): find_courses, a card's token, create_course ———
+  hub.hooks.failText = failText;
+  hub.hooks.findCourses = (university, query) => backend.findCourses(university, query);
+  hub.hooks.joinFound = async (token, name) => backend.joinFound(token, name);
+  hub.hooks.createCourse = (name, myName, university, findable) => backend.createCourse(name, myName, { university, findable });
+  hub.hooks.arrive = async id => {
+    if (store.get("profileHint", "") !== "done") store.set("profileHint", "show");
+    await refreshSpaces(false);
+    S.current = id; store.set("course", id); S.welcome = true;
+    closeAll(true); history.replaceState(null, "", `?c=${id}`); render();
+  };
 
   hub.live = live;
   await load();

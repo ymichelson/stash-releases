@@ -47,7 +47,7 @@ window.StashPWA = standIn([]);
 
 function start() {
   // The manifest and the Home Screen icon only matter for installing: add them now, not during the first paint.
-  for (const [rel, href] of [["manifest", "manifest.webmanifest"], ["apple-touch-icon", "icons/apple-touch-icon.png"]]) {
+  for (const [rel, href] of [["manifest", root.lang === "he" ? "manifest.he.webmanifest" : "manifest.webmanifest"] /* the Home Screen name in the page's language */, ["apple-touch-icon", "icons/apple-touch-icon.png"]]) {
     if (!document.querySelector(`link[rel="${rel}"]`)) {
       const l = document.createElement("link"); l.rel = rel; l.href = href; document.head.append(l);
     }

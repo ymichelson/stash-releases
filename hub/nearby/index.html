@@ -7,6 +7,12 @@
 <meta name="description" content="Nearby sharing for the class hub — prototype. Browser to browser over WebRTC; a stub server only introduces you.">
 <meta name="robots" content="noindex">
 <style>
+/* Hebrew letters: SF Hebrew on Apple devices (the system font comes first), Heebo everywhere else (Android, Windows).
+   Self-hosted (the CSP allows only this site); Hebrew range only, so Latin stays SF Pro / the system font. vendor/README.md */
+@font-face { font-family:"Stash Hebrew"; src:url("../vendor/fonts/heebo-hebrew-wght-5.3.0.woff2") format("woff2"); font-weight:100 900; font-display:swap;
+  unicode-range:U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F; }
+/* Hebrew reads better a little more open (no ascender/descender rhythm to lean on) */
+:lang(he) p, :lang(he) li, :lang(he) .k-note p, :lang(he) .meta { line-height:1.55; }
 /* Nearby sharing — PROTOTYPE (docs/shared/NEARBY.md). Paper Folios tokens + hub-design's rules (HUB-DESIGN.md):
    looking = thin SKY rings (`.nearby-anim`, same as the hub's Bring someone in → Nearby tile; voice auras stay on the
    notch); progress is INK; no toast stack — the receiver gets one panel. */
@@ -17,8 +23,8 @@
   --btn:#202427; --btn-fg:#FFFFFF; --btn-hover:#30353A;
   --sheet-shadow:0 1px 3px rgba(0,0,0,.06); --lift-shadow:0 3px 8px rgba(0,0,0,.09);
   --float-shadow:0 10px 30px rgba(40,32,20,.14), 0 1px 3px rgba(0,0,0,.08);
-  --text:-apple-system,"SF Pro Text",BlinkMacSystemFont,system-ui,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
-  --display:-apple-system,"SF Pro Display",BlinkMacSystemFont,system-ui,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --text:-apple-system,"SF Pro Text",BlinkMacSystemFont,"Stash Hebrew",system-ui,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --display:-apple-system,"SF Pro Display",BlinkMacSystemFont,"Stash Hebrew",system-ui,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
   --spring:cubic-bezier(.22,1,.36,1);
   color-scheme:light;
 }
@@ -224,8 +230,47 @@ footer code{font-size:12px}
   "use strict";
   const $ = s => document.querySelector(s);
   const params = new URLSearchParams(location.search);
+  /* Hebrew: ?lang=, then the hub's choice (More → Language), else the phone's language; one table for the page's words */
+  let savedLang = null; try { savedLang = localStorage.getItem("stash.lang"); } catch {}
+  const he = (params.get("lang") || savedLang || (/^(he|iw)\b/i.test(navigator.language || "") ? "he" : "en")) === "he";
+  if (he) {
+    document.documentElement.lang = "he"; document.documentElement.dir = "rtl";
+    const HE = { "People near you":"אנשים לידך", "Tap someone to send. They choose whether to take it.":"נוגעים במישהו כדי לשלוח. הם מחליטים אם לקבל.",
+      "Text":"טקסט", "File":"קובץ", "Invite to class":"הזמנה למחזור", "What to send":"מה לשלוח", "Type or paste something to send":"להקליד או להדביק משהו לשליחה",
+      "Text to send":"טקסט לשליחה", "No file chosen":"לא נבחר קובץ", "Choose…":"בחירה…", "Received":"התקבל", "Find people in this room by sound":"למצוא אנשים בחדר לפי צליל",
+      "Room code":"קוד חדר", "Join room":"כניסה לחדר", "Let people near you find me":"לאפשר לאנשים לידי למצוא אותי", "For 10 minutes, then hidden again":"ל־10 דקות, ואז שוב מוסתר",
+      "Turn on":"להפעיל", "Stop":"עצירה", "Then hidden again":"ואז שוב מוסתר", "Looking for people near you…":"מחפשים אנשים לידך…",
+      "Nobody near you yet — they need the hub open on their phone or laptop":"עוד אין אף אחד לידך — צריך שהעמוד יהיה פתוח אצלם בטלפון או במחשב",
+      "Add something to send first":"קודם להוסיף משהו לשליחה", "Busy — try again soon":"תפוס — אפשר לנסות שוב עוד רגע", "Can’t send this file from here — open it in the course":"אי אפשר לשלוח את הקובץ מכאן — פותחים אותו בקורס",
+      "Copied":"הועתק", "Couldn’t get the file — try again":"הקובץ לא הגיע — אפשר לנסות שוב", "Declined":"נדחה", "Didn’t send":"לא נשלח", "Files up to 50 MB":"קבצים עד \u206650 MB\u2069",
+      "Found people in this room":"נמצאו אנשים בחדר", "Not seeing them? They’ll find it in the course too.":"לא רואים אותם? הם ימצאו את זה גם בקורס.", "Send to someone nearby":"לשלוח למישהו קרוב",
+      "Sending…":"שולחים…", "Sent":"נשלח", "Someone":"מישהו", "Sound isn’t available in this browser — use the code":"אין צליל בדפדפן הזה — משתמשים בקוד",
+      "Sent through Stash’s relay — your networks can’t reach each other directly. It’s deleted within an hour.":"נשלח דרך השרת של Stash — הרשתות שלכם לא מגיעות זו לזו ישירות. זה נמחק תוך שעה.",
+      "Text up to 1 MB":"טקסט עד \u20661 MB\u2069", "That didn’t arrive whole — ask them to send again":"זה לא הגיע בשלמותו — כדאי לבקש לשלוח שוב",
+      "The microphone is off — use the code instead":"המיקרופון כבוי — משתמשים בקוד במקום", "This nearby code has ended — open Nearby again":"הקוד הזה כבר לא בתוקף — פותחים שוב את ״בסביבה״",
+      "Waiting…":"ממתינים…", "Accept":"לקבל", "Copy":"העתקה", "Decline":"לדחות", "Find people in this room by sound?":"למצוא אנשים בחדר לפי צליל?", "Join":"הצטרפות",
+      "Not now":"לא עכשיו", "Nothing is saved unless you accept.":"שום דבר לא נשמר בלי אישור.", "Save":"שמירה", "Start":"להתחיל",
+      "You’ll be visible to people in this room for 10 minutes.":"אנשים בחדר יראו אותך במשך 10 דקות.", "Not seeing them? Both type the same room code:":"לא רואים אותם? שניכם מקלידים אותו קוד חדר:",
+      "Listening for people in this room · ":"מקשיבים לאנשים בחדר · ", "People Near You · Stash":"אנשים לידך · Stash", "CS Year 2":"מדמ״ח שנה ב׳", "Question 4 is on page 212":"שאלה 4 בעמוד 212",
+      "Prototype. A stub server (or, with no server, this browser’s other tabs) only introduces you; what you send goes browser to browser, encrypted by WebRTC. Nothing is kept.":"אב־טיפוס. שרת ניסיוני (או, בלי שרת, הלשוניות האחרות בדפדפן) רק מכיר ביניכם; מה ששולחים עובר מדפדפן לדפדפן, מוצפן ב־WebRTC. שום דבר לא נשמר." };
+    const HE_RE = [[/^In room (.+)$/, "בחדר $1"], [/^Send to (.+)$/, "לשלוח ל$1"], [/^Sharing (.+) nearby · (.+) left$/, "משתפים את $1 בסביבה · נשארו $2"],
+      [/^Tap someone to invite them to (.+)\.$/, "נוגעים במישהו כדי להזמין אותו ל$1."], [/^They get “Join (.+)\?”$/, "הם יקבלו ״להצטרף ל$1?״"], [/^Visible for (.+), then hidden again$/, "גלוי עוד $1, ואז שוב מוסתר"],
+      [/^Join (.+)\?$/, "להצטרף ל$1?"], [/^Invite from (.+)$/, "הזמנה מ$1"], [/^From (.+) · (.+)$/, "מ$1 · $2"], [/^(.+) · code (.+)$/, "$1 · קוד $2"],
+      [/^Not seeing them\? Read out the code: (.+)$/, "לא רואים אותם? להקריא את הקוד: $1"], [/^(.+) is nearby · (.+) is sharing it$/, "$1 בסביבה · משותף על ידי $2"],
+      [/^Same code on (.+)’s screen\? $/, "אותו קוד על המסך של $1? "], [/^ — if not, decline\.$/, " — אם לא, לדחות."],
+      [/^Introduced by: (.+) · room (.+) · you are (.+)$/, (_, by, room, me) => `הכרות דרך: ${by.replace("this browser’s tabs (no server)", "הלשוניות בדפדפן (בלי שרת)")} · חדר ${room.replace("same network", "אותה רשת").replace("found by sound", "נמצא לפי צליל")} · השם שלך: ${me}`]];
+    const heJoin = v => v.replace(/(^|[\s(])([בלמש]|ה)([A-Za-z0-9])/g, "$1$2־$3");
+    const heText = v => { const k = v.replace(/\s+/g, " ").trim(); if (!k) return v; if (HE[k] != null) return v.replace(v.trim(), HE[k]); for (const [re, to] of HE_RE) if (re.test(k)) return heJoin(k.replace(re, to)); return v; };
+    const loc = root => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      for (let n = w.nextNode(); n; n = w.nextNode()) if (/[A-Za-z]/.test(n.nodeValue) && !n.parentElement?.closest("script, style, textarea")) { const v = heText(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; }
+      for (const el of root.querySelectorAll?.("[aria-label], [placeholder], [title]") || []) for (const a of ["aria-label", "placeholder", "title"]) { const v = el.getAttribute(a); if (v && /[A-Za-z]/.test(v) && !/[א-ת]/.test(v)) { const h = heText(v); if (h !== v) el.setAttribute(a, h); } } };
+    const tx = $("#text"); if (tx && tx.value === "Question 4 is on page 212") tx.value = HE[tx.value];
+    loc(document.body); document.title = heText(document.title);
+    new MutationObserver(ms => { for (const m of ms) { if (m.type === "attributes") loc(m.target.parentElement || m.target); else for (const n of m.addedNodes) loc(n.nodeType === 1 ? n : n.parentElement || document.body); if (m.type === "characterData") loc(m.target.parentElement); } })
+      .observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["aria-label", "placeholder", "title"] });
+  }
   const VISIBLE_FOR = 10 * 60e3, ROTATE = 15 * 60e3, CHUNK = 64 * 1024, MAX_FILE = 50e6, MAX_TEXT = 1e6;
-  const names = ["Dana", "Omer", "Noa", "Yael", "Ariel", "Tamar", "Itai", "Maya"];
+  const names = he ? ["דנה", "עומר", "נועה", "יעל", "אריאל", "תמר", "איתי", "מאיה"] : ["Dana", "Omer", "Noa", "Yael", "Ariel", "Tamar", "Itai", "Maya"];
   const myName = (params.get("name") || sessionStorage.getItem("nearby.name") || names[Math.floor(Math.random() * names.length)]).slice(0, 24);
   try { sessionStorage.setItem("nearby.name", myName) } catch {}
   const forceRelay = params.get("relay") === "1";

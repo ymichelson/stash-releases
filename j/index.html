@@ -32,6 +32,11 @@
   const hub = new URL(path ? "../../hub/" : "../hub/", location.href);
   if (/^[A-Z0-9]{6}$/.test(code)) hub.searchParams.set("code", code);
   if (q.get("lang") === "he") hub.searchParams.set("lang", "he");
+  let saved = null; try { saved = localStorage.getItem("stash.lang"); } catch {}
+  if ((q.get("lang") || saved || (/^(he|iw)\b/i.test(navigator.language || "") ? "he" : "en")) === "he") { // the moment before the redirect, in Hebrew too
+    document.documentElement.lang = "he"; document.documentElement.dir = "rtl"; document.title = "הצטרפות לקורס · Stash";
+    document.getElementById("msg").innerHTML = 'פותחים את Stash… <a href="../hub/">המשך</a>';
+  }
   location.replace(hub.href);
 })();
 </script>

@@ -6,11 +6,15 @@
 <meta name="robots" content="noindex">
 <title>Classroom poster · Stash</title>
 <style>
+/* Hebrew letters: SF Hebrew on Apple devices (the system font comes first), Heebo everywhere else (Android, Windows).
+   Self-hosted (the CSP allows only this site); Hebrew range only, so Latin stays SF Pro / the system font. vendor/README.md */
+@font-face { font-family:"Stash Hebrew"; src:url("../vendor/fonts/heebo-hebrew-wght-5.3.0.woff2") format("woff2"); font-weight:100 900; font-display:swap;
+  unicode-range:U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F; }
 /* An A4 poster for the classroom wall: the round-7 A4 plate, the course name in its free top quarter,
    a real QR + the code inside its card (safe rect x 440–2040, y 1040–2590 of 2480 × 3508). Always light paper. */
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
-html, body { margin: 0; background: #D9D6CF; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif; color: #202427; }
+html, body { margin: 0; background: #D9D6CF; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Stash Hebrew", system-ui, "Segoe UI", Roboto, sans-serif; color: #202427; }
 .bar { position: sticky; top: 0; display: flex; justify-content: center; gap: 10px; padding: 14px; }
 .bar button, .bar a { height: 36px; padding: 0 16px; border: 0; border-radius: 9px; font: 500 14px/36px inherit; font-family: inherit; text-decoration: none; cursor: pointer; }
 .bar .primary { background: #202427; color: #fff; }
@@ -34,25 +38,33 @@ html, body { margin: 0; background: #D9D6CF; font-family: -apple-system, BlinkMa
 </style>
 </head>
 <body>
-<div class="bar"><button class="primary" onclick="print()">Print</button><a class="quiet" href="javascript:history.back()">Back</a></div>
+<div class="bar"><button class="primary" id="print" onclick="print()">Print</button><a class="quiet" id="back" href="javascript:history.back()">Back</a></div>
 <div class="sheet">
   <img src="../art/poster-a4-light.webp" alt="">
-  <div class="head"><h1 id="t">Join Algorithms</h1><p>Slides, board photos and notes from everyone in the course.</p></div>
+  <div class="head"><h1 id="t">Join Algorithms</h1><p id="sub">Slides, board photos and notes from everyone in the course.</p></div>
   <div class="card"><div class="qr" id="qr"></div><div class="code" id="c"></div>
-    <div class="how">Scan, or open <b>ymichelson.github.io/stash-releases/j</b> and type the code.<br>Opens in the browser — nothing to install.</div></div>
+    <div class="how" id="how">Scan, or open <b>ymichelson.github.io/stash-releases/j</b> and type the code.<br>Opens in the browser — nothing to install.</div></div>
 </div>
 <script src="../vendor/qrcode-generator-1.4.4.js"></script>
 <script>
 (() => {
   const p = new URLSearchParams(location.search);
   const code = (p.get("code") || "K7Q4MZ").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
-  const course = (p.get("course") || "Algorithms").slice(0, 60);
-  document.getElementById("t").textContent = `Join ${course}`;
-  document.title = `Poster — ${course} · Stash`;
+  let saved = null; try { saved = localStorage.getItem("stash.lang"); } catch {}
+  const he = (p.get("lang") || saved || (/^(he|iw)\b/i.test(navigator.language || "") ? "he" : "en")) === "he";
+  const course = (p.get("course") || (he ? "אלגוריתמים" : "Algorithms")).slice(0, 60), $ = id => document.getElementById(id);
+  if (he) { // the poster in Hebrew (the course name is whatever it's called)
+    document.documentElement.lang = "he"; document.documentElement.dir = "rtl";
+    $("print").textContent = "הדפסה"; $("back").textContent = "חזרה";
+    $("sub").textContent = "מצגות, תמונות של הלוח וסיכומים מכל מי שבקורס.";
+    $("how").innerHTML = 'סורקים, או פותחים את <b dir="ltr" style="white-space:nowrap;unicode-bidi:isolate">ymichelson.github.io/stash-releases/j</b> ומקלידים את הקוד.<br>נפתח בדפדפן — בלי להתקין כלום.';
+  }
+  $("t").textContent = he ? `הצטרפות ל${/^[A-Za-z0-9]/.test(course) ? "־" : ""}${course}` : `Join ${course}`;
+  document.title = he ? `פוסטר — ${course} · Stash` : `Poster — ${course} · Stash`;
   document.getElementById("c").textContent = code.slice(0, 3) + "‑" + code.slice(3);
   const q = qrcode(0, "M"); q.addData(`https://ymichelson.github.io/stash-releases/j/?c=${code}`); q.make(); const n = q.getModuleCount(); let d = "";
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
-  document.getElementById("qr").innerHTML = `<svg viewBox="-2 -2 ${n + 4} ${n + 4}" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QR code for the invite"><rect x="-2" y="-2" width="${n + 4}" height="${n + 4}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+  document.getElementById("qr").innerHTML = `<svg viewBox="-2 -2 ${n + 4} ${n + 4}" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${he ? "קוד QR להזמנה" : "QR code for the invite"}"><rect x="-2" y="-2" width="${n + 4}" height="${n + 4}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
 })();
 </script>
 </body>

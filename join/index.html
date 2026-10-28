@@ -18,13 +18,19 @@
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <style>
+/* Hebrew letters: SF Hebrew on Apple devices (the system font comes first), Heebo everywhere else (Android, Windows).
+   Self-hosted (the CSP allows only this site); Hebrew range only, so Latin stays SF Pro / the system font. vendor/README.md */
+@font-face { font-family:"Stash Hebrew"; src:url("../hub/vendor/fonts/heebo-hebrew-wght-5.3.0.woff2") format("woff2"); font-weight:100 900; font-display:swap;
+  unicode-range:U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F; }
+/* Hebrew reads better a little more open (no ascender/descender rhythm to lean on) */
+:lang(he) p, :lang(he) li, :lang(he) .k-note p, :lang(he) .meta { line-height:1.55; }
 :root {
   --paper:#FAF9F6; --sheet:#FFFFFF; --sheet-hover:#FFFFFF; --well:#F0EEE9; --ink:#202427; --ink2:#646A73;
   --hair:rgba(32,36,39,.09); --hair-strong:rgba(32,36,39,.16); --sky:#82AAF1; --sky-pale:#E4EDFC; --focus:#345EA0;
   --primary:#202427; --on-primary:#FFFFFF; --red:#C74646; --shadow-sheet:0 1px 3px rgba(0,0,0,.06); --grain:.035;
   --ease-out:cubic-bezier(.23,1,.32,1);
-  --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  --display:-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif; color-scheme:light;
+  --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Stash Hebrew", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --display:-apple-system, BlinkMacSystemFont, "SF Pro Display", "Stash Hebrew", system-ui, "Segoe UI", Roboto, sans-serif; color-scheme:light;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --paper:#16191E; --sheet:#22272E; --sheet-hover:#272D35; --well:#1D2127; --ink:#ECEEF2; --ink2:#AEB5C0; --hair:rgba(236,238,242,.11);
@@ -181,7 +187,7 @@ h1 { font:500 28px/34px var(--display); letter-spacing:-.012em; }
 </header>
 <div class="backdrop" aria-hidden="true"></div>
 <main id="main" tabindex="-1"></main>
-<footer><a href="../">What's Stash?</a></footer>
+<footer><a href="../">What's Stash?</a> · <a href="#" id="lang-switch" translate="no"></a></footer>
 
 <script src="../hub/nearby/nearby.js"></script>
 <script>
@@ -192,8 +198,8 @@ const CONFIG = {
   appJoin: code => `stash://join?code=${code}`,
 };
 const params = new URLSearchParams(location.search);
-const lang = params.get("lang") === "he" ? "he" : "en", LQ = lang === "he" ? "&lang=he" : "";
-if (lang === "he") { document.documentElement.lang = "he"; document.documentElement.dir = "rtl"; }
+const lang = (params.get("lang") || (() => { try { return localStorage.getItem("stash.lang"); } catch { return null; } })() || (/^(he|iw)\b/i.test(navigator.language || "") ? "he" : "en")) === "he" ? "he" : "en" /* ?lang= wins, then the choice under More → Language, else the phone's language */, LQ = lang === "he" ? "&lang=he" : "";
+if (lang === "he") { document.documentElement.lang = "he"; document.documentElement.dir = "rtl"; document.title = "הצטרפות לקורס · Stash"; }
 if (["dark", "light"].includes(params.get("theme"))) document.documentElement.dataset.theme = params.get("theme");
 function readCode() { // /j/K7Q4MZ, ?code=k7q-4mz, ?c=…, #K7Q4MZ — 6 letters/digits, dashes and spaces ignored
   const fromPath = location.pathname.match(/\/(?:j|join)\/([A-Za-z0-9-]{6,8})\/?$/);
@@ -234,8 +240,16 @@ const norm = x => x.toUpperCase().replace(/[\s-]/g, "");
 /* Real shape (engineering, main 1b3ca94): GET <functions>/preview?code=… → { status, kind, course, code, term, uni, cover (0–9),
    coverKey ("cover-01-ribbon"), people ("40+", a string), things, inviter, shelf }. The page reads coverKey and shows people as given. */
 async function preview(code) { await new Promise(r => setTimeout(r, 420)); const l = LISTED.find(x => x.code === code);
-  return DEMO[code] || (l ? { status:"open", id:"alg", course:l.course, instructor:l.instructor, code:l.number, term:l.term, uni:"Northfield University", cover:l.cover, people:l.size, things:"10+", inviter:"A classmate" } : { status: "unknown" }); }
+  return DEMO[code] || (l ? { status:"open", id:"alg", course:l.course, instructor:l.instructor, code:l.number, term:l.term, uni: lang === "he" ? "אוניברסיטת נורת׳פילד" : "Northfield University", cover:l.cover, people:l.size, things:"10+", inviter: lang === "he" ? "מישהו מהקורס" : "A classmate" } : { status: "unknown" }); }
 
+/* In Hebrew the made-up courses are Israeli ones (hub.js DEMO_HE) */
+if (lang === "he") {
+  const HE_DEMO = { "Algorithms":"אלגוריתמים", "Algorithms 2":"אלגוריתמים 2", "Algorithmic Game Theory":"תורת המשחקים האלגוריתמית", "Calculus 2":"חדו״א 2", "Intro to Psychology":"מבוא לפסיכולוגיה",
+    "Prof. Levin":"פרופ׳ לוין", "Dr. Shapira":"ד״ר שפירא", "Prof. Amir":"פרופ׳ אמיר", "Dr. Cohen":"ד״ר כהן", "Prof. Nir":"פרופ׳ ניר", "Spring 2027":"סמסטר ב׳ תשפ״ז",
+    "Northfield University":"אוניברסיטת נורת׳פילד", "CS 2041":"234247", "CS 3042":"234248", "CS 4410":"236410", "MATH 1102":"104032", "PSY 1001":"51101",
+    "Maya":"מאיה", "Yael":"יעל", "Noa":"נועה", "CS Year 2":"מדמ״ח שנה ב׳", "A classmate":"מישהו מהקורס", "under 10":"פחות מ־10" };
+  for (const o of [...Object.values(DEMO), ...LISTED]) for (const k of Object.keys(o)) if (HE_DEMO[o[k]] != null) o[k] = HE_DEMO[o[k]];
+}
 const main = document.getElementById("main");
 /* Hebrew wording (same approach as the hub: one table, applied to the chrome, never to course data) */
 const HE = {
@@ -256,23 +270,34 @@ const HE = {
   "Choose your university first.":"קודם לבחור מוסד לימודים.", "Type at least 3 letters of the name, or the course number.":"לפחות 3 אותיות מהשם, או מספר הקורס.",
   "Start a course":"פתיחת קורס", "Course name":"שם הקורס", "Course number":"מספר הקורס", "Lecturer":"מרצה", "Term":"סמסטר", "Start the course":"לפתוח את הקורס",
   "Back to search":"חזרה לחיפוש", "Starting…":"פותחים…", "Join it instead":"להצטרף אליו", "Join":"הצטרפות", " is nearby":" בסביבה",
-  "You're its first member. Others taking it can join with your invite — or find it, if you let them.":"את/ה הראשון/ה בקורס. אחרים יוכלו להצטרף עם ההזמנה שלך — או למצוא אותו, אם תאפשר/י.",
+  "Looking up the course":"מחפשים את הקורס", "Only what you add is shared":"רק מה שמוסיפים משותף", " — nothing else from your phone or computer":" — שום דבר אחר מהטלפון או מהמחשב",
+  "Your first name":"השם הפרטי שלך", "Algorithms, or CS 2041":"אלגוריתמים, או 234247", "the person who invited you":"מי ששלח את ההזמנה",
+  "Search by the course name or its number. Only courses whose owner made them findable show up, and you see nothing inside until you join.":"חיפוש לפי שם הקורס או המספר שלו. מופיעים רק קורסים שהבעלים אפשרו למצוא, ושום דבר מבפנים לא נראה עד שמצטרפים.", "Start a course · Stash":"פתיחת קורס · Stash",
+  "You're its first member. Others taking it can join with your invite — or find it, if you let them.":"הקורס נפתח, ועוד אין בו אף אחד. אחרים יוכלו להצטרף עם ההזמנה שלך — או למצוא אותו, אם מאפשרים חיפוש.",
 };
 const HE_RE = [
-  [/^ invited you · (\S+) people · (\S+) files and notes$/, " הזמין/ה אותך · $1 אנשים · $2 קבצים וסיכומים"], [/^Join (.+)$/, "הצטרפות ל$1"],
-  [/^Ask (.+) for a new code\. Invites last two weeks\.$/, "אפשר לבקש מ$1 קוד חדש. הזמנות תקפות שבועיים."], [/^(.+) closed the door\. Ask them to open it again\.$/, "$1 סגר/ה את ההרשמה. אפשר לבקש לפתוח שוב."],
-  [/^(.+) is sharing it$/, "$1 משתף/ת אותו"], [/^(.+) is already here for (.+) — join it, so everyone taking it is in one place\.$/, "$1 כבר קיים ל$2 — כדאי להצטרף, כדי שכל מי שלומד אותו יהיה במקום אחד."],
+  [/^ invited you · (\S+) people · (\S+) files and notes$/, " · הזמנה לקורס · $1 אנשים · $2 קבצים וסיכומים"], [/^ invited you · (\S+) people$/, " · הזמנה לקורס · $1 אנשים"], [/^ · (\S+) files and notes$/, " · $1 קבצים וסיכומים"],
+  [/^(.+) lets people in by hand — you'll see the course once they do\. Only what you add is shared$/, "$1 מאשרים כל הצטרפות ידנית — הקורס יופיע אחרי האישור. רק מה שמוסיפים משותף"], [/^Join (.+)$/, "הצטרפות ל$1"],
+  [/^Ask (.+) for a new code\. Invites last two weeks\.$/, "אפשר לבקש מ$1 קוד חדש. הזמנות תקפות שבועיים."], [/^(.+) closed the door\. Ask them to open it again\.$/, "ההרשמה נסגרה על ידי $1. אפשר לבקש לפתוח אותה שוב."],
+  [/^(.+) is sharing it$/, "משותף על ידי $1"], [/^(.+) is nearby$/, "$1 בסביבה"], [/^(.+) is already here for (.+) — join it, so everyone taking it is in one place\.$/, "$1 כבר קיים ל$2 — כדאי להצטרף, כדי שכל מי שלומד אותו יהיה במקום אחד."],
   [/^No findable course matches at (.+)\. Ask a classmate for an invite — or start it, and others taking it can find it\.$/, "אין קורס שאפשר למצוא ב$1. אפשר לבקש הזמנה ממישהו מהקורס — או לפתוח אותו, ואחרים ימצאו."],
   [/^Let others at (.+) find it$/, "לאפשר לאחרים ב$1 למצוא אותו"], [/^(\S+) people$/, "$1 אנשים"],
 ];
 const heJoin = v => v.replace(/(^|[\s(])([בלמש]|ה)([A-Za-z0-9])/g, "$1$2-$3");
-const heText = v => { if (HE[v] != null) return HE[v]; const tr = v.trim(); if (HE[tr] != null) return v.replace(tr, HE[tr]); for (const [re, to] of HE_RE) if (re.test(v)) return heJoin(v.replace(re, to)); return v; };
+const pageTitle = v => { document.title = (lang === "he" ? heText(v) : v) + " · Stash"; }; // the tab name in Hebrew too
+const heTerm = v => v.replace(/\b(?:Semester (A|B)|(Fall|Spring|Summer|Winter)) (\d{4})\b|\b(\d{4}) \(full year\)/g, (_, ab, season, y, full) => full ? `${full} (שנתי)` : ab ? `סמסטר ${ab === "A" ? "א׳" : "ב׳"} ${y}` : `${{ Fall: "סתיו", Spring: "אביב", Summer: "קיץ", Winter: "חורף" }[season]} ${y}`); // course terms (hub.js heText)
+const heText = v => { v = heTerm(v); if (HE[v] != null) return HE[v]; const tr = v.trim(); if (HE[tr] != null) return v.replace(tr, HE[tr]); for (const [re, to] of HE_RE) if (re.test(v)) return heJoin(v.replace(re, to)); return v; };
 function heLocalize(root) {
   if (lang !== "he") return;
   const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  for (let n = w.nextNode(); n; n = w.nextNode()) { if (!/[A-Za-z]/.test(n.nodeValue) || n.parentElement?.closest("h1, .meta, .found b, script, style")) continue; const v = heText(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; }
+  for (let n = w.nextNode(); n; n = w.nextNode()) { if (!/[A-Za-z]/.test(n.nodeValue) || n.parentElement?.closest("h1, .found b, script, style") || (n.parentElement?.closest(".meta") && HE[n.nodeValue.trim()] == null && heTerm(n.nodeValue) === n.nodeValue)) continue; const v = heText(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; }
   for (const el of root.querySelectorAll("[aria-label], [placeholder]")) for (const a of ["aria-label", "placeholder"]) { const v = el.getAttribute(a); if (v && /^[A-Z]/.test(v) && HE[v]) el.setAttribute(a, HE[v]); }
-  const h = root.querySelector?.("h1"); if (h && /^Join /.test(h.textContent) && h.closest(".problem, .inner") && HE[h.textContent]) h.textContent = HE[h.textContent];
+  const h = root.querySelector?.("h1"); if (h && h.closest(".problem, .inner") && HE[h.textContent]) h.textContent = HE[h.textContent]; // headings are chrome here, course names aren't in HE
+}
+{ // the language switch at the bottom: the other language, remembered for the hub too (More → Language there)
+  const sw = document.getElementById("lang-switch"), to = lang === "he" ? "en" : "he";
+  sw.textContent = to === "he" ? "עברית" : "English"; sw.lang = to; sw.dir = to === "he" ? "rtl" : "ltr";
+  sw.addEventListener("click", e => { e.preventDefault(); try { localStorage.setItem("stash.lang", to); } catch {} const u = new URL(location.href); u.searchParams.delete("lang"); location.replace(u.href); });
 }
 if (lang === "he") new MutationObserver(() => heLocalize(document.body)).observe(document.body, { childList: true, subtree: true });
 function show(html, empty) { document.body.classList.toggle("empty-screen", !!empty); document.body.classList.remove("invite-screen"); main.innerHTML = html; main.firstElementChild?.classList.add("enter"); }
@@ -284,14 +309,14 @@ const nearCards = () => nearList.slice(0, 3).map(n => `<div class="nearby" role=
 function nearbyCard() { // live cards from nearby.js (at most 3); ?nearby=1 shows a demo one
   if (!params.get("nearby")) return `<div id="near">${nearCards()}</div>`;
   return params.get("nearby") ? `<div class="nearby" role="status"><span class="dot" aria-hidden="true"><span></span><i></i></span>
-    <p><b>Algorithms is nearby</b><small>Dana is sharing it</small></p><a class="btn primary" href="?code=K7Q4MZ">Join</a></div>` : "";
+    <p><b>${lang === "he" ? "אלגוריתמים" : "Algorithms"} is nearby</b><small>${lang === "he" ? "דנה" : "Dana"} is sharing it</small></p><a class="btn primary" href="?code=K7Q4MZ">Join</a></div>` : "";
 }
 function start(err) {
-  document.title = "Join a course · Stash";
+  pageTitle("Join a course");
   show(`<div>${nearbyCard()}<div class="card"><div class="inner">
     <h1>Join a course</h1><p class="meta" style="font-size:14px">Type the code from your invite.</p>
     <form id="code-form" novalidate><div class="field"><label for="code">Invite code</label>
-      <input class="input code" id="code" name="code" placeholder="ABC-123" maxlength="60" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" aria-describedby="code-err"></div>
+      <input class="input code" id="code" name="code" dir="ltr" placeholder="ABC-123" maxlength="60" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" aria-describedby="code-err"></div>
       ${err ? `<p class="err" id="code-err">${esc(err)}</p>` : `<p id="code-err" hidden></p>`}
       <button class="btn primary wide" type="submit">Find course</button></form>
     <p class="alt">No invite? <a href="?find=1${LQ}">Search by course name or number</a></p></div></div></div>`, true);
@@ -316,7 +341,7 @@ async function load(code) {
   problem(d);
 }
 function invite(code, d) {
-  document.title = `Join ${d.course} · Stash`;
+  pageTitle(`Join ${d.course}`);
   const name = store.get("name", "");
   const ask = d.status === "approval";
   show(`<div class="card invite"><div class="cover"><img src="${art(d.coverKey || d.cover)}" data-art="${d.coverKey || d.cover}" alt=""></div><div class="inner">
@@ -350,7 +375,7 @@ function problem(d) {
     rate: ["Too many tries", "Wait a few minutes, then try the code again."],
   }[d.status] || ["Couldn't reach Stash", "Check the internet and try again."];
   const pic = ["expired", "closed", "full"].includes(d.status) ? "c3-invite" : "c4-join";
-  document.title = P[0] + " · Stash";
+  pageTitle(P[0]);
   show(`<div class="card problem" role="alert"><img src="${art(pic)}" data-art="${pic}" alt=""><h1>${P[0]}</h1><p>${P[1]}</p>
     <a class="btn primary" href="./${LQ ? "?lang=he" : ""}">Try another code</a></div>`);
 }
@@ -361,7 +386,7 @@ function cardRow(x) {
     <a class="btn primary" style="height:36px;font-size:13px;border-radius:9px" href="?code=${x.code}">Open</a></div>`;
 }
 function find() {
-  document.title = "Find your course · Stash";
+  pageTitle("Find your course");
   const uni = store.get("uni", "");
   show(`<div class="card"><div class="inner"><h1>Find your course</h1>
     <p class="meta">Search by the course name or its number. Only courses whose owner made them findable show up, and you see nothing inside until you join.</p>
@@ -384,7 +409,7 @@ function find() {
     r.querySelectorAll("[data-start]").forEach(b => b.addEventListener("click", () => startCourse(u, q))); });
 }
 function startCourse(u, q) {
-  document.title = "Start a course · Stash";
+  pageTitle("Start a course");
   const looksLikeNumber = /\d/.test(q);
   show(`<div class="card"><div class="inner"><h1>Start a course</h1>
     <p class="meta">You're its first member. Others taking it can join with your invite — or find it, if you let them.</p>
