@@ -69,6 +69,7 @@ export function routeFor(request, scope) {
   if (url.origin !== new URL(scope).origin || !url.href.startsWith(scope)) return "network"; // the backend, CDNs
   if (url.pathname.includes("/__files/")) return "files";            // a kept file (cache only)
   if (url.pathname.includes("/nearby-api/") || url.pathname.includes("/push-api/")) return "network";
+  if (url.pathname.endsWith("/boot.js")) return "network";            // the page's version check: always the newest
   if (request.mode === "navigate") return "page";                     // network first, the cached page when offline
   return "asset";                                                     // cached at once, refreshed behind
 }

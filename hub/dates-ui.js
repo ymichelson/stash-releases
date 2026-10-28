@@ -11,26 +11,26 @@ import { PDFText } from "./pdftext.js";
 
 const HE = {
   "Add the course dates": "הוספת תאריכי הקורס", "Add dates…": "הוספת תאריכים…",
-  "Stash finds the exams, deadlines and class times. You check each one before anything is added.": "Stash מוצא מבחנים, הגשות ושעות שיעור. בודקים כל אחד לפני שמשהו נוסף.",
+  "Stash finds the exams, deadlines and class times. You check each one before anything is added.": "\u200fStash מוצא מבחנים, הגשות ושעות שיעור. בודקים כל אחד לפני שמשהו נוסף.",
   "Syllabus": "סילבוס", "Calendar": "יומן", "Paste a list": "הדבקת רשימה", "Choose the syllabus (PDF)": "בחירת הסילבוס (PDF)",
-  "Choose a calendar file (.ics)": "בחירת קובץ יומן (‎.ics)", "or paste the calendar link": "או להדביק את הקישור ליומן", "Get": "הבאה",
+  "Choose a calendar file (.ics)": "בחירת קובץ יומן (‎.ics)", "or paste the calendar link": "או להדביק את הקישור ליומן", "Get": "טעינה",
   "Paste the dates — one per line, the way the lecturer wrote them.": "להדביק את התאריכים — אחד בכל שורה, כמו שהמרצה כתב.",
   "Find dates": "חיפוש תאריכים", "Reading": "קורא את", "Every week": "כל שבוע", "Dates": "תאריכים", "Not now": "לא עכשיו",
   "Review": "לבדיקה", "Add": "הוספה", "Edit": "עריכה", "Done": "סיום", "Remove": "הסרה", "What": "מה", "Day": "יום", "Time": "שעה",
   "Where": "איפה", "Leave empty for all day": "ריק = כל היום", "Copy the list": "העתקת הרשימה", "Copied.": "הועתק.",
-  "Tick what’s right. Nothing is added until you tap Add.": "מסמנים מה נכון. שום דבר לא נוסף עד שמקישים הוספה.",
+  "Tick what’s right. Nothing is added until you tap Add.": "מסמנים מה נכון. שום דבר לא נוסף עד שלוחצים על „הוספה”.",
   "No dates found in": "לא נמצאו תאריכים ב", "No dates found.": "לא נמצאו תאריכים.", "Try pasting them instead.": "אפשר להדביק אותם במקום.",
-  "This PDF has no words to read (a scan?). Paste the dates instead.": "ב-PDF הזה אין מילים לקרוא (סריקה?). אפשר להדביק את התאריכים במקום.",
-  "This calendar’s site doesn’t let a web page read it. Download the .ics file, then choose it here.": "האתר של היומן לא מאפשר לדף אינטרנט לקרוא אותו. אפשר להוריד את קובץ ה-‎.ics ולבחור אותו כאן.",
+  "This PDF has no words to read (a scan?). Paste the dates instead.": "ב־PDF הזה אין מילים לקרוא (סריקה?). אפשר להדביק את התאריכים במקום.",
+  "This calendar’s site doesn’t let a web page read it. Download the .ics file, then choose it here.": "האתר של היומן לא מאפשר לדף אינטרנט לקרוא אותו. אפשר להוריד את קובץ ה־‎.ics ולבחור אותו כאן.",
   "Couldn’t add the dates. Try again in a minute.": "לא הצלחנו להוסיף את התאריכים. כדאי לנסות שוב בעוד דקה.",
-  "Only the course owner and helpers can add dates. Copy the list and send it to them.": "רק מנהלי הקורס יכולים להוסיף תאריכים. אפשר להעתיק את הרשימה ולשלוח להם.",
+  "Only the course owner and helpers can add dates. Copy the list and send it to them.": "רק צוות הקורס יכול להוסיף תאריכים. אפשר להעתיק את הרשימה ולשלוח לצוות.",
   "Add the exam and class dates": "הוספת תאריכי המבחנים והשיעורים", "From the syllabus, a calendar or a list": "מהסילבוס, מיומן או מרשימה",
-  "in": "ב", "Found": "נמצאו", "dates": "תאריכים", "date": "תאריך", "your note": "הפתק שלך",
+  "in": "ב", "Found": "נמצאו", "dates": "תאריכים", "date": "תאריך", "your note": "הפתק שלכם",
   "Exam": "מבחן", "Due": "הגשה", "Class": "שיעור", "Other": "אחר",
   "People": "צוות הקורס", "Grading": "הרכב הציון", "How the grade is made": "איך הציון מורכב", "Reading": "קריאה", "Links": "קישורים",
   "Required": "חובה", "Recommended": "רשות", "Choose the syllabus (PDF or Word)": "בחירת הסילבוס (PDF או Word)",
   "The grade breakdown and the reading go into one note everyone in the course sees.": "הרכב הציון והקריאה נשמרים בפתק אחד שכל הקורס רואה.",
-  "Photos of a syllabus are read by the Stash app on a Mac. Here, choose the PDF or Word file, or paste the text.": "צילומים של סילבוס נקראים באפליקציית Stash במק. כאן אפשר לבחור את קובץ ה-PDF או ה-Word, או להדביק את הטקסט.",
+  "Photos of a syllabus are read by the Stash app on a Mac. Here, choose the PDF or Word file, or paste the text.": "את צילומי הסילבוס קוראת אפליקציית Stash ב־Mac. כאן אפשר לבחור את קובץ ה־PDF או ה־Word, או להדביק את הטקסט.",
   "Nothing to add found in": "לא נמצא מה להוסיף ב", "Added": "נוספו", "to the course": "לקורס",
 };
 const PENCIL = '<svg class="i s" viewBox="0 0 20 20" aria-hidden="true"><path d="M13.5 3.5l3 3L7 16H4v-3z"/><path d="M11.5 5.5l3 3"/></svg>';
@@ -193,11 +193,11 @@ export function startDates(hub) {
   /** "CS 2341 · 25 Oct–22 Jan" under the title. */
   function courseLine() {
     const s = R.syl; if (!s) return "";
-    const day = v => { if (!v) return null; const [, m, d] = v.split("-").map(Number); return he ? `${d}/${m}` : `${d} ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1]}`; };
+    const day = v => { if (!v) return null; const [, m, d] = v.split("-").map(Number); return he ? `${d}.${m}` : `${d} ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1]}`; };
     return [s.code, [day(s.term?.starts), day(s.term?.ends)].filter(Boolean).join("–")].filter(Boolean).join(" · ");
   }
-  /** 10:00–11:00 and 25/10–22/1 stay in order inside Hebrew. */
-  const ltr = t => esc(t).replace(/(\d{1,2}[:/]\d{1,2})–(\d{1,2}[:/]\d{1,2})/g, "<bdi dir=\"ltr\">$1–$2</bdi>");
+  /** 10:00–11:00 and 25.10–22.1 stay in order inside Hebrew. */
+  const ltr = t => esc(t).replace(/(\d{1,2}[:/.]\d{1,2})–(\d{1,2}[:/.]\d{1,2})/g, "<bdi dir=\"ltr\">$1–$2</bdi>");
   function tickRow(key, kind, on, title, line, extra = "") {
     return `<li class="dr-row k-${kind} ${on ? "" : "off"}">
       <label class="dr-tick"><input type="checkbox" data-sy-tick="${key}" ${on ? "checked" : ""} aria-label="${esc(`${title}, ${line}`)}"><span>${TICK}</span></label>
@@ -307,7 +307,7 @@ export function startDates(hub) {
     else say(`<span>${foundWords(found.length, from)}</span><button class="linkbtn" data-act="dates-review">${T("Review")}</button>`, 12000);
   }
   const foundWords = (n, from) => he
-    ? `נמצאו <b>${n === 1 ? "תאריך אחד" : `${n} תאריכים`}</b>${from ? ` ${/^[\u0590-\u05FF]/.test(from) ? "ב" : "ב-"}<b><bdi>${esc(from)}</bdi></b>` : ""}`
+    ? `נמצאו <b>${n === 1 ? "תאריך אחד" : `${n} תאריכים`}</b>${from ? ` ${/^[\u0590-\u05FF]/.test(from) ? "ב" : "ב־"}<b><bdi>${esc(from)}</bdi></b>` : ""}`
     : `Found <b>${n} ${n === 1 ? "date" : "dates"}</b>${from ? ` in <b><bdi>${esc(from)}</bdi></b>` : ""}`;
   hub.hooks.datesCard = (c, ess) => {
     const a = S.datesAsk;

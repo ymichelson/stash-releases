@@ -18,6 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Stash">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script src="boot.js"></script>
 <script type="module" src="pwa.js"></script>
 <meta name="description" content="A course's shared table: everyone taking it puts down what they have. Prototype with made-up data.">
 <style>
@@ -165,6 +166,7 @@ svg.i.s { width:15px; height:15px; }
 .btn.icon { width:34px; padding:0; }
 .btn[disabled] { opacity:.45; pointer-events:none; }
 .btn.big { height:44px; padding:0 18px; font-size:15px; border-radius:10px; }
+.btn.cta { height:44px; padding:0 20px; font-size:15px; border-radius:10px; }   /* like .big, which the Hebrew pass skips (a viewer class) */
 @media (max-width:699px) { .course-bar .add-top { display:none; } }
 
 /* one status line: new-since by default, transient notes replace it */
@@ -326,6 +328,8 @@ img.pg-thumb { width:100%; height:100%; object-fit:cover; object-position:top ce
 @media (min-width:700px) { .sk-cover { aspect-ratio:3.6/1; } }
 .sk-line { height:12px; border-radius:6px; margin-top:16px; width:40%; }
 .sk-sheet { aspect-ratio:1/1.1; }
+.sk-title { height:30px; width:min(46%, 320px); border-radius:8px; margin-top:8px; }
+.sk-strip { height:58px; margin-top:20px; border-radius:10px; }
 .sk-pulse { animation:pulse 1.4s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity:.55; } }
 
@@ -411,7 +415,7 @@ textarea.input { min-height:120px; resize:vertical; }
 .codebox { position:relative; display:flex; justify-content:center; gap:6px; direction:ltr; }
 .codebox .cb { width:44px; height:54px; display:grid; place-items:center; border-radius:10px; background:var(--well);
   box-shadow:inset 0 0 0 1px var(--hair); font:500 24px/1 var(--font); color:var(--ink); transition:box-shadow .12s; }
-.codebox .cb:nth-child(4) { margin-inline-start:10px; }
+.codebox .cb:nth-of-type(4) { margin-inline-start:10px; } /* K7Q-4MZ: three, a gap, three (the input is the first child) */
 .codebox input { position:absolute; inset:0; width:100%; opacity:0; border:0; font-size:16px; color:transparent; caret-color:transparent; background:none; }
 .codebox:focus-within .cb.on { box-shadow:inset 0 0 0 1px var(--hair), 0 0 0 2px var(--focus); }
 .codebox input[aria-invalid="true"] ~ .cb { box-shadow:inset 0 0 0 1px var(--red); }
@@ -636,6 +640,11 @@ select.input { appearance:none; padding-inline-end:34px; background-image:url("d
 :root[data-theme="dark"] { --pc-coral:#4D3631; --pc-coral-ink:#F6C2B6; --pc-butter:#4A3F2A; --pc-butter-ink:#F2D9A4; --pc-sky:#2C3852; --pc-sky-ink:#B9CFF7; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pc-coral:#4D3631; --pc-coral-ink:#F6C2B6; --pc-butter:#4A3F2A; --pc-butter-ink:#F2D9A4; --pc-sky:#2C3852; --pc-sky-ink:#B9CFF7; } }
 @media (prefers-reduced-motion: reduce) { .pc.in { animation:none; } .pc::after { transition:none; } }
+/* the first screen (no courses yet): one primary action, then the invite code as a quiet second way in */
+.first-code { margin-top:36px; padding-top:22px; border-top:1px solid var(--hair); width:min(380px,100%); }
+.first-code > p { margin:0 0 12px; font:500 13px/18px var(--font); color:var(--ink2); }
+.first-code-row { display:flex; flex-direction:column; gap:12px; align-items:center; }
+.here-cap { display:none; }
 .fsubline { display:flex; align-items:center; }
 .fsubline:not(:has(.sub)) .here-slot { position:absolute; top:14px; inset-inline-end:16px; }
 .fsubline .here-slot { margin-inline-start:auto; position:relative; z-index:2; }
@@ -908,7 +917,7 @@ a, button, [data-act] { -webkit-tap-highlight-color:transparent; }
   .welcome .acts .btn { height:40px; padding:0 18px; font-size:15px; }
   .empty h2 { font-size:19px; }
   .empty p { font-size:15px; }
-  .empty .btn.big { height:48px; border-radius:12px; }
+  .empty .btn.big, .empty .btn.cta { height:48px; border-radius:12px; }
 }
 
 /* ===== the phone: the course as a paper folio (HUB-DIRECTION.md; renderFolio): the cover folds into the top bar on scroll, the dates sit in one card ===== */
@@ -1095,6 +1104,9 @@ a, button, [data-act] { -webkit-tap-highlight-color:transparent; }
   .folio.during .fcover { padding-bottom:0; }
   .fsubline { min-height:22px; }
   .fsubline:not(:has(.sub)) .here-slot { position:static; margin-inline-start:auto; }
+  /* who's here on the phone: larger circles and a few words, so one pale initial isn't a mystery (launch QA N4) */
+  .fsubline .pc { width:28px; height:28px; font-size:11.5px; }
+  .fsubline .here-cap { display:block; order:-1; margin-inline-end:10px; font:400 13px/18px var(--font); color:var(--ink2); white-space:nowrap; max-width:46vw; overflow:hidden; text-overflow:ellipsis; unicode-bidi:plaintext; }
   .fcover .sub { font:400 14px/20px var(--font); color:var(--ink2); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .fcover h1 { margin:2px 0 0; }
   .fname { gap:6px; font:500 28px/34px var(--display); letter-spacing:-.012em; }
@@ -1286,6 +1298,7 @@ html.pwa-standalone .hd { padding-top:max(14px, env(safe-area-inset-top)); }
 <input type="file" id="pick-photo" accept="image/*" capture="environment" hidden>
 
 <script src="nearby/nearby.js"></script>
+<script src="legal.js"></script>
 <script src="hub.js"></script>
 </body>
 </html>

@@ -47,9 +47,9 @@ const art = key => {
 
 /* ============ words (English + Hebrew chrome) ============ */
 const HE = {
-  courses:"קורסים", joinCourse:"הצטרפות או פתיחת קורס", joinCode:"הצטרפות עם קוד", yourCourses:"הקורסים שלך", onTheirOwn:"קורסים", bring:"הזמנה",
+  courses:"קורסים", joinCourse:"הצטרפות או פתיחת קורס", joinCode:"הצטרפות עם קוד", yourCourses:"הקורסים שלכם", onTheirOwn:"קורסים", bring:"הזמנה",
   next:"הבא", add:"הוספה ל", week:"שבוע", thisWeek:"השבוע", courseFiles:"קבצי הקורס", earlier:"קודם", things:"פריטים", thing:"פריט",
-  newSince:"חדשים מאז", show:"להראות", others:"ועוד", and:"ו-", people:"אנשים", photo:"תמונה", file:"קובץ", link:"קישור", note:"פתק",
+  newSince:"חדשים מאז", show:"הצגה", others:"ועוד", and:"ו־", people:"אנשים", photo:"תמונה", file:"קובץ", link:"קישור", note:"פתק",
   thanks:"תודה", gotIt:"הבנתי", same:"גם לי יש שאלה", helpful:"עזר לי", addOne:"הוספה", info:"על הקורס", invitePeople:"הזמנת אנשים", reminders:"תזכורות לתאריכים", showHere:"להראות שאני כאן", hereMore:"עוד", thanksW:"תודה", open:"פתיחה", save:"שמירה", saveFiles:"שמירה בקבצים", savePhoto:"שמירת התמונה", close:"סגירה", copy:"העתקה",
   nothingYet:"עוד אין כלום על השולחן", nothingYetP:"אפשר להניח את הסילבוס, מצגות או תמונה של הלוח — כולם בקורס יקבלו את זה.",
   offline:"אין חיבור · עודכן", offlineP:"מה שכאן עדיין עובד; מה שתוסיפו יישלח כשהחיבור יחזור.",
@@ -78,121 +78,125 @@ const heWhen = x => String(x).replace(/\b(\d+ (?:h|min)) ago\b/g, "$1") /* "3 h 
   .replace(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{1,2})\b/g, (_, m, d) => `${d}.${HE_MONTH[m]}`)
   .replace(/\b(\d+) min\b/g, (_, n) => n === "1" ? "לפני דקה" : `לפני ${n} דק׳`).replace(/\bjust now\b/, "עכשיו").replace(/\b(\d+) h\b/g, (_, n) => n === "1" ? "לפני שעה" : n === "2" ? "לפני שעתיים" : `לפני ${n} שעות`).replace(/\bWeek (\d+)\b/g, "שבוע $1").replace(/\b(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sun|Mon|Tue|Wed|Thu|Fri|Sat|today|now|Nov|Oct|Dec)\b/g, d => HE_DAYS[d]);
 const HE_EXACT = {
-  "Profile":"פרופיל", "Make it yours ·":"להפוך אותו לשלך ·", "Don’t show again":"לא להציג שוב", "Your profile":"הפרופיל שלך", "You · your profile":"את/ה · הפרופיל שלך", "Owner · Profile":"בעלים · פרופיל",
+  "Profile":"פרופיל", "Make it yours ·":"התאמה אישית ·", "Don’t show again":"לא להציג שוב", "Your profile":"הפרופיל שלי", "You · your profile":"אני · הפרופיל שלי", "Owner · Profile":"פותחי הקורס · פרופיל",
   "Join a course":"הצטרפות לקורס", "Join or start a course":"הצטרפות או פתיחת קורס", "Prototype states":"מצבי אב־טיפוס", "Course files":"קבצי הקורס", "This week":"השבוע", "Earlier":"קודם",
-  "All":"הכול", "Lectures":"הרצאות", "Tutorials":"תרגולים", "Homework":"שיעורי בית", "Exams":"מבחנים", "Show":"להראות", "Undo":"ביטול",
+  "All":"הכול", "Lectures":"הרצאות", "Tutorials":"תרגולים", "Homework":"תרגילי בית", "Exams":"מבחנים", "Show":"הצגה", "Undo":"ביטול",
   "Copied.":"הועתק.", "Link copied.":"הקישור הועתק.", "Saved to this device.":"נשמר במכשיר הזה.", "Removed.":"הוסר.", "Deleted for everyone.":"נמחק אצל כולם.",
-  "Thanks — reported.":"תודה — הדיווח נשלח.", "Just you so far":"בינתיים רק את/ה", "Just you":"רק את/ה", "Invite":"הזמנה", "Invite people":"להזמין אנשים", "Add":"הוספה",
+  "Thanks — reported.":"תודה — הדיווח נשלח.", "Just you so far":"בינתיים אין עוד אף אחד", "Just you":"רק אני", "Invite":"הזמנה", "Invite people":"הזמנת אנשים", "Add":"הוספה",
   "Photo":"תמונה", "File":"קובץ", "Link":"קישור", "Note":"פתק", "Back":"חזרה", "Next":"הבא", "Goes to":"לאן זה הולך",
-  "Has a date?":"יש תאריך?", "(homework, an exam)":"(שיעורי בית, מבחן)", "Leave a sticker":"להשאיר מדבקה", "Send on WhatsApp":"לשלוח בוואטסאפ",
-  "Send to someone nearby":"לשלוח למישהו קרוב", "Report":"דיווח", "Delete":"מחיקה", "Open":"פתיחה", "Save":"שמירה", "Copy":"העתקה",
+  "Has a date?":"יש תאריך?", "(homework, an exam)":"(תרגיל בית, מבחן)", "Leave a sticker":"השארת מדבקה", "Send on WhatsApp":"שליחה ב־WhatsApp",
+  "Send to someone nearby":"שליחה למישהו בסביבה", "Report":"דיווח", "Delete":"מחיקה", "Open":"פתיחה", "Save":"שמירה", "Copy":"העתקה",
   "Thanks":"תודה", "Got it":"הבנתי", "Same question":"גם לי יש שאלה", "Helpful":"עזר לי", "Code":"קוד", "Nearby":"בסביבה",
-  "Copy code":"העתקת הקוד", "Show big for a room":"להציג בגדול לכיתה", "Print a poster for the classroom":"להדפיס פוסטר לכיתה", "New code":"קוד חדש",
-  "Works until Thu, 5 Nov":"בתוקף עד יום ה׳, 5.11", "Post in a WhatsApp group":"לפרסם בקבוצת וואטסאפ", "Copy link":"העתקת הקישור", "More…":"עוד…",
-  "See who's near you":"מי בסביבה", "Find people in this room by sound":"למצוא אנשים בחדר לפי צליל", "Invite people near you":"להזמין אנשים שנמצאים לידך", "People in this course":"האנשים בקורס", "Change the cover":"החלפת כריכה",
+  "Copy code":"העתקת הקוד", "Show big for a room":"הצגה בגדול לכיתה", "Print a poster for the classroom":"הדפסת פוסטר לכיתה", "New code":"קוד חדש",
+  "Works until Thu, 5 Nov":"בתוקף עד יום ה׳, 5.11", "Post in a WhatsApp group":"פרסום בקבוצת WhatsApp", "Copy link":"העתקת הקישור", "More…":"עוד…",
+  "See who's near you":"מי בסביבה", "Find people in this room by sound":"חיפוש אנשים בחדר לפי צליל", "Invite people near you":"הזמנת אנשים שנמצאים לידכם", "People in this course":"האנשים בקורס", "Change the cover":"החלפת כריכה",
   "Forget this browser…":"לשכוח את הדפדפן הזה…", "Prototype":"אב־טיפוס", "States…":"מצבים…", "Light paper":"נייר בהיר", "Night paper":"נייר לילה",
-  "Someone adds something":"מישהו מוסיף משהו", "For the whole class":"לכל המחזור", "This week in your courses":"השבוע בקורסים שלך", "Class":"מחזור",
-  "Only what you add is shared.":"רק מה שמוסיפים משותף.", "Sending…":"שולח…", "Waiting to send":"ממתין לשליחה", "Add a sticker":"להוסיף מדבקה",
-  "Coming up":"בקרוב", "More":"עוד", "Close":"סגירה", "Stash for Mac":"Stash ל-Mac", "Cancel":"ביטול", "Leave":"עזיבה", "Forget":"לשכוח",
-  "Keep a copy":"לשמור עותק", "Get Stash for Mac":"להוריד את Stash ל-Mac", "Not now":"לא עכשיו", "Let the course come to you":"שהקורס יגיע אלייך",
-  "It lands by itself":"זה מגיע לבד", "Paste anywhere":"להדביק בכל מקום", "Talk your notes":"לדבר את הסיכומים",
-  "new things arrive as they're added":"דברים חדשים מגיעים ברגע שמוסיפים אותם", "drag slides into your notes":"לגרור שקפים לסיכומים", "hold fn and speak":"להחזיק fn ולדבר",
-  "Stash for Mac keeps this course one ⌘V away — even with no tab open.":"Stash ל-Mac שומר את הקורס במרחק ⌘V — גם בלי לשונית פתוחה.",
-  "New things land here":"דברים חדשים נוחתים כאן", "Add what you have":"להוסיף מה שיש לך", "Say thanks":"להגיד תודה",
-  " — the yellow tab marks what you haven't seen.":" — הלשונית הצהובה מסמנת מה עוד לא ראית.", " with a sticker; no chat to keep up with.":" עם מדבקה; בלי צ׳אט לעקוב אחריו.",
+  "Someone adds something":"מישהו מוסיף משהו", "For the whole class":"לכל המחזור", "This week in your courses":"השבוע בקורסים שלכם", "Class":"מחזור",
+  "Only what you add is shared.":"רק מה שמוסיפים משותף.", "Sending…":"שולחים…", "Waiting to send":"ממתין לשליחה", "Add a sticker":"הוספת מדבקה",
+  "Coming up":"בקרוב", "More":"עוד", "Close":"סגירה", "Stash for Mac":"Stash ל־Mac", "Cancel":"ביטול", "Leave":"יציאה", "Forget":"לשכוח",
+  "Keep a copy":"שמירת עותק", "Get Stash for Mac":"הורדת Stash ל־Mac", "Not now":"לא עכשיו", "Let the course come to you":"שהקורס יגיע אליכם לבד",
+  "It lands by itself":"זה מגיע לבד", "Paste anywhere":"להדביק בכל מקום", "Talk your notes":"להכתיב את הסיכומים",
+  "new things arrive as they're added":"דברים חדשים מגיעים ברגע שמוסיפים אותם", "drag slides into your notes":"לגרור מצגות לסיכומים", "hold fn and speak":"להחזיק fn ולדבר",
+  "Stash for Mac keeps this course one ⌘V away — even with no tab open.":"\u200fStash ל־Mac שומר את הקורס במרחק \u2066⌘V\u2069 — גם בלי לשונית פתוחה.",
+  "New things land here":"דברים חדשים נוחתים כאן", "Add what you have":"להוסיף מה שיש לכם", "Say thanks":"להגיד תודה",
+  " — the yellow tab marks what you haven't seen.":" — הלשונית הצהובה מסמנת מה עוד לא ראיתם.", " with a sticker; no chat to keep up with.":" עם מדבקה; בלי צ׳אט לעקוב אחריו.",
   "Prototype with made-up courses · nothing leaves this page · ":"אב־טיפוס עם קורסים מומצאים · שום דבר לא יוצא מהעמוד · ",
   "Made-up class — a prototype. Nothing you add leaves this page.":"מחזור מומצא — אב־טיפוס. שום דבר לא יוצא מהעמוד.",
-  "Tip: paste (⌘V) or drop a file anywhere on the course to add it.":"טיפ: אפשר להדביק (⌘V) או לגרור קובץ לכל מקום בעמוד.",
+  "Tip: paste (⌘V) or drop a file anywhere on the course to add it.":"טיפ: אפשר להדביק (\u2066⌘V\u2069) או לגרור קובץ לכל מקום בעמוד.",
   "Or share a photo of the board straight from your camera.":"או לצלם את הלוח ישר מהמצלמה.", "Invite code":"קוד הזמנה", "Look up":"חיפוש",
-  "Find a course by its code":"חיפוש קורס לפי הקוד", "Nobody near you yet — they need the hub open on their phone or laptop":"עוד אין אף אחד לידך — צריך שהעמוד יהיה פתוח אצלם בטלפון או במחשב",
+  "Find a course by its code":"חיפוש קורס לפי הקוד", "Nobody near you yet — they need the hub open on their phone or laptop":"עוד אין אף אחד לידכם — העמוד צריך להיות פתוח אצלם בטלפון או במחשב",
   "Stop":"עצירה", "Added to ":"נוסף ל", "Added for ":"נוסף ל", "the whole class":"כל המחזור",  " is adding ":" · מוסיפים ", " added ":" · נוסף: ",
-  "Back online. Everything you added has gone.":"החיבור חזר. כל מה שהוספת נשלח.", "Waiting to send — it goes by itself when you're back online.":"ממתין לשליחה — יישלח לבד כשהחיבור יחזור.",
-  "In the real hub this opens in your browser's PDF viewer.":"בגרסה האמיתית זה נפתח במציג ה-PDF של הדפדפן.", "Add one file at a time for now.":"בינתיים קובץ אחד בכל פעם.",
-  "Passwords and codes are never shared.":"סיסמאות וקודים לעולם לא משותפים.", "This kind of file can’t be shared: programs, scripts, web pages and macros are blocked.":"אי אפשר לשתף קובץ מהסוג הזה: תוכנות, סקריפטים, דפי אינטרנט ומאקרו חסומים.", "Files up to 50 MB can be shared.":"אפשר לשתף קבצים עד 50MB.",
+  "Back online. Everything you added has gone.":"החיבור חזר. כל מה שהוספתם נשלח.", "Waiting to send — it goes by itself when you're back online.":"ממתין לשליחה — יישלח לבד כשהחיבור יחזור.",
+  "In the real hub this opens in your browser's PDF viewer.":"בגרסה האמיתית זה נפתח במציג ה־PDF של הדפדפן.", "Add one file at a time for now.":"בינתיים קובץ אחד בכל פעם.",
+  "Passwords and codes are never shared.":"סיסמאות וקודים אף פעם לא משותפים.", "This kind of file can’t be shared: programs, scripts, web pages and macros are blocked.":"אי אפשר לשתף קובץ מהסוג הזה: תוכנות, סקריפטים, דפי אינטרנט ומאקרו חסומים.", "Files up to 50 MB can be shared.":"אפשר לשתף קבצים עד \u206650 MB\u2069.",
   "Nothing here yet":"עוד אין כאן כלום", "Add the syllabus, slides or a photo of the board. Everyone in the course sees it.":"אפשר להוסיף את הסילבוס, מצגות או תמונה של הלוח. כל מי שבקורס יראה.",
-  "Courses":"קורסים", "Your courses":"הקורסים שלך", "Report this?":"לדווח על זה?", "Forget this browser?":"לשכוח את הדפדפן הזה?",
-  "A course helper will look at it. If three people report it, it's hidden until then.":"עוזר/ת בקורס יבדקו. אם שלושה אנשים מדווחים, זה מוסתר עד אז.",
-  "This browser leaves all your courses and forgets your name in them. What others added stays.":"הדפדפן יעזוב את כל הקורסים וישכח את השם שלך בהם. מה שאחרים הוסיפו נשאר.",
-  "What you added stays for the others. You can come back with the invite code.":"מה שהוספת נשאר לאחרים. אפשר לחזור עם קוד ההזמנה.",
-  "People here see only the name you chose for this course.":"האנשים כאן רואים רק את השם שבחרת לקורס הזה.", "Everyone in the course sees the same cover.":"כולם בקורס רואים את אותה כריכה.",
-  "Started this course":"בעלי הקורס", "Photo of the board":"תמונה של הלוח", " is on now ":" מתקיים עכשיו ", "Search or jump to…":"חיפוש או מעבר אל…",
-  "New since you were here":"חדש מאז הביקור הקודם", "On the desk":"על השולחן", "Do":"פעולות", "Invite people":"להזמין אנשים", "Show the code big for the room":"להציג את הקוד בגדול לכיתה",
-  "Open the week":"לפתוח את השבוע", "Copied":"הועתק", "Saved":"נשמר", "Copy link":"העתקת הקישור", "Sticker":"מדבקה", "Pass to…":"להעביר ל…", "WhatsApp":"וואטסאפ", "Nearby":"בסביבה", "Change":"שינוי", "Move to":"להעביר אל", "Filed under ":"תויק תחת ", "Filed in ":"תויק ב", "Also added by ":"הוסיפו גם ", "Pass to someone at the desk":"להעביר למישהו ליד השולחן", "Lecturer and TA":"מרצה ומתרגלים", "Import .ics":"ייבוא ‎.ics", "Edit":"עריכה", "Add course info":"הוספת פרטי הקורס",
-  "Nobody has added the lecturer, office hours or links yet.":"עוד אף אחד לא הוסיף מרצה, שעות קבלה או קישורים.", "The course owner adds these in Stash for Mac.":"מי שפתח/ה את הקורס מוסיף/ה אותם ב-Stash ל-Mac.", "Here now":"כאן עכשיו",
-  " · paste or drop anything here — it lands on the desk for ":" · אפשר להדביק או לגרור לכאן — זה נוחת על השולחן ל-", "Search this course":"חיפוש בקורס",
+  "Courses":"קורסים", "Your courses":"הקורסים שלכם", "Report this?":"לדווח על זה?", "Forget this browser?":"לשכוח את הדפדפן הזה?",
+  "A course helper will look at it. If three people report it, it's hidden until then.":"מישהו מצוות הקורס יבדוק. אם שלושה אנשים ידווחו, זה יוסתר עד הבדיקה.",
+  "This browser leaves all your courses and forgets your name in them. What others added stays.":"הדפדפן ייצא מכל הקורסים וישכח את השם שלכם בהם. מה שאחרים הוסיפו נשאר.",
+  "What you added stays for the others. You can come back with the invite code.":"מה שהוספתם נשאר לאחרים. אפשר לחזור עם קוד ההזמנה.",
+  "People here see only the name you chose for this course.":"האנשים כאן רואים רק את השם שבחרתם לקורס הזה.", "Everyone in the course sees the same cover.":"כולם בקורס רואים את אותה כריכה.",
+  "Started this course":"פותחי הקורס", "Photo of the board":"תמונה של הלוח", " is on now ":" מתקיים עכשיו ", "Search or jump to…":"חיפוש או מעבר אל…",
+  "New since you were here":"חדש מאז הביקור הקודם", "On the desk":"על השולחן", "Do":"פעולות", "Invite people":"הזמנת אנשים", "Show the code big for the room":"הצגת הקוד בגדול לכיתה",
+  "Open the week":"פתיחת השבוע", "Copied":"הועתק", "Saved":"נשמר", "Copy link":"העתקת הקישור", "Sticker":"מדבקה", "Pass to…":"העברה ל…", "WhatsApp":"WhatsApp", "Nearby":"בסביבה", "Change":"שינוי", "Move to":"העברה אל", "Filed under ":"תויק תחת ", "Filed in ":"תויק ב", "Also added by ":"הוסיפו גם ", "Pass to someone at the desk":"העברה למישהו ליד השולחן", "Lecturer and TA":"מרצה ומתרגלים", "Import .ics":"ייבוא ‎.ics", "Edit":"עריכה", "Add course info":"הוספת פרטי הקורס",
+  "Nobody has added the lecturer, office hours or links yet.":"עוד אף אחד לא הוסיף מרצה, שעות קבלה או קישורים.", "The course owner adds these in Stash for Mac.":"פותחי הקורס מוסיפים אותם ב־Stash ל־Mac.", "Here now":"כאן עכשיו",
+  " · paste or drop anything here — it lands on the desk for ":" · אפשר להדביק או לגרור לכאן — זה נוחת על השולחן ל־", "Search this course":"חיפוש בקורס",
   " took a copy of ":" · נלקח עותק של ", "Passed ":"הועבר ", " to ":" ל-", " — it waits for them with Keep · No thanks.":" — זה מחכה לאישור שלהם.",
-  "New things land on the desk":"דברים חדשים נוחתים על השולחן", "Lecturer":"מרצה", "Teaching assistant":"מתרגל", "Moodle":"Moodle", "Zoom — tutorials":"Zoom — תרגולים", "Recordings":"הקלטות", "Owner":"בעלים", "You":"את/ה",
+  "New things land on the desk":"דברים חדשים נוחתים על השולחן", "Lecturer":"מרצה", "Teaching assistant":"מתרגל", "Moodle":"Moodle", "Zoom — tutorials":"Zoom — תרגולים", "Recordings":"הקלטות", "Owner":"פותחי הקורס", "You":"אני",
   "New things":"דברים חדשים", "Essentials":"תאריכים חשובים", "Photo of a whiteboard":"תמונה של לוח", "Photo of a lecture slide":"תמונה של שקף מהרצאה",
 };
 Object.assign(HE_EXACT, {
-  "Take a photo":"לצלם", "Choose a photo or file":"לבחור תמונה או קובץ", "What to add":"מה להוסיף", "Join your first course":"מצטרפים לקורס הראשון",
-  "Type the code from your invite, or find your course by its code.":"מקלידים את הקוד מההזמנה, או מוצאים את הקורס לפי הקוד שלו.", "No cookies, no tracking.":"בלי עוגיות, בלי מעקב.",
-  "Invite code, 6 letters and numbers":"קוד הזמנה, 6 אותיות ומספרים", "Your courses · Stash":"הקורסים שלך · Stash", "What you saved from it stays on this device.":"מה ששמרת ממנו נשאר במכשיר הזה.",
+  "Take a photo":"צילום", "Choose a photo or file":"בחירת תמונה או קובץ", "What to add":"מה להוסיף", "Join your first course":"מצטרפים לקורס הראשון",
+  "Type the code from your invite, or find your course by its code.":"מקלידים את הקוד מההזמנה, או מוצאים את הקורס לפי הקוד שלו.", "Find your course by name, or start it for your class.":"מוצאים את הקורס לפי השם, או פותחים אותו בשביל הכיתה.", "Find or start a course":"למצוא או לפתוח קורס", "Have an invite code?":"יש לכם קוד הזמנה?", "No cookies, no tracking.":"בלי עוגיות, בלי מעקב.",
+  "Invite code, 6 letters and numbers":"קוד הזמנה, 6 אותיות ומספרים", "Your courses · Stash":"הקורסים שלכם · Stash", "What you saved from it stays on this device.":"מה ששמרתם ממנו נשאר במכשיר הזה.",
   "Lecturer ·":"מרצה ·", "Teaching assistant ·":"מתרגל ·", "About this course":"על הקורס", "People":"אנשים", "Join":"הצטרפות", "How":"איך", "QR code for the invite":"קוד QR להזמנה",
   "Members add the lecturer, TA, office hours and links themselves. Nothing is copied from Moodle.":"חברי הקורס מוסיפים בעצמם את המרצה, המתרגלים, שעות הקבלה והקישורים. שום דבר לא מועתק מ־Moodle.",
   "Keep a copy of the notes and links on this device until then.":"עד אז אפשר לשמור עותק של הפתקים והקישורים במכשיר הזה.", " is nearby":" בסביבה",
-  "Just you so far":"בינתיים אין עוד אף אחד", "Just you":"רק אני", "You · your profile":"אני · הפרופיל שלי", "You":"אני", "Owner · Profile":"בעלים · פרופיל",
-  "Stash for Mac keeps this course one ⌘V away — even with no tab open.":"Stash ל־Mac שומר את הקורס במרחק \u2066⌘V\u2069 — גם בלי לשונית פתוחה.",
+  "Just you so far":"בינתיים אין עוד אף אחד", "Just you":"רק אני", "You · your profile":"אני · הפרופיל שלי", "You":"אני", "Owner · Profile":"פותחי הקורס · פרופיל",
+  "Stash for Mac keeps this course one ⌘V away — even with no tab open.":"\u200fStash ל־Mac שומר את הקורס במרחק \u2066⌘V\u2069 — גם בלי לשונית פתוחה.",
   "Tip: paste (⌘V) or drop a file anywhere on the course to add it.":"טיפ: אפשר להדביק (\u2066⌘V\u2069) או לגרור קובץ לכל מקום בעמוד.",
-  "Let the course come to you":"שהקורס יגיע אליך לבד",
-  "No connection. Try again when you’re back online.":"אין חיבור. אפשר לנסות שוב כשהחיבור יחזור.", "Slow down a little — try again in a minute.":"רגע, לאט — אפשר לנסות שוב בעוד דקה.",
-  "Loading your courses":"טוענים את הקורסים שלך", "Create a class":"יצירת מחזור", "Show me as here":"להראות שאני כאן", "The server didn’t answer.":"השרת לא ענה.",
+  "Let the course come to you":"שהקורס יגיע אליכם לבד",
+  "No connection. Try again when you’re back online.":"אין חיבור. אפשר לנסות שוב כשהחיבור יחזור.", "Slow down a little — try again in a minute.":"קצת יותר לאט — אפשר לנסות שוב בעוד דקה.",
+  "Loading your courses":"טוענים את הקורסים שלכם", "Create a class":"יצירת מחזור", "Show me as here":"להראות שאני כאן", "The server didn’t answer.":"השרת לא ענה.",
   "Save to Files":"שמירה בקבצים", "Save Image":"שמירת התמונה", "That code has expired. Ask for a new one.":"תוקף הקוד פג. אפשר לבקש קוד חדש.",
   "That course isn’t taking new people.":"הקורס לא מקבל אנשים חדשים.", "That code doesn’t match a course. Check it and try again.":"הקוד לא מתאים לאף קורס. כדאי לבדוק ולנסות שוב.",
   "Someone in this course already uses that name. Try another.":"מישהו בקורס כבר משתמש בשם הזה. אפשר לבחור שם אחר.", "Too many tries. Wait a few minutes and try again.":"יותר מדי ניסיונות. כדאי לחכות כמה דקות ולנסות שוב.",
   "This course is full.":"הקורס מלא.", "You can’t join this course.":"אי אפשר להצטרף לקורס הזה.", "That code has expired.":"תוקף הקוד פג.", "That code doesn’t match a course.":"הקוד לא מתאים לאף קורס.",
-  "Make it yours · Profile":"להפוך אותו לשלך · פרופיל", "Something went wrong. Try again.":"משהו השתבש. אפשר לנסות שוב.", "That couldn’t be shared — try again from the app":"לא הצלחנו לשתף — אפשר לנסות שוב מהאפליקציה",
-  "Put Stash on your Home Screen — it opens like an app.":"אפשר לשים את Stash במסך הבית — הוא ייפתח כמו אפליקציה.", "Put Stash on your Home Screen":"Stash במסך הבית",
+  "Make it yours · Profile":"התאמה אישית · פרופיל", "Something went wrong. Try again.":"משהו השתבש. אפשר לנסות שוב.", "That couldn’t be shared — try again from the app":"לא הצלחנו לשתף — אפשר לנסות שוב מהאפליקציה",
+  "Put Stash on your Home Screen — it opens like an app.":"אפשר לשים את Stash במסך הבית — הוא ייפתח כמו אפליקציה.", "Put Stash on your Home Screen":"\u200fStash במסך הבית",
   "Put Stash on your Home Screen: tap ":"כדי לשים את Stash במסך הבית: נוגעים ב־", " Share, then ":" שיתוף, ואז ב־", "Add to Home Screen":"הוספה למסך הבית",
   "That’s too big to add (50 MB at most)":"זה גדול מדי (עד \u206650 MB\u2069)", "Nothing to add":"אין מה להוסיף", "On — you’ll hear when something’s added":"פועל — תקבלו התראה כשמשהו נוסף",
   "Couldn’t turn it on":"לא הצלחנו להפעיל",
-  "You’ve shared a lot in the last hour. Try again a bit later.":"שיתפת הרבה בשעה האחרונה. אפשר לנסות שוב עוד מעט.", "Sent what you added while offline.":"מה שהוספת בלי חיבור נשלח.",
+  "You’ve shared a lot in the last hour. Try again a bit later.":"שיתפתם הרבה בשעה האחרונה. אפשר לנסות שוב עוד מעט.", "Sent what you added while offline.":"מה שהוספתם בלי חיבור נשלח.",
   "Here's what I found":"הנה מה שמצאתי",
   "Code from your invite":"הקוד מההזמנה", "The exam is in room 204…":"המבחן בחדר 204…", "Scan the code, or open ":"סורקים את הקוד, או פותחים את ", " and type ":" ומקלידים ",
   "It opens in the browser — nothing to install.":"נפתח בדפדפן — בלי להתקין כלום.", "Covers":"כריכות", "Stickers":"מדבקות", "No courses yet":"עוד אין קורסים",
-  "A course gets good when everyone taking it is in. Bring the people next to you first.":"קורס נהיה טוב כשכל מי שלומד אותו נמצא בו. כדאי להתחיל מהאנשים שיושבים לידך.",
+  "A course gets good when everyone taking it is in. Bring the people next to you first.":"קורס נהיה טוב כשכל מי שלומד אותו נמצא בו. כדאי להתחיל מהאנשים שיושבים לידכם.",
   "Your profile":"הפרופיל שלי",
-  "Asked to join. You’ll be in once the owner says yes.":"הבקשה נשלחה. הקורס ייפתח אחרי אישור של מי שפתח אותו.", "Can’t reach Stash right now":"אין חיבור ל־Stash כרגע",
-  "Try again":"לנסות שוב", "Your name in this course":"השם שלך בקורס הזה", "Ready — tap ":"מוכן — נוגעים שוב ב־", " again.":".",
-  "Join a course first, then share again.":"קודם מצטרפים לקורס, ואז משתפים שוב.", "Like “Dana added Lecture 5”. Only for your courses; turn it off any time.":"למשל ״אלגוריתמים: קובץ חדש מדנה״. רק מהקורסים שלך; אפשר לכבות בכל רגע.",
-  "Turn on":"להפעיל", "Install":"התקנה", "Reload":"רענון", "A new version is ready":"גרסה חדשה מוכנה", "A course helper will look at it. If three people report it, it's hidden until then.":"מישהו מצוות הקורס יבדוק. אם שלושה אנשים מדווחים, זה מוסתר עד אז.",
+  "Asked to join. You’ll be in once the owner says yes.":"הבקשה נשלחה. הקורס ייפתח אחרי שפותחי הקורס יאשרו.", "Can’t reach Stash right now":"אין חיבור ל־Stash כרגע",
+  "Try again":"לנסות שוב", "Your name in this course":"השם שלכם בקורס הזה", "Ready — tap ":"מוכן — נוגעים שוב ב־", " again.":".",
+  "Join a course first, then share again.":"קודם מצטרפים לקורס, ואז משתפים שוב.", "Like “Dana added Lecture 5”. Only for your courses; turn it off any time.":"למשל „אלגוריתמים: קובץ חדש מדנה”. רק מהקורסים שלכם; אפשר לכבות בכל רגע.",
+  "Turn on":"הפעלה", "Install":"התקנה", "Reload":"רענון", "A new version is ready":"גרסה חדשה מוכנה", "A course helper will look at it. If three people report it, it's hidden until then.":"מישהו מצוות הקורס יבדוק. אם שלושה אנשים ידווחו, זה יוסתר עד הבדיקה.",
 });
 const HE_RE = [
   [/^ · paste or drop anything here — it lands on the desk for (.+)\.$/, (_, who) => ` · אפשר להדביק או לגרור לכאן — זה נוחת על השולחן ${who === "everyone you invite" ? "לכל מי שיוזמן" : "ל־" + who.replace(/^([\d,]+) people$/, "$1 אנשים")}.`],
   [/^Cover (\d+)$/, "כריכה $1"], [/^Nothing in (Lectures|Tutorials|Homework|Exams) this week yet\.$/, (_, sec) => `עוד אין ${HE_EXACT[sec]} השבוע.`],
   [/^(Lectures|Tutorials|Homework|Exams|Course files) · (.+)$/, (_, sec, rest) => `${HE_EXACT[sec]} · ${heWhen(rest)}`],
-  [/^([\d,]+) (?:person|people)((?: · started by (.+?))?)((?: · the owner approves new people)?)$/, (_, n, st, who, ap) => `${n === "1" ? "אדם אחד" : n + " אנשים"}${who ? ` · נפתח על ידי ${who}` : ""}${ap ? " · כל הצטרפות באישור" : ""}`],
+  [/^([\d,]+) (?:person|people)((?: · started by (.+?))?)((?: · the owner approves new people)?)$/, (_, n, st, who, ap) => `${n === "1" ? "אדם אחד" : n + " אנשים"}${who ? ` · פותחי הקורס: ${who}` : ""}${ap ? " · כל הצטרפות באישור" : ""}`],
   [/^Add (.+) to which course\?$/, (_, w) => `לאיזה קורס להוסיף${/^\d/.test(w) ? ` ${w.replace(/ things?$/, " פריטים").replace(/ photos?$/, " תמונות").replace(/ files?$/, " קבצים")}` : ({ "this":" את זה", "this photo":" את התמונה", "this file":" את הקובץ", "this link":" את הקישור", "this text":" את הטקסט" })[w] ?? ` ${w}`}?`],
   [/^Tell me when someone adds to (.+)\?$/, "לקבל התראה כשמישהו מוסיף ל$1?"], [/^([\d,]+) too big to add \(50 MB at most\)\.$/, "$1 גדולים מדי (עד \u206650 MB\u2069)."],
   [/^Found (\d+) dates — add them\?$/, "נמצאו $1 תאריכים — להוסיף אותם?"], [/^Join (.+)\?$/, "להצטרף ל$1?"], [/^Join (.+)$/, "הצטרפות ל$1"],
-  [/^You're no longer in (.+)\.$/, "הוסרת מ$1."], [/^(.+) deleted this course\. It's gone in (\d+) days\.$/, "הקורס נמחק על ידי $1, והוא ייעלם בעוד $2 ימים."],
+  [/^You're no longer in (.+)\.$/, "אתם כבר לא ב$1."], [/^(.+) deleted this course\. It's gone in (\d+) days\.$/, "הקורס נמחק על ידי $1, והוא ייעלם בעוד $2 ימים."],
   [/^(\d+) more people here$/, "ועוד $1 כאן"], [/^and ([\d,]+) more$/, "ועוד $1"], [/^(.+) is here$/, "$1 כאן"], [/^(.+) is sharing it$/, "משותף על ידי $1"],
   [/^(.+) · (\d+) courses together$/, "$1 · $2 קורסים ביחד"],
   [/^(PDF|DOCX?|PPTX?|XLSX?)((?: · [^·]+)*)$/, (_, k, rest) => k + rest.replace(/ · ([\d,]+) pages?/, (x, n) => ` · ${n === "1" ? "עמוד אחד" : n + " עמודים"}`).replace(/ · ([\d.,]+) (KB|MB|GB)/, " · \u2066$1 $2\u2069")],
   [/^([\d,]+) people in (.+) will see this\.$/, "$1 אנשים בקורס $2 יראו את זה."], [/^Code (.+)$/, "קוד $1"], [/^Search (.+)$/, "חיפוש ב$1"], [/^Saved by (\d+) people$/, "נשמר אצל $1 אנשים"], [/^put this down (.+)$/, (_, w) => "הונח כאן " + heWhen(w.replace(/ ago$/, "")).replace(/^just now$/, "עכשיו")],
-  [/^Added by (.+)\. Only what members type here — nothing is copied from Moodle\.$/, "נוסף על ידי $1. רק מה שחברי הקורס כותבים — שום דבר לא מועתק מ-Moodle."],
+  [/^Added by (.+)\. Only what members type here — nothing is copied from Moodle\.$/, "נוסף על ידי $1. רק מה שחברי הקורס כותבים — שום דבר לא מועתק מ־Moodle."],
   [/^ and ([\d,]+) others$/, " ועוד $1"], [/^Invite people to (.+)$/, "הזמנה לקורס $1"], [/^([\d,]+) people in (.+)$/, "$1 אנשים בקורס $2"],
-  [/^Note from (.+)$/, "פתק של $1"], [/^Leave (.+)…$/, "לעזוב את $1…"], [/^Leave (.+)\?$/, "לעזוב את $1?"], [/^Week (\d+)$/, "שבוע $1"],
+  [/^Note from (.+)$/, "פתק של $1"], [/^Leave (.+)…$/, "יציאה מ$1…"], [/^Leave (.+)\?$/, "לצאת מ$1?"], [/^Week (\d+)$/, "שבוע $1"],
   [/^([\d,]+) people$/, "$1 אנשים"], [/^1 new$/, "חדש אחד"], [/^([\d,]+) new$/, "$1 חדשים"], [/^1 thing$/, "פריט אחד"], [/^([\d,]+) things?$/, "$1 פריטים"], [/^Add to (.+)$/, "הוספה ל$1"],
-  [/^You're in (.+)$/, "נכנסת ל$1"], [/^Cover for (.+)$/, "כריכה ל$1"], [/^Nothing in (.+) this week yet\.$/, "עוד אין $1 השבוע."],
+  [/^You're in (.+)$/, "נכנסתם ל$1"], [/^Cover for (.+)$/, "כריכה ל$1"], [/^Nothing in (.+) this week yet\.$/, "עוד אין $1 השבוע."],
   [/^(.+) · whole class$/, "$1 · כל המחזור"], [/^([\d,]+) people in (.+) will see this\.$/, "$1 אנשים בקורס $2 יראו את זה."],
   [/^Everyone in (.+) will see this\.$/, "כל מי שב$1 יראה את זה."], [/^Everyone you bring into (.+) will see this\.$/, "כל מי שיצטרף ל$1 יראה את זה."],
   [/^ — (paste or drop a file anywhere on the page|a photo of the board is two taps)\.$/, m => m.includes("paste") ? " — להדביק או לגרור קובץ לכל מקום בעמוד." : " — תמונה של הלוח זה שתי נגיעות."],
-  [/^Read it out, or let people scan the code\. They join (.+) in the browser\.$/, "להקריא בקול, או לתת לסרוק את הקוד. מצטרפים ל$1 בדפדפן."],
+  [/^Read it out, or let people scan the code\. They join (.+) in the browser\.$/, "מקריאים את הקוד בקול, או נותנים לסרוק אותו. מצטרפים ל$1 בדפדפן."],
   [/^Anyone with the link can open (.+) in their browser\.$/, "כל מי שיש לו את הקישור יכול לפתוח את $1 בדפדפן."],
-  [/^Not seeing them\? Read out the code: $/, "לא רואים אותם? להקריא את הקוד: "],
-  [/^Phones and laptops near you with the hub open see “(.+) is nearby — Join”\. You stay visible for 10 minutes\.$/, "טלפונים ומחשבים לידך שהעמוד פתוח אצלם יראו ״$1 בסביבה — הצטרפות״. גלוי ל-10 דקות."],
+  [/^Not seeing them\? Read out the code: $/, "לא רואים אותם? מקריאים את הקוד: "],
+  [/^Phones and laptops near you with the hub open see “(.+) is nearby — Join”\. You stay visible for 10 minutes\.$/, "טלפונים ומחשבים לידכם שהעמוד פתוח בהם יראו „$1 בסביבה — הצטרפות”. אתם גלויים במשך 10 דקות."],
   [/^Northfield University · (\d+) courses together$/, "Northfield University · $1 קורסים ביחד"],
 ];
 const heAfter = name => (/^[A-Za-z0-9]/.test(name) ? "־" : "") + name; // ל־Algorithms, לאלגוריתמים
 const docTitle = v => { document.title = lang === "he" ? heText(v) : v; };
 const HE_SKIP = ".body, .big, bdi, .nm b, .cw-h b, .slip, .k-note, .k-link, .ghost-t, h1, input, textarea, select, .coming b";
-const heJoin = v => v.replace(/(^|[\s(])([בלמש]|ה)([A-Za-z0-9])/g, "$1$2-$3"); // Israeli style: ל-Algorithms, ב-Calculus
+const heJoin = v => v.replace(/(^|[\s(])([בלמש]|ה)(\u2068?)([A-Za-z0-9])/g, "$1$2־$3$4"); // Israeli style with a maqaf: ל־Algorithms, ב־Calculus
+// A Latin name inside a Hebrew sentence is isolated (FSI…PDI, like <bdi>), so "מצטרפים ל-QA launch בדפדפן" keeps its order (QA N3)
+// and a short one never breaks across two lines ("QA-ל" at a line's end, "launch mvqq3sj2" on the next)
+const heIso = to => typeof to !== "string" ? to : (...m) => to.replace(/\$(\d)/g, (_, n) => { const g = m[n] ?? "";
+  return /[A-Za-z]/.test(g) ? `\u2068${g.length <= 28 ? g.replace(/ /g, "\u00A0") : g}\u2069` : g; });
 function heText(v) {
   if (HE_EXACT[v] != null) return HE_EXACT[v];
   const tr = v.trim(); if (!tr) return v;
   if (HE_EXACT[tr] != null) return v.replace(tr, HE_EXACT[tr]);
-  for (const [re, to] of HE_RE) if (re.test(v)) return heJoin(v.replace(re, to));
+  for (const [re, to] of HE_RE) if (re.test(v)) return heJoin(v.replace(re, heIso(to)));
   const TERM = /\b(?:Semester (A|B)|(Fall|Spring|Summer|Winter)) (\d{4})\b|\b(\d{4}) \(full year\)/g; // course terms, the Mac's words (CourseTerm.localized)
   if (TERM.test(v)) v = v.replace(TERM, (_, ab, season, y, full) => full ? `${full} (שנתי)` : ab ? `סמסטר ${ab === "A" ? "א׳" : "ב׳"} ${y}` : `${{ Fall: "סתיו", Spring: "אביב", Summer: "קיץ", Winter: "חורף" }[season]} ${y}`);
   if (/\b(Sun|Mon|Tue|Wed|Thu|Fri|Sat|Tuesday|Monday|Sunday|now|Week \d+|\d+ h|\d+ min|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/.test(v)) return heWhen(v);
@@ -383,6 +387,17 @@ function page(title, thumb) { // first page of a PDF: the real one when its adde
     <rect x="10" y="92" width="38" height="26" rx="2" fill="#EEF1F5"/><path d="M14 112l9-9 7 6 6-8 8 11" stroke="#9EB3D4" stroke-width="1.4" fill="none"/></svg>`;
 }
 
+/* The demo's things are titled by the same rules as the live page's (live.js itemFrom; launch QA N1/N2). */
+function tidyDemoTitles() {
+  let changed = false;
+  for (const it of [...S.courses.flatMap(c => [...c.items, ...c.files]), ...S.classes.flatMap(c => c.items)]) {
+    const was = it.title;
+    if (it.kind === "link" && it.title && (/^https?:\/\//i.test(it.title) || it.title === it.dom)) it.title = CORE.ShownTitle.link(it.title) || "";
+    else if ((it.kind === "photo" || it.kind === "pdf") && it.title) it.title = CORE.ShownTitle.file(it.title, { isImage: it.kind === "photo", he: lang === "he" });
+    changed ||= it.title !== was;
+  }
+  return changed;
+}
 /* ============ state ============ */
 const S = {
   courses: courses(), current: params.get("c") || store.get("course", "alg"), state: params.get("state") || "normal",
@@ -419,7 +434,7 @@ const DEMO_HE = {
   "Reading for Thursday: chapter 7, pages 210–245. The quiz covers chapters 6 and 7.":"קריאה ליום חמישי: פרק 7, עמודים 210–245. הבוחן על פרקים 6 ו־7.",
   "How we make memories":"איך נוצרים זיכרונות",
   "Group project teams are up — find your team in the sheet before Sunday. Two teams still need a fourth person.":"הצוותים לפרויקט עלו — מוצאים את הצוות בגיליון עד יום ראשון. לשני צוותים עדיין חסר אדם רביעי.",
-  "Our timetable, semester A":"מערכת השעות שלנו, סמסטר א׳", "CS Year 2 — WhatsApp group":"מדמ״ח שנה ב׳ — קבוצת וואטסאפ", "Semester calendar.pdf":"לוח הסמסטר.pdf",
+  "Our timetable, semester A":"מערכת השעות שלנו, סמסטר א׳", "CS Year 2 — WhatsApp group":"מדמ״ח שנה ב׳ — קבוצת WhatsApp", "Semester calendar.pdf":"לוח הסמסטר.pdf",
   "Data Structures":"מבני נתונים",
 };
 const DEMO_HE_RE = [
@@ -450,7 +465,7 @@ if (S.state === "worst") { // QA (docs/shared/QA-PLAN.md): realistic worst case 
   c.names = ["👩🏽‍💻 Aleksandra Wiśniewska-Kowalczyk", "Jo"]; c.here = ["👩🏽‍💻 Aleksandra Wiśniewska-Kowalczyk", "J", "נועה כהן-לוי", "Bartholomew Fitzgerald-Montgomery III"]; c.hereMore = 196; c.owner = "נועה כהן-לוי"; c.weekTitles[6] = "Joint distributions, conditional expectation and the law of total variance";
   const it = c.items;
   it[0].by = "🦄"; it[0].title = "IMG_20261022_101532_HDR_PORTRAIT_FRONT_CAMERA.jpg"; it[0].stickers = { 1: 9999, 2: 1 };
-  it[1].title = "https://moodle.northfield.example/mod/resource/view.php?id=12345678901234567890&forcedownload=1&token=abc"; it[1].dom = "moodle.northfield.example"; it[1].by = "J";
+  it[1].title = "https://moodle.northfield.example/mod/resource/view.php?id=12345678901234567890&forcedownload=1&token=abc"; it[1].dom = "moodle.northfield.example"; it[1].url = it[1].title; it[1].by = "J";
   it[2].by = "נועה כהן-לוי"; it[2].title = "שקף 23 — relaxation (תיקון)";
   it[3].text = "<b>Exam</b> moved &amp; **room 204**: https://maps.northfield.example/buildings/engineering/rooms/204?floor=2&wing=north&accessible=true " + "Bring your student card. ".repeat(180);
   it[4].title = "Lecture_11_Joint_Distributions_Covariance_Correlation_Independence_FINAL_v12_corrected_after_class.pdf"; it[4].meta = "PDF · 1,204 pages · 49.9 MB";
@@ -477,6 +492,7 @@ function render() {
   if (c) pwa(P => P.openedCourse?.(c.id));
   hooks.course?.(S.view === "class" ? null : c);   // live.js: say "here" in the open course only
   renderSide();
+  const back = $('#topbar [data-act="switcher"]'); if (back) back.style.visibility = c ? "" : "hidden";   // no courses: nothing to go back to (QA N5)
   if (LIVE && S.liveBlock) return S.liveBlock();
   if (!c) return renderNoCourses();
   if (S.view === "class") return renderClass();
@@ -490,7 +506,7 @@ function render() {
   const coming = c.items.filter(i => i.due).sort((a, b) => a.dueSort - b.dueSort);
   const removed = S.state === "removed", deleted = S.state === "deleted", canAdd = !removed && !deleted;
   const isEmpty = c.items.length === 0 && c.files.length === 0;
-  if (shelf && !removed && !deleted) return renderFolio(c, isEmpty);
+  if (shelf) return renderFolio(c, isEmpty, goneNotice(c, removed, deleted));   // the phone keeps its own layout when you've been removed, too
   $("#course").innerHTML = `
     <div class="course-top">
       <header class="hd">
@@ -510,8 +526,7 @@ function render() {
           <li><b>Say thanks</b> with a sticker; no chat to keep up with.</li></ul>
           <div class="acts"><button class="btn" data-act="welcome-ok">Got it</button></div></div></aside>` : ""}
       ${profHint()}
-      ${removed ? `<div class="notice">${ic("leave")}<p><b>You're no longer in ${esc(c.name)}.</b><small>What you saved from it stays on this device.</small></p></div>` : ""}
-      ${deleted ? `<div class="notice">${ic("trash")}<p><b>${esc(c.owner)} deleted this course. It's gone in 5 days.</b><small>Keep a copy of the notes and links on this device until then.</small></p><button class="btn">Keep a copy</button></div>` : ""}
+      ${goneNotice(c, removed, deleted)}
     </div>
     <div class="workspace">
       <section class="desk" id="desk" aria-labelledby="h-now">
@@ -533,7 +548,7 @@ function render() {
     </div>
     <div id="nudge-slot">${S.nudge ? nudgeCard() : ""}</div>`;
   if (isEmpty) { const st = $("#desk"); if (st && !$("#status", st)) st.insertAdjacentHTML("afterbegin", `<div class="status" id="status" role="status" aria-live="polite"></div>`); }
-  $("#foot").innerHTML = LIVE ? `<p>Connected to the real Stash server · what you add is shared with the course · <a href="../">Stash for Mac</a></p>` : `<p>Prototype with made-up courses · nothing leaves this page · <a href="../">Stash for Mac</a></p>`;
+  $("#foot").innerHTML = LIVE ? `<p>Connected to the real Stash server · what you add is shared with the course · <a href="../">Stash for Mac</a>${legalLinks()}</p>` : `<p>Prototype with made-up courses · nothing leaves this page · <a href="../">Stash for Mac</a></p>`;
   $("#bottombar").innerHTML = !(canAdd && !isEmpty) ? "" : shelf ? `<button class="btn primary" data-act="add">${ic("photo","s")}<span>${t("addOne")}</span></button>` : c.liveNow // during a lecture/tutorial the one obvious thing is the photo of the board
     ? `<button class="btn primary" data-act="quick" data-q="photo" data-section="${esc(c.liveNow.section)}">${ic("photo","s")}<span>Photo of the board</span></button><button class="btn" style="flex:0 0 46px;padding:0" data-act="add" aria-label="${esc(addLabel(c))}">${ic("plus")}</button>`
     : `<button class="btn primary" data-act="add">${ic("plus","s")}<span>${addLabel(c)}</span></button>`;
@@ -547,7 +562,8 @@ function render() {
    the top bar as you scroll, the three dates in one card) ============
    Cover with the moment line → Essentials (Next exam · Due · Next class, core.js Essentials) → New since … → the shelf
    (This week / Earlier) → one bar. During class: the line says so, today's board leads, the bar is camera-first. */
-let CORE = null; import("./core.js").then(mod => { CORE = mod; if (!LIVE && params.get("here")) demoHere(+params.get("here")); if ((phone() || params.get("here")) && course() && S.view !== "class") render(); }).catch(() => {});
+let CORE = null; import("./core.js").then(mod => { CORE = mod; const retitled = !LIVE && tidyDemoTitles();
+  if (!LIVE && params.get("here")) demoHere(+params.get("here")); if ((retitled || phone() || params.get("here")) && course() && S.view !== "class") render(); }).catch(() => {});
 function demoHere(n) { // prototype only (?here=6): classmates with the course open, for pictures and tests
   const names = lang === "he" ? ["דנה לוי", "עומר", "נועה כהן", "Maya Ben David", "אילן", "שירה"] : ["Dana Levi", "Omer", "Noa Cohen", "Maya Ben David", "Ilan", "Shira"];
   const members = new Map(names.map((x, i) => [`p${i}`, x]));
@@ -606,14 +622,20 @@ function presenceInner(c) {
     const look = lookOf(c, p.name), col = look && CORE.Profile?.COLORS[look.color], photo = look?.photo && CORE.Profile?.photoOK(look.photo) ? look.photo : null;
     const st = col ? ` data-c style="--fl:${col.light[0]};--fil:${col.light[1]};--fd:${col.dark[0]};--fid:${col.dark[1]}"` : "";
     return `<button class="pc t-${p.colour}${fresh ? " in" : ""}${photo ? " has-photo" : ""}"${st} data-act="here-who" data-name="${esc(p.name)}" aria-label="${esc(p.name)}">${photo ? `<img src="${photo}" alt="">` : `<span aria-hidden="true">${esc(p.initials)}</span>`}</button>`; }).join("")}${more
-    ? `<button class="pc more" data-act="here-who" data-name="${esc(rest)}" aria-label="${esc(rest)}"><bdi dir="ltr" aria-hidden="true">+${more}</bdi></button>` : ""}</span>`;
+    ? `<button class="pc more" data-act="here-who" data-name="${esc(rest)}" aria-label="${esc(rest)}"><bdi dir="ltr" aria-hidden="true">+${more}</bdi></button>` : ""}<small class="here-cap" aria-hidden="true">${esc(hereCap(ppl))}</small></span>`;
   return html;
 }
+// The phone says what the circles are (launch QA N4): "Ilan is here now" · "3 here now"
+const hereCap = ppl => ppl.length === 1 ? CORE.Presence.label(ppl, lang) : lang === "he" ? `${ppl.length} כאן עכשיו` : `${ppl.length} here now`;
 const remindersOn = c => store.get(`remind.${c?.id}`, true);  // one switch per course (Mac: its own; phone: + set_reminders)
 const showHere = () => store.get("showHere", true);           // this device: "Show me as here"
 function renderPresence() { const el = $("#here-slot"); if (el) el.innerHTML = presenceInner(course()); }
 const newWord = n => lang === "he" ? (n === 1 ? "חדש אחד" : `${n} חדשים`) : `${n} new`;
-function renderFolio(c, isEmpty) {
+function goneNotice(c, removed, deleted) {
+  return removed ? `<div class="notice">${ic("leave")}<p><b>You're no longer in ${esc(c.name)}.</b><small>What you saved from it stays on this device.</small></p></div>`
+    : deleted ? `<div class="notice">${ic("trash")}<p><b>${esc(c.owner)} deleted this course. It's gone in 5 days.</b><small>Keep a copy of the notes and links on this device until then.</small></p><button class="btn">Keep a copy</button></div>` : "";
+}
+function renderFolio(c, isEmpty, gone = "") {
   const ess = essentialsOf(c), live = duringClass(c, ess), nNew = c.items.filter(i => i.isNew);
   const exam = ess.find(e => e.slot === "exam"), soon = ess.filter(e => e.slot !== "class").sort((a, b) => a.at - b.at)[0];
   const examDays = exam ? (new Date(exam.at) - Date.now()) / 864e5 : 99;
@@ -624,7 +646,8 @@ function renderFolio(c, isEmpty) {
   const hot = soon && (new Date(soon.at) - Date.now()) / 864e5 <= 7 ? soon : null;
   const sub = [c.code, c.instructor].filter(Boolean).join(" · ");
   const essHTML = !ess.length ? "" : live
-    ? `<div class="ess-strip" role="list" aria-label="Essentials">${ess.map(e => { const k = essCard(e); return `<div role="listitem"><b dir="auto">${esc(e.slot === "class" ? t("next") : e.slot === "exam" ? e.title : k.v)}</b><span>${esc(e.slot === "exam" ? k.v : e.slot === "due" ? k.s.replace(/ · .*/, "") : k.when || k.v)}</span></div>`; }).join("")}</div>`
+    ? `<div class="ess-strip" role="list" aria-label="Essentials">${ess.map(e => { const k = essCard(e);   // a phone third is ~100 pt: the kind ("Next exam", "Due") reads better than a cut title (QA N8)
+      return `<div role="listitem" aria-label="${esc([k.l, e.slot === "class" ? "" : e.title, k.v, k.s].filter(Boolean).join(", "))}"><b>${esc(e.slot === "class" ? t("next") : e.slot === "due" && [...k.v].length <= 10 ? k.v : k.l)}</b><span>${esc(e.slot === "exam" ? [k.v, k.s.replace(/ · .*/, "")].join(" · ") : e.slot === "due" ? k.s.replace(/ · .*/, "") : k.when || k.v)}</span></div>`; }).join("")}</div>`
     : `<div class="ess" role="list" aria-label="Essentials">${ess.map(e => { const k = essCard(e);
         return `<div class="icard ${e === hot ? "hot" : ""}" role="listitem"><span class="l">${esc(k.l)}</span><b class="v" dir="auto">${esc(k.v)}</b><span class="s">${esc(k.s)}</span></div>`; }).join("")}</div>`;
   const ask = S.essAsk && S.essAsk.c === c.id && CORE ? (() => { const a = S.essAsk.s, now = new Date();
@@ -642,7 +665,7 @@ function renderFolio(c, isEmpty) {
       <h1 id="course-name"><button class="fname" data-act="switcher" aria-haspopup="dialog">${esc(c.name)}${ic("down","s")}</button></h1>
       <div class="fsubline">${sub ? `<span class="sub">${esc(sub)}</span>` : ""}<span class="here-slot" id="here-slot">${presenceInner(c)}</span></div>
       ${moment ? `<p class="moment">${moment}</p>` : ""}</header>
-    ${essHTML}${ask}${hooks.datesCard?.(c, ess) ?? ""}${profHint()}
+    ${gone}${essHTML}${ask}${hooks.datesCard?.(c, ess) ?? ""}${profHint()}
     <div class="status" id="status" role="status" aria-live="polite"></div>
     ${isEmpty ? emptyCourse(c) : `
     ${board.length ? `<section class="fsec board" aria-labelledby="h-board"><h2 class="fh" id="h-board">${lang === "he" ? "הלוח של היום" : "Today’s board"}</h2>
@@ -659,7 +682,7 @@ function renderFolio(c, isEmpty) {
   bar.innerHTML = isEmpty ? "" : live
     ? `<button class="btn primary cam" data-act="quick" data-q="photo" data-section="${esc(c.liveNow?.section || "")}">${ic("photo")}<span>${lang === "he" ? "צילום הלוח" : "Photo of the board"}</span></button><button class="btn plus" data-act="add" aria-label="${esc(t("addOne"))}">${ic("plus")}</button>`
     : `<button class="btn primary wide" data-act="add">${ic("plus","s")}<span>${t("addOne")}</span></button>`;
-  bar.className = "bottombar" + (live ? " during" : ""); bar.style.display = isEmpty ? "none" : "";
+  bar.className = "bottombar" + (live ? " during" : ""); bar.style.display = isEmpty || gone ? "none" : "";
   renderStatus(); observeTitle();
   shelfMore(list);
 }
@@ -778,7 +801,7 @@ function renderSide() {
 }
 function slip(it) {
   const file = it.kind === "pdf";
-  return `<button class="slip ${file ? "file" : ""}" data-open="${it.id}"><b dir="auto">${esc(it.title)}</b><small>${esc(file ? it.meta : it.dom)}</small></button>`;
+  return `<button class="slip ${file ? "file" : ""}" data-open="${it.id}"><b dir="auto">${esc(it.title || it.dom)}</b><small>${esc(file ? it.meta : it.dom)}</small></button>`;
 }
 function stickerStack(it) {
   const ids = Object.keys(it.stickers).filter(k => it.stickers[k] > 0).sort((a, b) => it.stickers[b] - it.stickers[a]).slice(0, 2);
@@ -791,16 +814,16 @@ function stickerStack(it) {
 function body(it) {
   if (it.crisp && hooks.body) { const b = hooks.body(it); if (b) return b; } // Crisp Swap (hidden flag)
   if (it.kind === "note") return `<div class="body k-note"><p dir="auto">${esc(it.text)}</p></div>`;
-  if (it.kind === "link") return `<div class="body k-link ${it.pic ? "has-pic" : ""}">${mono(it.dom)}<div class="dom"><i></i>${esc(it.dom)}</div><h3 dir="auto">${esc(it.title)}</h3>${it.pic ? `<div class="pic">${pic(it.pic)}</div>` : ""}</div>`;
+  if (it.kind === "link") return `<div class="body k-link ${it.pic ? "has-pic" : ""}">${mono(it.dom)}${it.title ? `<div class="dom"><i></i>${esc(it.dom)}</div><h3 dir="auto">${esc(it.title)}</h3>` : `<h3 dir="ltr" class="only-dom">${esc(it.dom)}</h3>`}${it.pic ? `<div class="pic">${pic(it.pic)}</div>` : ""}</div>`;
   if (it.kind === "photo") return `<div class="body k-photo"><div class="ph">${it.src ? `<img src="${it.src}" alt="">` : pic(it.pic)}</div></div>`;
   return `<div class="body k-file"><div class="page">${page(it.title, it.thumb)}</div><b dir="auto">${esc(it.title)}</b></div>`;
 }
 function accName(it) {
   if (lang === "he") { // people's titles stay as written; only the chrome words are Hebrew
-    const what = it.kind === "note" ? `פתק: ${it.text.slice(0, 80)}` : it.kind === "photo" ? `תמונה: ${it.title}` : it.kind === "link" ? `קישור: ${it.title}, ${it.dom}` : `קובץ: ${it.title}`;
+    const what = it.kind === "note" ? `פתק: ${it.text.slice(0, 80)}` : it.kind === "photo" ? `תמונה: ${it.title}` : it.kind === "link" ? `קישור: ${[it.title, it.dom].filter(Boolean).join(", ")}` : `קובץ: ${it.title}`;
     return `${what}. נוסף על ידי ${it.by}, ${heWhen(it.ago)}${it.isNew ? ". חדש" : ""}`;
   }
-  const what = it.kind === "note" ? `Note: ${it.text.slice(0, 80)}` : it.kind === "photo" ? `Photo: ${it.title}` : it.kind === "link" ? `Link: ${it.title}, ${it.dom}` : `File: ${it.title}`;
+  const what = it.kind === "note" ? `Note: ${it.text.slice(0, 80)}` : it.kind === "photo" ? `Photo: ${it.title}` : it.kind === "link" ? `Link: ${[it.title, it.dom].filter(Boolean).join(", ")}` : `File: ${it.title}`;
   return `${what}. Added by ${it.by}, ${it.ago}${it.isNew ? ". New" : ""}`;
 }
 function sheet(it) {
@@ -848,15 +871,16 @@ function emptyCourse(c) {
 function renderNoCourses() {
   docTitle("Your courses · Stash");
   $("#course").innerHTML = `<div class="empty" style="padding-top:12vh"><img data-art="c4-join" src="${art("c4-join")}" alt="">
-    <h2>Join your first course</h2><p>Type the code from your invite, or find your course by its code.</p>
-    <form class="acts" data-form="code" style="width:min(360px,100%);flex-direction:column;align-items:center;gap:14px">${codeBox("")}
-    <button class="btn primary big" type="submit">Join</button></form>
-    <p style="margin-top:14px"><a href="../join/?find=1${lang === "he" ? "&lang=he" : ""}">Find a course by its code</a></p></div>`;
-  $("#foot").innerHTML = `No cookies, no tracking.`;
+    <h2>Join your first course</h2><p>Find your course by name, or start it for your class.</p>
+    <div class="acts"><button class="btn primary cta" data-act="join">${ic("search","s")}<span>Find or start a course</span></button></div>
+    <form class="first-code" data-form="code" aria-labelledby="first-code-h"><p id="first-code-h">Have an invite code?</p>
+      <div class="first-code-row">${codeBox("")}<button class="btn" type="submit">${lang === "he" ? "הצטרפות" : "Join"}</button></div></form></div>`;
+  $("#foot").innerHTML = `No cookies, no tracking.${legalLinks()}`;
   $("#bottombar").style.display = "none";
 }
 function renderLoading() {
-  $("#course").innerHTML = `<div class="course-top" aria-busy="true" aria-label="Loading the course"><div class="sk sk-cover sk-pulse"></div><div class="sk sk-line sk-pulse"></div></div>
+  // the same shape as the course that replaces it — name, one line, the dates row — so nothing jumps when it arrives
+  $("#course").innerHTML = `<div class="course-top" aria-busy="true" aria-label="Loading the course"><div class="sk sk-title sk-pulse"></div><div class="sk sk-line sk-pulse"></div><div class="sk sk-strip sk-pulse"></div></div>
     <section class="block"><div class="sk sk-line sk-pulse" style="width:22%;margin:0 0 14px"></div><div class="grid">${"<div class='sk sk-sheet sk-pulse'></div>".repeat(4)}</div></section>`;
 }
 function nudgeCard() {
@@ -1047,13 +1071,13 @@ function openItem(id, from, dir = 0) {
   if (it.isNew) { it.isNew = false; }
   const media = it.kind === "pdf" ? `<div class="pg">${page(it.title, it.thumb)}</div><div class="ttl" style="text-align:center">${esc(it.title.replace(/\.(pdf|docx?|pptx?|key)$/i, ""))}${it.meta ? `<small>${esc(it.meta)}</small>` : ""}</div>`
     : it.kind === "photo" ? `<div class="media">${it.src ? `<img src="${it.src}" alt="${esc(it.title)}">` : pic(it.pic)}</div><div class="ttl">${esc(it.title)}</div>`
-    : it.kind === "link" ? `${it.pic ? `<div class="media" style="aspect-ratio:16/7">${pic(it.pic)}</div>` : ""}<div class="ttl">${esc(it.title)}<small dir="ltr">${esc(it.url || it.dom)}</small></div>`
+    : it.kind === "link" ? `${it.pic ? `<div class="media" style="aspect-ratio:16/7">${pic(it.pic)}</div>` : ""}<div class="ttl">${esc(it.title || it.dom)}<small dir="ltr">${esc(CORE ? CORE.ShownTitle.shortURL(it.url || it.dom) : it.url || it.dom)}</small></div>`
     : `<div class="txt" dir="auto">${esc(it.text)}</div>`;
   const primary = it.kind === "pdf" ? `<button class="btn primary" data-act="fake-open">${ic("open","s")}<span>${t("open")}</span></button><button class="btn quiet" data-act="save" data-id="${it.id}">${ic("save","s")}<span>${saveWord(it)}</span></button>`
     : it.kind === "photo" ? `<button class="btn primary" data-act="save" data-id="${it.id}">${ic("save","s")}<span>${saveWord(it)}</span></button>`
     : it.kind === "link" ? `<a class="btn primary" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">${ic("open","s")}<span>${t("open")}</span></a><button class="btn" data-act="copy" data-text="${esc(it.url)}">${ic("copy","s")}<span>${t("copy")}</span></button>`
     : `<button class="btn primary" data-act="copy" data-text="${esc(it.text)}">${ic("copy","s")}<span>${t("copy")}</span></button>`;
-  const title = it.kind === "note" ? `Note from ${it.by}` : it.title;
+  const title = it.kind === "note" ? `Note from ${it.by}` : it.title || it.dom;
   const where = !c ? `${theClass().name} · whole class` : it.week ? `${S.view === "class" ? c.name + " · " : ""}${t("week")} ${it.week}${it.section ? " · " + it.section : ""}` : t("courseFiles");
   const share = `${SITE}hub/?${c ? "c=" + c.id : "class=" + theClass().id}`;
   const waText = lang === "he" ? `${it.kind === "note" ? it.text.slice(0, 120) : it.title} — ${c ? c.name : theClass().name} ב־Stash: ${share}` : `${it.kind === "note" ? it.text.slice(0, 120) : it.title} — ${c ? c.name : theClass().name} on Stash: ${share}`;
@@ -1145,6 +1169,12 @@ function openTray(btn) {
 function closeTray() { const tr = $(".tray"); if (!tr) return; tr._btn?.setAttribute("aria-expanded", "false"); tr.remove(); }
 
 /* menu */
+/** " · Privacy · Terms" once the legal pages are filled in and switched on (docs/launch/fill-legal.sh); nothing before. */
+function legalLinks() {
+  if (!window.STASH_LEGAL?.live) return "";
+  const sfx = lang === "he" ? "-he" : "";
+  return ` · <a href="legal/privacy${sfx}.html">${lang === "he" ? "פרטיות" : "Privacy"}</a> · <a href="legal/terms${sfx}.html">${lang === "he" ? "תנאי שימוש" : "Terms"}</a>`;
+}
 function openMenu(btn) {
   closeMenu();
   const c = course(); const mu = document.createElement("div"); mu.className = "menu"; mu.setAttribute("role", "menu");
@@ -1234,7 +1264,8 @@ function fromText(text) {
   if (SECRET.test(text)) return { kind: "note", text, refuse: "Passwords and codes are never shared." };
   if (/^https?:\/\/\S+$/i.test(text)) { let dom = text; try { dom = new URL(text).hostname.replace(/^www\./, ""); } catch {}
     if (dom === "chat.whatsapp.com") return { kind: "link", url: text, dom, title: `${S.view === "class" ? theClass().name : course().name} — WhatsApp group`, wa: true };
-    return { kind: "link", url: text, dom, title: dom === "visualgo.net" ? "VisuAlgo" : (t => { try { return decodeURIComponent(t); } catch { return t; } })(text.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")).slice(0, 80) }; } // a malformed %-escape must not break paste
+    const url = CORE ? CORE.ShownTitle.cleanURL(text) : text;   // launch QA N1: no utm_source=whatsapp…, no address as the title
+    return { kind: "link", url, dom, title: dom === "visualgo.net" ? "VisuAlgo" : (CORE?.ShownTitle.link(url) || dom) }; }
   return { kind: "note", text: text.slice(0, 5000) };
 }
 // The server's blocked kinds (shared.sql file_allowed), said before Add instead of after it (launch QA): programs,

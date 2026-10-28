@@ -12,11 +12,11 @@ const HE = {
   "Search universities and colleges": "חיפוש אוניברסיטה או מכללה", "Universities": "אוניברסיטאות", "Colleges": "מכללות",
   "My school isn’t here": "המוסד שלי לא ברשימה", "Type its name. Your courses work the same.": "כותבים את השם. הקורסים עובדים בדיוק אותו דבר.",
   "Your school’s name": "שם המוסד", "Use": "בחירה", "What’s the course called?": "איך קוראים לקורס?", "Change": "שינוי",
-  "Algorithms, Calculus 2, Contracts…": "אלגוריתמים, חדו״א 2, דיני חוזים…", "Create Course": "יצירת קורס", "Have an invite code?": "יש לך קוד הזמנה?",
-  "Your name here": "השם שלך כאן", "Join": "הצטרפות", "Ask to Join": "בקשת הצטרפות", "Join with Code": "הצטרפות עם קוד", "Open": "פתיחה",
-  "under 10 students": "פחות מ-10 סטודנטים", "Create a New One": "ליצור קורס חדש בכל זאת", "Open It": "פתיחה", "Ask to Join Instead": "בקשת הצטרפות במקום", "Join Instead": "הצטרפות במקום", "Add the syllabus": "להוסיף את הסילבוס", "Find or start a course instead": "למצוא או לפתוח קורס",
+  "Algorithms, Calculus 2, Contracts…": "אלגוריתמים, חדו״א 2, דיני חוזים…", "Create Course": "יצירת קורס", "Have an invite code?": "יש לכם קוד הזמנה?",
+  "Your name here": "השם שלכם כאן", "Join": "הצטרפות", "Ask to Join": "בקשת הצטרפות", "Join with Code": "הצטרפות עם קוד", "Open": "פתיחה",
+  "under 10 students": "פחות מ־10 סטודנטים", "Create a New One": "ליצור קורס חדש בכל זאת", "Open It": "פתיחה", "Ask to Join Instead": "בקשת הצטרפות במקום", "Join Instead": "הצטרפות במקום", "Add the syllabus": "הוספת הסילבוס", "Find or start a course instead": "למצוא או לפתוח קורס",
   "Too many searches this hour — you can still create it.": "יותר מדי חיפושים בשעה הזו — עדיין אפשר ליצור אותו.",
-  "Couldn’t reach Stash. Check the internet and try again.": "אין חיבור ל-Stash. כדאי לבדוק את האינטרנט ולנסות שוב.",
+  "Couldn’t reach Stash. Check the internet and try again.": "אין חיבור ל־Stash. כדאי לבדוק את האינטרנט ולנסות שוב.",
   "Someone in this course already uses that name. Try another.": "מישהו בקורס כבר משתמש בשם הזה. אפשר לנסות שם אחר.",
 };
 
@@ -113,7 +113,7 @@ export function startCourses(hub) {
       if (k === 0 || /[\s\-–]/.test(lo[k - 1])) return esc(text.slice(0, k)) + "<mark>" + esc(text.slice(k, k + ql.length)) + "</mark>" + esc(text.slice(k + ql.length));
     return esc(text);
   };
-  const people = b => (b === "under 10" ? T("under 10 students") : he ? `${b} סטודנטים` : `${b} students`);
+  const people = b => (b === "under 10" ? T("under 10 students") : he ? `\u2066${b}\u2069 סטודנטים` : `${b} students`);
   const action = c => T(c.already_member ? "Open" : c.join_policy === "code" ? "Join with Code" : c.needs_approval || c.join_policy === "request" ? "Ask to Join" : "Join");
 
   // ——— where do you study? ———
@@ -246,7 +246,7 @@ export function startCourses(hub) {
     try {
       const r = hub.LIVE ? await hub.hooks.joinFound(c.find_token, me) : { status: c.needs_approval ? "requested" : "joined" };
       cache.spend(c.find_token);
-      if (r?.status === "requested") { closeAll(); say(`<span>${ic("check", "s")}</span><span>${he ? "ביקשת להצטרף. תיכנסו כשהבעלים יאשרו." : "Asked to join. You’ll be in once the owner says yes."}</span>`, 6000); return; }
+      if (r?.status === "requested") { closeAll(); say(`<span>${ic("check", "s")}</span><span>${he ? "הבקשה נשלחה. תיכנסו אחרי שפותחי הקורס יאשרו." : "Asked to join. You’ll be in once the owner says yes."}</span>`, 6000); return; }
       if (r?.status === "joined" || r?.status === "already") {
         if (hub.LIVE) return hub.hooks.arrive(r.space_id);
         const id = "found-" + c.find_token;

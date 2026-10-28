@@ -4,7 +4,7 @@
 // functions as the Mac app (backend/supabase/shared.sql), so what one adds shows on the other within ~20 seconds.
 // Publishable key only — row-level security guards; never a secret key (SupabaseBackend refuses one).
 import { SupabaseBackend } from "./backend.js";
-import { Presence } from "./core.js";
+import { Presence, ShownTitle } from "./core.js";
 import { PDFThumb } from "./pdfthumb.js";
 
 export const SERVER = Object.freeze({
@@ -47,12 +47,12 @@ const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } 
 const sizeOf = b => b > 1048576 ? (b / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1024)) + " KB";
 
 /** A server row → the shape the page draws. Pure; `people` maps person id → name, `me` is this person's id. */
-export function itemFrom(row, { people, me, lastSeen, mine = [], ME = "You" }) {
+export function itemFrom(row, { people, me, lastSeen, mine = [], ME = "You", lang = "en" }) {
   const kind = KINDS[row.kind];
   if (!kind) return null;
   const it = {
     id: row.id, cid: row.client_id, live: true, kind, week: row.week ?? null,
-    title: row.title || (kind === "note" ? "" : row.file_path?.split("/").pop() || ""),
+    title: row.title || (kind === "note" ? "" : row.file_path?.split("/").pop() || ""), fileName: row.title || row.file_path?.split("/").pop() || "",
     // "mine" is decided by id, never by the name shown: an old classmate named "You" must not look like you (27 Oct review)
     own: row.added_by === me,
     by: row.added_by === me ? ME : ((n => n === ME ? `${n} (classmate)` : n)(people.get(row.added_by) || "Someone")),
@@ -63,7 +63,11 @@ export function itemFrom(row, { people, me, lastSeen, mine = [], ME = "You" }) {
   };
   if (kind === "note") it.text = row.body || row.title || "";
   if (kind === "link" && !/^https?:\/\//i.test(row.url || "")) return null;   // the server allows only http(s); check again
-  if (kind === "link") { it.url = row.url; try { it.dom = new URL(row.url).hostname.replace(/^www\./, ""); } catch { it.dom = row.url; } it.title ||= it.dom; }
+  // A link nobody titled gets a short name from its address (Moodle, Past exams) or none — never its domain twice (QA N1)
+  if (kind === "link") { it.url = ShownTitle.cleanURL(row.url); try { it.dom = new URL(row.url).hostname.replace(/^www\./, ""); } catch { it.dom = row.url; }
+    if (!it.title || /^https?:\/\//i.test(it.title) || it.title === it.dom) it.title = ShownTitle.link(row.url) || ""; }
+  // IMG_20261027_093512.jpg → Photo · Tue 09:35, Lecture_03.pdf → Lecture 03 (QA N2); downloads keep the real file name
+  if (kind === "photo" || kind === "pdf") it.title = ShownTitle.file(it.title, { isImage: kind === "photo", at: Date.parse(row.created_at) || Date.now(), he: lang === "he" });
   if (kind === "pdf") it.meta = `${((row.title || "").split(".").pop() || "FILE").slice(0, 5).toUpperCase()} · ${sizeOf(row.file_size || 0)}`;
   if (kind === "photo") it.meta = sizeOf(row.file_size || 0);
   if (row.due_at) {
@@ -94,7 +98,8 @@ export async function startLive(hub) {
 
   // ——— loading the courses ———
   async function load() {
-    block(`<div class="course-top" aria-busy="true" aria-label="Loading your courses"><div class="sk sk-cover sk-pulse"></div><div class="sk sk-line sk-pulse"></div></div>`);
+    block(`<div class="course-top" aria-busy="true" aria-label="Loading your courses"><div class="sk sk-title sk-pulse"></div><div class="sk sk-line sk-pulse"></div><div class="sk sk-strip sk-pulse"></div></div>
+      <section class="block" aria-hidden="true"><div class="sk sk-line sk-pulse" style="width:22%;margin:0 0 14px"></div><div class="grid">${"<div class='sk sk-sheet sk-pulse'></div>".repeat(4)}</div></section>`);
     try { await backend.signIn(); await refreshSpaces(true); await live.profile.load().catch(() => {}); }
     catch (e) { return block(`<div class="empty" style="padding-top:12vh"><h2>Can’t reach Stash right now</h2><p>${esc(failText(e))}</p><div class="acts"><button class="btn primary" data-act="live-retry">Try again</button></div></div>`); }
     S.liveBlock = null;
@@ -163,7 +168,7 @@ export async function startLive(hub) {
   async function syncItems(c, st, res, initial, before, light) {
     const rows = [...res.materials.values()].filter(r => r.ready && !r.hidden && !r.deleted_at)
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    const all = rows.map(r => itemFrom(r, { people: st.people, me: backend.me, lastSeen: st.lastSeen, mine: st.mineStickers.get(r.id) || [], ME })).filter(Boolean);
+    const all = rows.map(r => itemFrom(r, { people: st.people, me: backend.me, lastSeen: st.lastSeen, mine: st.mineStickers.get(r.id) || [], ME, lang: hub.lang })).filter(Boolean);
 
     const weeks = all.map(i => i.week).filter(w => w != null);
     const weekNow = weeks.length ? Math.max(...weeks) : 1;
@@ -417,7 +422,7 @@ export async function startLive(hub) {
         const url = await backend.fileURL(it.filePath);
         if (!download) { if (tab) tab.location.href = url; else location.href = url; return; }
         const blob = await (await fetch(url)).blob();
-        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = it.title || "file"; document.body.append(a); a.click();
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = it.fileName || it.title || "file"; document.body.append(a); a.click();
         setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
         say(`<span>Saved to this device.</span>`, 2000);
       } catch (e) { tab?.close(); say(`<span>${esc(failText(e))}</span>`, 4000); }
@@ -472,7 +477,7 @@ export async function startLive(hub) {
       const p = (async () => {
         const blob = await (await fetch(await backend.fileURL(it.filePath))).blob();
         const ext = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png", "image/heic": "heic", "image/webp": "webp" }[blob.type];
-        const name = ext && !/\.[a-z0-9]{2,5}$/i.test(it.title || "") ? `${it.title || "file"}.${ext}` : (it.title || "file");
+        const base = it.fileName || it.title || "file", name = ext && !/\.[a-z0-9]{2,5}$/i.test(base) ? `${base}.${ext}` : base;
         return new File([blob], name, { type: blob.type || "application/octet-stream" });
       })();
       p.catch(() => files.delete(it.id));   // a failed fetch is tried again on the next tap

@@ -615,6 +615,53 @@ export const SmartNames = Object.freeze({
   },
 });
 
+/** What a thing is called on its card (launch QA N1/N2): a camera name becomes "Photo · Tue 9:35", a file loses its
+    extension and underscores, a link without a title gets a short name from its address — or none, so the domain shows once. */
+export const ShownTitle = Object.freeze({
+  file(name, { isImage = false, at = Date.now(), he = false, timeZone } = {}) {
+    const raw = String(name ?? "").trim();
+    if (SmartNames.isGeneric(raw)) {
+      const p = SmartNames.title({ fileName: raw, isImage, at }).parts;
+      if (!p) return raw;
+      if (!he) return SmartNames.english(p, timeZone);
+      const word = { board: "צילום לוח", photo: "תמונה", screenshot: "צילום מסך", scan: "סריקה", document: "מסמך" }[p.kind] ?? "תמונה";
+      return `${word} · ${new Intl.DateTimeFormat("he", { weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false, timeZone }).format(new Date(at))}`;
+    }
+    if (!/\.(pdf|docx?|pptx?|xlsx?|key|pages|numbers|txt|rtf|md|zip|png|jpe?g|heic|heif|gif|webp|tiff?|bmp)$/i.test(raw)) return raw;   // a typed title ("Version 2.0") stays
+    const t = SmartNames.tidy(raw);
+    return /^[a-z]/.test(t) && !/\s/.test(t) && t.length <= 24 ? t[0].toUpperCase() + t.slice(1) : t;   // "board.png" → "Board"
+  },
+  /** A link's address without tracking (utm_*, fbclid…), for showing and copying. */
+  cleanURL(url) {
+    try {
+      const u = new URL(String(url).trim());
+      for (const k of [...u.searchParams.keys()]) if (/^(utm_|mc_)/i.test(k) || ["fbclid", "gclid", "igshid", "si", "ref_src"].includes(k.toLowerCase())) u.searchParams.delete(k);
+      return u.toString().replace(/\?$/, "");
+    } catch { return String(url ?? ""); }
+  },
+  /** The address as people read it: "moodle.huji.ac.il/course/view.php?id=4521" (no https://, no www, no tracking). */
+  shortURL(url) { return this.cleanURL(url).replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/$/, ""); },
+  /** A short name for a link nobody titled; null when the address says nothing (then the card shows only the domain). */
+  link(url) {
+    let u; try { u = new URL(String(url).trim()); } catch { return null; }
+    const h = u.hostname.toLowerCase().replace(/^www\./, ""), path = u.pathname;
+    const known = [[/(^|\.)youtube\.com$|^youtu\.be$/, "YouTube"], [/^docs\.google\.com$/, { document: "Google Docs", spreadsheets: "Google Sheets", presentation: "Google Slides", forms: "Google Forms" }],
+      [/^drive\.google\.com$/, "Google Drive"], [/^meet\.google\.com$/, "Google Meet"], [/(^|\.)zoom\.us$/, "Zoom"], [/(^|\.)teams\.microsoft\.com$/, "Teams"],
+      [/(^|\.)github\.com$/, "GitHub"], [/(^|\.)overleaf\.com$/, "Overleaf"], [/(^|\.)notion\.(so|site)$/, "Notion"], [/(^|\.)chat\.whatsapp\.com$/, "WhatsApp"]];
+    for (const [re, name] of known) if (re.test(h)) { if (typeof name === "string") return name; const k = path.split("/")[1]; return name[k] || null; }
+    if (/(^|[.-])moodle([.-]|$)/.test(h)) return "Moodle";
+    const GENERIC = /^(index|view|default|home|main|page|course|courses|mod|resource|file|files|download|show|open|d|s|u|p|c|e|edit|en|he|il)$/i;
+    const segs = path.split("/").map(x => { try { return decodeURIComponent(x); } catch { return x; } }).filter(Boolean);
+    for (const seg of segs.reverse()) {
+      const w = stripExt(seg).replace(/[-_+]+/g, " ").replace(/\s+/g, " ").trim();
+      if (!w || GENERIC.test(w) || !/\p{L}{3}/u.test(w) || w.length > 60) continue;
+      if ((w.match(/\d/g) || []).length > w.length / 3 || /^[0-9a-f]{12,}$/i.test(w.replace(/ /g, ""))) continue;   // ids, hashes
+      return /^\p{Ll}/u.test(w) ? w[0].toUpperCase() + w.slice(1) : w;
+    }
+    return null;
+  },
+});
+
 const KIND_WORD = { lecture: "Lecture", tutorial: "Tutorial", homework: "Homework", exam: "Exam", summary: "Summary" };
 
 /** Where a new upload belongs (SmartFiling): {week, kind, number, reason: "name"|"calendar"|"date", label}. */
@@ -964,9 +1011,9 @@ export const Essentials = Object.freeze({
   line(c, now = new Date(), timeZone, lang = "en") {
     const he = lang === "he", days = daysApart(now, c.at, timeZone), p = tzParts(c.at, timeZone);
     const time = c.allDay ? null : `${p.h}:${String(p.mi).padStart(2, "0")}`;
-    const full = he ? `${HE_DAYS[p.wd]} ${p.d}/${p.m}` : `${EN_DAYS[p.wd]} ${p.d} ${EN_MONTHS[p.m - 1]}`;
+    const full = he ? `${HE_DAYS[p.wd]} ${p.d}.${p.m}` : `${EN_DAYS[p.wd]} ${p.d} ${EN_MONTHS[p.m - 1]}`;
     const word = days <= 0 ? (he ? "היום" : "Today") : days === 1 ? (he ? "מחר" : "Tomorrow") : days <= 6 ? (he ? HE_DAYS : EN_DAYS)[p.wd]
-      : he ? `${p.d}/${p.m}` : `${p.d} ${EN_MONTHS[p.m - 1]}`;
+      : he ? `${p.d}.${p.m}` : `${p.d} ${EN_MONTHS[p.m - 1]}`;
     const parts = c.slot === "exam" ? [full, time, c.place]
       : c.slot === "due" ? [c.title, word + (days <= 0 && time ? ` ${time}` : ""), c.place]
       : c.isNow ? [he ? "עכשיו" : "Now", c.place] : [[word, time].filter(Boolean).join(" "), c.place];
@@ -1192,7 +1239,7 @@ export const DateImport = Object.freeze({
     const time = f.allDay ? null : hm(p.h, p.mi) + (e && (e.h !== p.h || e.mi !== p.mi) ? `–${hm(e.h, e.mi)}` : "");
     if (f.repeatUntil) return [he ? `כל ${HE_DAYS[p.wd]}` : `Every ${EN_DAYS[p.wd]}`, time, f.place].map(blank).filter(Boolean).join(" · ");
     const year = p.y !== tzParts(now, timeZone).y;
-    const day = he ? `${HE_DAYS[p.wd]} ${p.d}/${p.m}${year ? `/${p.y}` : ""}` : `${EN_DAYS[p.wd]} ${p.d} ${EN_MONTHS[p.m - 1]}${year ? ` ${p.y}` : ""}`;
+    const day = he ? `${HE_DAYS[p.wd]} ${p.d}.${p.m}${year ? `.${p.y}` : ""}` : `${EN_DAYS[p.wd]} ${p.d} ${EN_MONTHS[p.m - 1]}${year ? ` ${p.y}` : ""}`;
     return [day, time, f.place].map(blank).filter(Boolean).join(" · ");
   },
   /** What import_events takes. */
@@ -1382,9 +1429,9 @@ export const MyData = Object.freeze({
   },
   /** delete_me's answer → one plain line. */
   deletedLine(r, he = false) {
-    if (!r?.deleted) return he ? "לשרת לא היה שום דבר ממך." : "The server had nothing from you.";
+    if (!r?.deleted) return he ? "בשרת לא היה שום דבר שלכם." : "The server had nothing from you.";
     const n = r.items ?? 0, s = r.spaces_erased ?? 0;
-    if (he) return `הנתונים שלך נמחקו${n ? ` (${n === 1 ? "פריט אחד" : `${n} פריטים`} שהוספת)` : ""}.${s ? ` ${s === 1 ? "קורס אחד שרק את/ה היית בו נמחק." : `${s} קורסים שרק את/ה היית בהם נמחקו.`}` : ""}`;
+    if (he) return `הנתונים שלכם נמחקו${n ? ` (${n === 1 ? "פריט אחד" : `${n} פריטים`} שהוספתם)` : ""}.${s ? ` ${s === 1 ? "קורס אחד שהייתם בו לבד נמחק." : `${s} קורסים שהייתם בהם לבד נמחקו.`}` : ""}`;
     return `Your data is deleted${n ? ` (${n === 1 ? "1 thing" : `${n} things`} you added)` : ""}.${s ? ` ${s === 1 ? "1 course only you were in was erased." : `${s} courses only you were in were erased.`}` : ""}`;
   },
   /** Server too old for this button (function missing): say so instead of failing. */

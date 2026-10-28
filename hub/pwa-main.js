@@ -55,6 +55,13 @@ if ("serviceWorker" in navigator && isSecureContext && !automated) {
     watch(reg.installing);
     reg.addEventListener("updatefound", () => watch(reg.installing));
   }).catch(() => {});
+  // A new version took over (sw.js skips waiting): reload once, so this page never mixes its old scripts with the
+  // new worker's files (a later import would come from the new cache). Not while a sheet is open or you're typing.
+  if (navigator.serviceWorker.controller) navigator.serviceWorker.addEventListener("controllerchange", () => {
+    const busy = () => document.querySelector(".panel, .spwa") || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "");
+    const go = () => { if (!busy() || document.hidden) location.reload(); else setTimeout(go, 2000); };
+    go();
+  }, { once: true });
   navigator.serviceWorker.addEventListener("message", e => {
     if (e.data?.type === "flush") queue.flush();
     if (e.data?.type === "open" && e.data.url) location.href = e.data.url;

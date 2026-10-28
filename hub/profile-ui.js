@@ -7,14 +7,14 @@
 import { MyData, Profile } from "./core.js";
 
 const HE = {
-  "Profile": "פרופיל", "Your circle": "העיגול שלך", "No colour": "בלי צבע", "Choose a photo…": "בחירת תמונה…", "Change photo…": "החלפת תמונה…",
-  "Remove photo": "הסרת התמונה", "Your name": "השם שלך", "Name": "שם", "In all my courses": "בכל הקורסים שלי", "Save name": "שמירת השם",
+  "Profile": "פרופיל", "Your circle": "העיגול שלכם", "No colour": "בלי צבע", "Choose a photo…": "בחירת תמונה…", "Change photo…": "החלפת תמונה…",
+  "Remove photo": "הסרת התמונה", "Your name": "השם שלכם", "Name": "שם", "In all my courses": "בכל הקורסים שלי", "Save name": "שמירת השם",
   "Use on my other devices": "שימוש במכשירים האחרים שלי", "Show a code": "הצגת קוד", "I have a code": "יש לי קוד", "Link": "קישור",
-  "Leave or forget": "עזיבה או שכחה", "Forget this browser…": "לשכוח את הדפדפן הזה…", "Courses you're in": "הקורסים שלך",
-  "Your iPhone and Mac can be the same you: one name, the same courses.": "האייפון וה־Mac יכולים להיות אותו אדם: שם אחד, אותם קורסים.",
-  "Classmates see only your name and your colour or photo. Nothing here is required.": "חברים לקורס רואים רק את השם שלך ואת הצבע או התמונה. שום דבר כאן אינו חובה.",
-  "Classmates see only your name. Nothing here is required.": "חברים לקורס רואים רק את השם שלך. שום דבר כאן אינו חובה.",
-  "Forgetting takes this browser out of all your courses. What you added stays for the others.": "שכחה מוציאה את הדפדפן הזה מכל הקורסים. מה שהוספת נשאר לאחרים.",
+  "Leave or forget": "עזיבה או שכחה", "Forget this browser…": "לשכוח את הדפדפן הזה…", "Courses you're in": "הקורסים שלכם",
+  "Your iPhone and Mac can be the same you: one name, the same courses.": "ה־iPhone וה־Mac יכולים להיות אתם, באותה זהות: שם אחד, אותם קורסים.",
+  "Classmates see only your name and your colour or photo. Nothing here is required.": "חברים לקורס רואים רק את השם שלכם ואת הצבע או התמונה. שום דבר כאן לא חובה.",
+  "Classmates see only your name. Nothing here is required.": "חברים לקורס רואים רק את השם שלכם. שום דבר כאן לא חובה.",
+  "Forgetting takes this browser out of all your courses. What you added stays for the others.": "שכחה מוציאה את הדפדפן הזה מכל הקורסים. מה שהוספתם נשאר לאחרים.",
   "Type a name.": "צריך להקליד שם.", "40 letters at most.": "עד 40 אותיות.", "That looks like a password. Pick another name.": "זה נראה כמו סיסמה. כדאי לבחור שם אחר.",
   "Type the 8 letters from your other device.": "צריך להקליד את 8 התווים מהמכשיר האחר.", "Code from your other device": "הקוד מהמכשיר האחר",
   "That code didn’t work. Make a new one and try again.": "הקוד לא עבד. כדאי ליצור קוד חדש ולנסות שוב.", "Too many tries. Wait a few minutes.": "יותר מדי ניסיונות. כדאי לחכות כמה דקות.",
@@ -22,16 +22,16 @@ const HE = {
   "Photo saved.": "התמונה נשמרה.", "Photo removed.": "התמונה הוסרה.", "That picture can’t be used. Try another.": "אי אפשר להשתמש בתמונה הזאת. כדאי לנסות אחרת.",
   "No connection. Try again when you’re back online.": "אין חיבור. כדאי לנסות שוב כשהחיבור יחזור.",
   "Only in": "רק ב", "here": "כאן", "You’re": "השם שלי",
-  "Your data": "הנתונים שלך", "Download my data": "הורדת הנתונים שלי", "Delete my data…": "מחיקת הנתונים שלי…",
+  "Privacy policy": "מדיניות פרטיות", "Terms of use": "תנאי שימוש", "Your data": "הנתונים שלכם", "Download my data": "הורדת הנתונים שלי", "Delete my data…": "מחיקת הנתונים שלי…",
   "A copy of everything Stash’s server keeps about you: your profile, courses, names, what you added and your activity.":
-    "עותק של כל מה ששרת Stash שומר עליך: הפרופיל, הקורסים, השמות, מה שהוספת והפעילות שלך.",
+    "עותק של כל מה ששרת Stash שומר עליכם: הפרופיל, הקורסים, השמות, מה שהוספתם והפעילות שלכם.",
   "Delete everything?": "למחוק הכול?",
   "Your names, profile, devices and everything you added are erased from every course, and this browser forgets you. A course you own passes to a helper or the longest-standing member; a course only you are in is erased. Files are gone within a day.":
-    "השמות, הפרופיל, המכשירים וכל מה שהוספת נמחקים מכל הקורסים, והדפדפן הזה שוכח אותך. קורס שבבעלותך עובר למישהו מצוות הקורס או למי שנמצא בו הכי הרבה זמן; קורס שאין בו אף אחד מלבדך נמחק. קבצים נעלמים תוך יום.",
+    "השמות, הפרופיל, המכשירים וכל מה שהוספתם נמחקים מכל הקורסים, והדפדפן הזה שוכח אתכם. קורס שפתחתם עובר למישהו מצוות הקורס או למי שנמצא בו הכי הרבה זמן; קורס שאין בו אף אחד מלבדכם נמחק. הקבצים נמחקים תוך יום.",
   "Copies classmates already saved on their own devices stay with them. This can’t be undone.":
     "עותקים שחברים לקורס כבר שמרו במכשירים שלהם נשארים אצלם. אי אפשר לבטל את זה.",
-  "Cancel": "ביטול", "Delete everything": "למחוק הכול", "Downloaded.": "הורד.",
-  "The server can’t do this yet. Write to us and we’ll do it for you.": "השרת עוד לא יכול לעשות את זה. כדאי לכתוב לנו ונעשה את זה בשבילך.",
+  "Cancel": "ביטול", "Delete everything": "מחיקת הכול", "Downloaded.": "ההורדה הושלמה.",
+  "The server can’t do this yet. Write to us and we’ll do it for you.": "השרת עוד לא יכול לעשות את זה. אפשר לכתוב לנו ונעשה את זה בשבילכם.",
   "On the made-up courses nothing is on a server: everything stays in this browser.": "בקורסים לדוגמה שום דבר לא נמצא בשרת: הכול נשאר בדפדפן הזה.",
 };
 const COLOR_NAMES = { coral: ["Coral", "אלמוג"], butter: ["Butter", "חמאה"], sky: ["Sky", "שמיים"], sage: ["Sage", "מרווה"],
@@ -61,7 +61,7 @@ export function startProfile(hub) {
     const panel = $(".panel.prof-panel");
     const html = `${head(esc(T("Profile")))}<div class="p-body prof">
       <div class="prof-top">${hub.face(ME, look, "big")}<div><b><bdi>${esc(name)}</bdi></b>
-        <small>${he ? (courses.length === 1 ? "בקורס אחד" : `ב-${courses.length} קורסים`) : courses.length === 1 ? "In 1 course" : `In ${courses.length} courses`}</small></div></div>
+        <small>${he ? (courses.length === 1 ? "בקורס אחד" : `ב־${courses.length} קורסים`) : courses.length === 1 ? "In 1 course" : `In ${courses.length} courses`}</small></div></div>
       <p class="prof-note">${ic("lock", "s")}<span>${esc(T(looksOn() ? "Classmates see only your name and your colour or photo. Nothing here is required." : "Classmates see only your name. Nothing here is required."))}</span></p>
       ${looksOn() ? `<section class="prof-sec" aria-labelledby="pf-look"><h3 id="pf-look">${esc(T("Your circle"))}</h3>
         <div class="swatches" role="radiogroup" aria-labelledby="pf-look">${swatch(null, look)}${Profile.COLORS.map((_, i) => swatch(i, look)).join("")}</div>
@@ -102,7 +102,13 @@ export function startProfile(hub) {
   function dataButtons() {
     return `<p class="prof-p">${esc(T("A copy of everything Stash’s server keeps about you: your profile, courses, names, what you added and your activity."))}</p>
       <div class="acts-row" style="margin-top:0"><button type="button" class="btn" data-act="prof-data-get">${ic("save", "s")}<span>${esc(T("Download my data"))}</span></button>
-        <button type="button" class="btn quiet danger" data-act="prof-data-ask">${ic("trash", "s")}<span>${esc(T("Delete my data…"))}</span></button></div>`;
+        <button type="button" class="btn quiet danger" data-act="prof-data-ask">${ic("trash", "s")}<span>${esc(T("Delete my data…"))}</span></button></div>${legalLinks()}`;
+  }
+  /** Privacy policy + terms: only once docs/launch/fill-legal.sh has filled the pages in and turned legal.js on. */
+  function legalLinks() {
+    if (!globalThis.STASH_LEGAL?.live) return "";
+    const sfx = he ? "-he" : "";
+    return `<p class="prof-p" style="margin-top:12px"><a href="legal/privacy${sfx}.html">${esc(T("Privacy policy"))}</a> · <a href="legal/terms${sfx}.html">${esc(T("Terms of use"))}</a></p>`;
   }
   /** The confirm step, in place: what goes, what stays with classmates, and a red button. */
   function dataConfirm() {
@@ -187,7 +193,7 @@ export function startProfile(hub) {
     catch (e) { say(`<span>${esc(fail(e))}</span>`, 4000); return; }
     const shown = Profile.pairCodeShown(code);
     $("#pf-pair").innerHTML = `<div class="pair-code" dir="ltr" aria-label="${esc([...code].join(" "))}">${esc(shown)}</div>
-      <p class="prof-p">${he ? "ב-Stash במכשיר האחר: פרופיל ← יש לי קוד, ולהקליד אותו תוך 10 דקות. שני המכשירים יהיו אותו אדם, עם אותם קורסים."
+      <p class="prof-p">${he ? "ב־Stash במכשיר האחר: פרופיל ← יש לי קוד, ולהקליד אותו תוך 10 דקות. שני המכשירים יהיו אותו אדם, עם אותם קורסים."
         : "In Stash on your other device: Profile → I have a code, and type it within 10 minutes. That device becomes you here, and brings its courses along."}</p>
       <div class="acts-row" style="margin-top:0"><button type="button" class="btn" data-act="prof-pair-copy" data-code="${esc(code)}">${ic("copy", "s")}<span>${he ? "העתקה" : "Copy"}</span></button></div>`;
   }

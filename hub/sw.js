@@ -7,9 +7,9 @@
 // - The backend (Supabase), the nearby/push test servers and anything outside the scope: never touched here.
 // Routes mirror pwa-core.js `routeFor` (tested there): keep the two in step.
 
-const VERSION = "hub-pwa-11-5d151c3e";  // 27 Oct: Hebrew pass (Heebo font, Hebrew manifest); hub-pwa-9: course-ui.js + schools.js (join or start a course); hub-pwa-8: syllabus.js (the syllabus reader); hub-pwa-7: Profile → Your data (download / delete); hub-pwa-6: launch QA (offline posts, PDF first pages)
+const VERSION = "hub-pwa-13-6d03e82f";  // 28 Oct: boot.js (never cached) checks this version, a new worker takes over at once; hub-pwa-12: 27 Oct: Hebrew pass (Heebo font, Hebrew manifest); hub-pwa-9: course-ui.js + schools.js (join or start a course); hub-pwa-8: syllabus.js (the syllabus reader); hub-pwa-7: Profile → Your data (download / delete); hub-pwa-6: launch QA (offline posts, PDF first pages)
 const SHELL = `stash-hub-shell-${VERSION}`, RUNTIME = "stash-hub-runtime-1", FILES = "stash-hub-files-1";
-const SHELL_FILES = ["./", "./index.html", "./hub.js", "./vendor/supabase-js-2.45.4.min.js", "./core.js", "./backend.js", "./live.js", "./profile-ui.js", "./dates-ui.js", "./syllabus.js", "./course-ui.js", "./schools.js", "./coursematch.js", "./pdftext.js", "./pdfthumb.js", "./pwa.js", "./pwa-main.js", "./pwa-core.js", "./nearby/nearby.js",
+const SHELL_FILES = ["./", "./index.html", "./hub.js", "./legal.js", "./vendor/supabase-js-2.45.4.min.js", "./core.js", "./backend.js", "./live.js", "./profile-ui.js", "./dates-ui.js", "./syllabus.js", "./course-ui.js", "./schools.js", "./coursematch.js", "./pdftext.js", "./pdfthumb.js", "./pwa.js", "./pwa-main.js", "./pwa-core.js", "./nearby/nearby.js",
   "./vendor/qrcode-generator-1.4.4.js", "./manifest.webmanifest", "./manifest.he.webmanifest", "./vendor/fonts/heebo-hebrew-wght-5.3.0.woff2", "./icons/icon-192.png", "./icons/apple-touch-icon.png"];
 const RUNTIME_MAX = 150;
 
@@ -18,6 +18,9 @@ self.addEventListener("install", event => {
     const cache = await caches.open(SHELL);
     // One missing file must not stop the rest (e.g. a renamed asset); each is fetched fresh, bypassing the HTTP cache.
     await Promise.all(SHELL_FILES.map(u => cache.add(new Request(u, { cache: "reload" })).catch(() => {})));
+    // A new version takes over at once (an open page reloads once when it does: pwa-main.js), so an old worker never
+    // keeps serving old scripts under a new page.
+    await self.skipWaiting();
   })());
 });
 
@@ -31,6 +34,7 @@ self.addEventListener("activate", event => {
 // The page asks for an update to take over now ("A new version is ready · Reload").
 self.addEventListener("message", event => {
   if (event.data?.type === "skip-waiting") self.skipWaiting();
+  if (event.data?.type === "version") event.ports[0]?.postMessage({ version: VERSION });   // boot.js: same version as the page?
 });
 
 function route(request) {
@@ -40,6 +44,7 @@ function route(request) {
   if (url.origin !== new URL(scope).origin || !url.href.startsWith(scope)) return "network";
   if (url.pathname.includes("/__files/")) return "files";
   if (url.pathname.includes("/nearby-api/") || url.pathname.includes("/push-api/")) return "network";
+  if (url.pathname.endsWith("/boot.js")) return "network";   // the version check itself must always be the newest
   if (request.mode === "navigate") return "page";
   return "asset";
 }
